@@ -1,0 +1,10 @@
+# Config file for /etc/init.d/potcoind
+
+# owner of potcoind process (don't change, must be existing)
+POTCOIN_USER="potcoin"
+
+# See http://www.bitcoin.org/smf/index.php?topic=1063
+POTCOIN_OPTS="${POTCOIN_OPTS}"
+
+# nice level
+NICELEVEL="19"

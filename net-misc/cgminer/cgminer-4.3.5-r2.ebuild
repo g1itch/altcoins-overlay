@@ -64,9 +64,9 @@ src_configure() {
 }
 
 src_install() { # How about using some make install?
-	dobin cgminer
+	dobin ${PN}
 
-	newinitd "${FILESDIR}"/cgminer.initd cgminer
+	newinitd "${FILESDIR}"/${PN}.initd ${PN}
 
 	if use udev; then
 		insinto /lib/udev/rules.d
@@ -76,7 +76,7 @@ src_install() { # How about using some make install?
 	if use doc; then
 		dodoc AUTHORS NEWS README API-README
 		use icarus || use bitforce || use modminer && dodoc FPGA-README
-		use avalon || use bflsc && dodoc ASIC-README
+		use avalon || use bflsc || gridseed && dodoc ASIC-README
 	fi
 
 	if use modminer; then
@@ -84,10 +84,12 @@ src_install() { # How about using some make install?
 		doins bitstreams/*.ncd
 		dodoc bitstreams/COPYING_fpgaminer
 	fi
+
 	if use opencl; then
 		insinto /usr/lib/cgminer
 		doins *.cl
 	fi
+
 	if use examples; then
 		docinto examples
 		dodoc api-example.php miner.php API.java api-example.c api-example.py example.conf

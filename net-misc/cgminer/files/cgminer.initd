@@ -4,22 +4,15 @@
 # $Header$
 
 pidfile=${pidfile:-/run/${SVCNAME}.pid}
-cgminer_config=${cgminer_config:-/etc/cgminer/cgminer.conf}
+cgminer_config=${cgminer_config:-/etc/cgminer/${SVCNAME}.conf}
 command="/usr/bin/cgminer"
 command_args="--syslog -l 60 -q -c ${cgminer_config} ${cgminer_args}"
+start_stop_daemon_args="-bm -N ${NICELEVEL:-20}"
 
 depend() {
-    after net
+    need net
 }
 
 # check config!
 # start_pre() {
 # }
-
-start () {
-    ebegin "Starting ${SVCNAME}"
-    start-stop-daemon --start --quiet --pidfile ${pidfile} \
-		      --background --make-pidfile \
-		      --exec ${command} -- ${command_args}
-    eend $? "Failed to start ${SVCNAME}"
-}

@@ -26,7 +26,7 @@ RDEPEND="${DEPEND}
 src_prepare() {
 	replace-flags -O2 -O3
 	replace-flags -march=i686 -march=native
-	epatch "${FILESDIR}"/${PN}-${MY_PV}-curl.patch
+	epatch "${FILESDIR}"/${PN}-${MY_PV}-curl-openssl.patch
 	eautoreconf
 }
 

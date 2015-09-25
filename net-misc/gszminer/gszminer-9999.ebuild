@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit autotools flag-o-matic git-2
+inherit autotools flag-o-matic git-r3
 
 DESCRIPTION="A highly specialized miner for Gridseed and Zeus ASICs"
 HOMEPAGE="https://github.com/slax0r/${PN}"
@@ -20,11 +20,11 @@ IUSE="doc examples hardened ncurses +udev scrypt ${HARDWARE}"
 REQUIRED_USE="|| ( ${HARDWARE} )"
 
 DEPEND="net-misc/curl
-	dev-libs/jansson
 	virtual/libusb:1
-	ncurses? ( sys-libs/ncurses )
+	ncurses? ( sys-libs/ncurses )"
+RDEPEND="${DEPEND}
+	dev-libs/jansson
 	udev? ( virtual/libudev )"
-RDEPEND="${DEPEND}"
 
 
 src_configure() {

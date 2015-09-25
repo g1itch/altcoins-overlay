@@ -31,17 +31,14 @@ REQUIRED_USE="|| ( ${HARDWARE} )
 	zeus? ( scrypt libusb )"
 
 DEPEND="net-misc/curl
-	dev-libs/jansson
 	libusb? ( virtual/libusb:1 )
-	ncurses? ( sys-libs/ncurses )
+	ncurses? ( sys-libs/ncurses )"
+RDEPEND="${DEPEND}
+	dev-libs/jansson
 	udev? ( virtual/libudev )"
-RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_PV}"
 
-src_prepare() {
-	eautoreconf
-}
 
 src_configure() {
 	use hardened && append-cflags "-nopie"

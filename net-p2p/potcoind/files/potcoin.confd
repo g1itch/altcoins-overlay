@@ -1,10 +1,26 @@
 # Config file for /etc/init.d/potcoind
 
-# owner of potcoind process (don't change, must be existing)
-POTCOIN_USER="potcoin"
+# Config file location
+#BITCOIND_CONFIGFILE="/etc/potcoin/potcoin.conf"
 
-# See http://www.bitcoin.org/smf/index.php?topic=1063
-POTCOIN_OPTS="${POTCOIN_OPTS}"
+# What directory to write pidfile to? (created and owned by $BITCOIND_USER)
+#BITCOIND_PIDDIR="/var/run/potcoind"
 
-# nice level
-NICELEVEL="19"
+# What filename to give the pidfile
+#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/${SVCNAME}.pid"
+
+# Where to write potcoind data (be mindful that the blockchain is large)
+#BITCOIND_DATADIR="/var/lib/potcoind"
+
+# User and group to own potcoind process
+#BITCOIND_USER="potcoin"
+#BITCOIND_GROUP="potcoin"
+
+# Path to potcoind executable
+#BITCOIND_BIN="/usr/bin/potcoind"
+
+# Nice value to run potcoind under
+#BITCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#BITCOIND_OPTS=""

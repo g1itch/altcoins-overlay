@@ -6,17 +6,17 @@ EAPI=5
 
 DB_VER="4.8"
 
-inherit bash-completion-r1 db-use systemd user git-2
+inherit bash-completion-r1 db-use systemd user
 
 MY_PN="potcoin"
-
+COMMIT="5c2b9dac24344c96c18a049d8a7b116946de7edd"
 DESCRIPTION="Potcoin crypto-currency p2p network daemon"
 HOMEPAGE="http://www.potcoin.com/"
-EGIT_REPO_URI="https://github.com/${MY_PN}/${MY_PN}.git"
+SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/${COMMIT}.zip -> ${P}.zip"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE="examples ipv6 logrotate systemd upnp"
 
 RDEPEND="
@@ -35,6 +35,7 @@ DEPEND="${RDEPEND}
 	sys-apps/sed
 "
 
+S="${WORKDIR}/${MY_PN/p/P}-${COMMIT}"
 
 pkg_setup() {
 	local UG="${MY_PN}"

@@ -40,6 +40,10 @@ RDEPEND="${DEPEND}
 S="${WORKDIR}/${PN}-${MY_PV}"
 
 
+src_prepare() {
+	eautoreconf
+}
+
 src_configure() {
 	use hardened && append-cflags "-nopie"
 

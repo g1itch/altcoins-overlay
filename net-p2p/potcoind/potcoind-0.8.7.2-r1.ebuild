@@ -6,7 +6,7 @@ EAPI=5
 
 DB_VER="4.8"
 
-inherit bash-completion-r1 db-use systemd user
+inherit bash-completion-r1 db-use eutils systemd user
 
 MY_PN="potcoin"
 COMMIT="5c2b9dac24344c96c18a049d8a7b116946de7edd"
@@ -17,7 +17,7 @@ SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/${COMMIT}.zip -> ${P}.zip"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples ipv6 logrotate systemd upnp"
+IUSE="cpu_flags_x86_sse2 examples ipv6 logrotate systemd upnp"
 
 RDEPEND="
 	dev-libs/boost[threads(+)]
@@ -29,6 +29,7 @@ RDEPEND="
 		net-libs/miniupnpc
 	)
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
+	virtual/bitcoin-leveldb
 "
 DEPEND="${RDEPEND}
 	>=app-shells/bash-4.1
@@ -44,6 +45,7 @@ pkg_setup() {
 }
 
 src_prepare() {
+	epatch "${FILESDIR}"/${P}-sys_leveldb.patch
 	if has_version '>=dev-libs/boost-1.52'; then
 		sed -i 's/\(-l db_cxx\)/-l boost_chrono$(BOOST_LIB_SUFFIX) \1/' \
 			src/makefile.unix
@@ -67,6 +69,7 @@ src_configure() {
 	fi
 
 	use ipv6 || OPTS+=("USE_IPV6=-")
+	use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
 
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \

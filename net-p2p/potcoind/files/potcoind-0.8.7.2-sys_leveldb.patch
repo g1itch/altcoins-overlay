@@ -1,0 +1,77 @@
+--- src/makefile.unix~	2015-10-12 11:44:33.347078969 +0300
++++ src/makefile.unix	2015-10-12 15:29:42.674981070 +0300
+@@ -11,6 +11,10 @@
+ # :=0 --> Disable IPv6 support
+ USE_IPV6:=1
+ 
++# :=1 --> Use system leveldb
++# :=0 --> Use embedded leveldb
++USE_SYSTEM_LEVELDB:=0
++
+ LINK:=$(CXX)
+ 
+ DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
+@@ -111,7 +115,6 @@
+ xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
+ 
+ OBJS= \
+-    leveldb/libleveldb.a \
+     obj/alert.o \
+     obj/version.o \
+     obj/checkpoints.o \
+@@ -146,6 +149,9 @@
+     obj/leveldb.o \
+     obj/txdb.o
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++     OBJS += leveldb/libleveldb.a
++endif
+ 
+ ifdef USE_SSE2
+ DEFS += -DUSE_SSE2
+@@ -161,14 +167,18 @@
+ #
+ # LevelDB support
+ #
+-MAKEOVERRIDES =
+-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++     MAKEOVERRIDES =
++     LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
++     DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
++     DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
++     obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++     LIBS += -lleveldb -lmemenv
++endif
+ OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
+-obj/txdb-leveldb.o: leveldb/libleveldb.a
+ 
+ # auto-generated dependencies:
+ -include obj/*.P
+--- src/leveldb.cpp~	2015-08-23 17:11:53.000000000 +0300
++++ src/leveldb.cpp	2015-10-12 15:24:49.346774608 +0300
+@@ -8,7 +8,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include <boost/filesystem.hpp>
+ 
+--- src/txdb-leveldb.cpp~	2015-08-23 17:11:53.000000000 +0300
++++ src/txdb-leveldb.cpp	2015-10-12 15:23:32.499507558 +0300
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"

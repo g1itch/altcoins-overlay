@@ -6,7 +6,7 @@ EAPI=5
 
 DB_VER="4.8"
 
-inherit base bash-completion-r1 db-use autotools user systemd
+inherit base bash-completion-r1 db-use autotools eutils versionator user systemd
 
 MY_PN="dash"
 
@@ -17,11 +17,12 @@ SRC_URI="https://github.com/dashpay/${MY_PN}/archive/v${PV}.zip -> ${MY_PN}-${PV
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples logrotate systemd upnp test"
+IUSE="examples libressl logrotate systemd upnp +wallet"
 
 RDEPEND="
 	dev-libs/boost[threads(+)]
-	dev-libs/openssl:0[-bindist]
+	!libressl? ( dev-libs/openssl:0[-bindist] )
+	libressl? ( dev-libs/libressl )
 	logrotate? (
 		app-admin/logrotate
 	)
@@ -29,6 +30,8 @@ RDEPEND="
 		net-libs/miniupnpc
 	)
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
+	>=dev-libs/leveldb-1.18-r1
+	dev-libs/libsecp256k1
 "
 DEPEND="${RDEPEND}
 	dev-lang/yasm
@@ -44,16 +47,26 @@ pkg_setup() {
 }
 
 src_prepare() {
+	local PVM=$(get_version_component_range 1-2)
+	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-sys_libsecp256k1.patch
 	eautoreconf
+	rm -r src/leveldb src/secp256k1
 }
 
 src_configure() {
+	local my_econf=
+	hasq test $FEATURES && my_econf="${my_econf} --enable-tests"
 	CXXFLAGS+=" -I. -I$(db_includedir "${DB_VER}")"
 	econf --with-gui=no \
 		  --without-libs \
 		  --without-utils \
-		$(use_enable test tests) \
-		$(use_with upnp miniupnpc)
+		  --with-system-leveldb \
+		  --with-system-libsecp256k1 \
+		$(use_enable wallet) \
+		$(use_with upnp miniupnpc) \
+		$(use_with libressl) \
+		${my_econf}
 }
 
 src_install() {

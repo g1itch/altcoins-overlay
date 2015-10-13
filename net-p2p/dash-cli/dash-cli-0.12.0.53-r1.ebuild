@@ -6,7 +6,7 @@ EAPI=5
 
 DB_VER="4.8"
 
-inherit bash-completion-r1 db-use autotools
+inherit bash-completion-r1 db-use autotools eutils versionator
 
 MY_PN="dash"
 
@@ -17,12 +17,14 @@ SRC_URI="https://github.com/dashpay/${MY_PN}/archive/v${PV}.zip -> ${MY_PN}-${PV
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE=""
+IUSE="libressl"
 
 RDEPEND="
 	dev-libs/boost[threads(+)]
-	dev-libs/openssl:0[-bindist]
+	!libressl? ( dev-libs/openssl:0[-bindist] )
+	libressl? ( dev-libs/libressl )
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
+	>=dev-libs/leveldb-1.18-r1
 "
 DEPEND="${RDEPEND}
 	dev-lang/yasm
@@ -32,6 +34,8 @@ DEPEND="${RDEPEND}
 S="${WORKDIR}/${MY_PN}-${PV}"
 
 src_prepare() {
+	rm -r src/leveldb
+	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch
 	eautoreconf
 }
 
@@ -41,7 +45,8 @@ src_configure() {
 		  --disable-tests \
 		  --without-daemon \
 		  --without-libs \
-		  --with-utils
+		  --with-utils \
+		  --with-system-leveldb
 }
 
 src_install() {

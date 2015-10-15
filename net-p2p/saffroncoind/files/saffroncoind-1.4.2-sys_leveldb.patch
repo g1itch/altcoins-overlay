@@ -1,0 +1,60 @@
+--- src/leveldb.cpp~	2015-01-13 09:53:45.000000000 +0200
++++ src/leveldb.cpp	2015-10-15 12:19:58.944822911 +0300
+@@ -8,7 +8,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include <boost/filesystem.hpp>
+ 
+--- src/makefile.unix~	2015-10-15 13:37:11.166281538 +0300
++++ src/makefile.unix	2015-10-15 13:40:45.098396154 +0300
+@@ -11,6 +11,10 @@
+ # :=0 --> Disable IPv6 support
+ USE_IPV6:=1
+ 
++# :=1 --> Use system leveldb
++# :=0 --> Use embedded leveldb
++USE_SYSTEM_LEVELDB:=0
++
+ LINK:=$(CXX)
+ 
+ DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
+@@ -111,7 +115,6 @@
+ xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
+ 
+ OBJS= \
+-    leveldb/libleveldb.a \
+     obj/alert.o \
+     obj/version.o \
+     obj/checkpoints.o \
+@@ -158,6 +161,10 @@
+     obj/cubehash.o \
+     obj/shavite.o
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++     OBJS += leveldb/libleveldb.a
++endif
++
+ ifdef USE_SSE2
+ DEFS += -DUSE_SSE2
+ OBJS_SSE2= obj/scrypt-sse2.o
+@@ -174,9 +181,13 @@
+ # LevelDB support
+ #
+ MAKEOVERRIDES =
+-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++	LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
++	DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
++	DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
++else
++	LIBS += -lleveldb -lmemenv
++endif
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
+ 

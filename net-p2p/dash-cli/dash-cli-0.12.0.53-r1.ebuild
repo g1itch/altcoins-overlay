@@ -53,7 +53,7 @@ src_install() {
 	dobin src/${PN}
 
 	has_version "net-p2p/dashd" ||
-		doman contrib/debian/manpages/dashd.1 ${PN}.1
+		newman contrib/debian/manpages/dashd.1 ${PN}.1
 
 	newbashcomp contrib/dashd.bash-completion ${PN}
 }

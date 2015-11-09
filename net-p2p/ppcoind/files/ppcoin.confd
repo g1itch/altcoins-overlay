@@ -1,0 +1,26 @@
+# Config file for /etc/init.d/ppcoind
+
+# Config file location
+#BITCOIND_CONFIGFILE="/etc/ppcoin/ppcoin.conf"
+
+# What directory to write pidfile to? (created and owned by $BITCOIND_USER)
+#BITCOIND_PIDDIR="/var/run/ppcoind"
+
+# What filename to give the pidfile
+#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/${SVCNAME}.pid"
+
+# Where to write ppcoind data (be mindful that the blockchain is large)
+#BITCOIND_DATADIR="/var/lib/ppcoind"
+
+# User and group to own ppcoind process
+#BITCOIND_USER="ppcoin"
+#BITCOIND_GROUP="ppcoin"
+
+# Path to ppcoind executable
+#BITCOIND_BIN="/usr/bin/ppcoind"
+
+# Nice value to run ppcoind under
+#BITCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#BITCOIND_OPTS=""

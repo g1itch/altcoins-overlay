@@ -1,0 +1,63 @@
+--- src/leveldb.cpp~	2014-05-13 18:56:31.000000000 +0300
++++ src/leveldb.cpp	2015-11-17 13:40:43.312252035 +0200
+@@ -8,7 +8,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include <boost/filesystem.hpp>
+ 
+--- src/makefile.unix~	2015-11-17 17:49:52.374044811 +0200
++++ src/makefile.unix	2015-11-17 17:51:18.654418276 +0200
+@@ -10,6 +10,10 @@
+ # :=1 --> Enable IPv6 support
+ # :=0 --> Disable IPv6 support
+ USE_IPV6:=1
++ 
++# :=1 --> Use system leveldb
++# :=0 --> Use embedded leveldb
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ 
+@@ -111,7 +115,6 @@
+ xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
+ 
+ OBJS= \
+-    leveldb/libleveldb.a \
+     obj/alert.o \
+     obj/version.o \
+     obj/checkpoints.o \
+@@ -145,6 +148,9 @@
+     obj/txdb.o \
+     obj/checkpointsync.o
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++     OBJS += leveldb/libleveldb.a
++endif
+ 
+ ifdef USE_SSE2
+ DEFS += -DUSE_SSE2
+@@ -160,11 +166,15 @@
+ # LevelDB support
+ #
+ MAKEOVERRIDES =
+-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+-DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-leveldb/libleveldb.a:
+-	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++	LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
++	DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
++	DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
++	leveldb/libleveldb.a:
++		@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
++else
++	LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

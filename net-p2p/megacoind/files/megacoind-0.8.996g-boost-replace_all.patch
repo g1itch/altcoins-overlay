@@ -1,0 +1,10 @@
+--- src/newsmessage.h~	2014-04-09 00:05:18.000000000 +0300
++++ src/newsmessage.h	2015-11-17 12:13:13.416247465 +0200
+@@ -3,6 +3,7 @@
+ 
+ #include <set>
+ #include <string>
++#include <boost/algorithm/string.hpp>
+ 
+ #include "uint256.h"
+ #include "util.h"

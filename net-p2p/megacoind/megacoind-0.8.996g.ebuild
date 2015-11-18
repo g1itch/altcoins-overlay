@@ -86,14 +86,14 @@ src_install() {
 	dobin src/${PN}
 
 	dodir /etc/${MY_PN}
-	# doins "${FILESDIR}"/${MY_PN}.conf
 	echo "# http://www.bitcoin.org/smf/index.php?topic=644.0" > \
 		 "${D}"/etc/${MY_PN}/${MY_PN}.conf
 	fowners ${UG}:${UG} /etc/${MY_PN}/${MY_PN}.conf
 	fperms 600 /etc/${MY_PN}/${MY_PN}.conf
 
 	dosym /etc/init.d/altcoin-daemon /etc/init.d/${PN}
-	echo "# Config file for ${PN} (look at altcoin-daemon for vars)" > \
+	dodir /etc/conf.d
+	echo "# Config file for ${PN} (look at /etc/conf.d/altcoin-daemon)" > \
 		 "${D}"/etc/conf.d/${PN}
 
 	dodoc README.md

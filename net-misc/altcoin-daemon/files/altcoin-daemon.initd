@@ -21,7 +21,7 @@ BITCOIND_USER=${BITCOIND_USER:-${COIN}}
 BITCOIND_GROUP=${BITCOIND_GROUP:-${COIN}}
 BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/${SVCNAME}}
 
-name="Altcoin Daemon"
+name="${COIN^} Daemon"
 description="Crypto-currency p2p network daemon"
 
 command="${BITCOIND_BIN}"

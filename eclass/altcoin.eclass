@@ -20,6 +20,9 @@ RDEPEND="
 	dev-libs/openssl:0[-bindist]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	net-misc/altcoin-daemon
+	upnp? (
+		net-libs/miniupnpc
+	)
 "
 
 DEPEND="${RDEPEND}
@@ -34,6 +37,7 @@ DEPEND="${RDEPEND}
 
 COIN_NAME=${COIN_NAME:-${PN:0:-1}}
 
+
 altcoin_pkg_setup() {
 	local UG="${COIN_NAME}"
 	enewgroup "${UG}"
@@ -46,6 +50,35 @@ altcoin_src_prepare() {
 		sed -i 's/\(-l db_cxx\)/-l boost_chrono$(BOOST_LIB_SUFFIX) \1/' \
 			src/makefile.unix
 	fi
+}
+
+
+altcoin_src_configure() {
+	OPTS=(
+		"DEBUGFLAGS="
+		"CXXFLAGS=${CXXFLAGS}"
+		"LDFLAGS=${LDFLAGS}"
+		"USE_SYSTEM_LEVELDB=1"
+		"BDB_INCLUDE_PATH=$(db_includedir "${DB_VER}")"
+		"BDB_LIB_SUFFIX=-${DB_VER}"
+		"$@"
+	)
+
+	if use upnp; then
+		OPTS+=("USE_UPNP=1")
+	else
+		OPTS+=("USE_UPNP=-")
+	fi
+
+	use ipv6 || OPTS+=("USE_IPV6=-")
+	use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
+}
+
+
+altcoin_src_compile() {
+	cd src || die
+	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \
+		  -f makefile.unix "${OPTS[@]}" ${PN}
 }
 
 
@@ -71,7 +104,22 @@ altcoin_src_install() {
 	dodir /etc/conf.d
 	echo "# Config file for ${PN} (look at /etc/conf.d/altcoin-daemon)" > \
 		 "${D}"/etc/conf.d/${PN}
+
+	local manpath=contrib/debian/manpages
+	for man in ${manpath}/{bitcoind,${PN}}.1; do
+		[ -f $man ] && newman $man ${PN}.1
+	done
+	for man in ${manpath}/{bitcoin,${COIN_NAME}}.conf.5; do
+		[ -f $man ] && newman $man ${COIN_NAME}.conf.5
+	done
+
+	if use examples; then
+		docinto examples
+		for ex in contrib/{bitrpc,pyminer,wallettools,linearize,qos,spendfrom}; do
+			[ -d $ex ] dodoc -r $ex
+		done
+	fi
 }
 
 
-EXPORT_FUNCTIONS pkg_setup src_prepare src_test src_install
+EXPORT_FUNCTIONS pkg_setup src_prepare src_configure src_compile src_test src_install

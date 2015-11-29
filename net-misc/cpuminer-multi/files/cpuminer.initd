@@ -7,7 +7,7 @@ pidfile=${pidfile:-/run/${SVCNAME}.pid}
 miner_config=${miner_config:-/etc/cpuminer/${SVCNAME}.conf}
 command="/usr/bin/cpuminer"
 command_args="-qBS -c ${miner_config} ${miner_args}"
-start_stop_daemon_args="-bm -N ${NICELEVEL:-20}"
+start_stop_daemon_args="-n ${SVCNAME} -N ${NICELEVEL:-20}"
 
 depend() {
     need net

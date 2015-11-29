@@ -105,6 +105,10 @@ altcoin_src_install() {
 	echo "# Config file for ${PN} (look at /etc/conf.d/altcoin-daemon)" > \
 		 "${D}"/etc/conf.d/${PN}
 
+	for doc in {README,README.md}; do
+		[ -f $doc ] && dodoc $doc
+	done
+
 	local manpath=contrib/debian/manpages
 	for man in ${manpath}/{bitcoind,${PN}}.1; do
 		[ -f $man ] && newman $man ${PN}.1

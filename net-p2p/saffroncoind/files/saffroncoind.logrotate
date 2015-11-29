@@ -1,8 +1,0 @@
-/var/lib/saffroncoin/.saffroncoin/debug.log {
-        missingok
-	weekly
-	sharedscripts
-	postrotate
-		killall -HUP saffroncoind
-	endscript
-}

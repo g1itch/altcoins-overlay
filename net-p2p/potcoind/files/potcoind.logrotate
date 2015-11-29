@@ -1,8 +1,0 @@
-/var/lib/potcoin/.potcoin/debug.log {
-        missingok
-	weekly
-	sharedscripts
-	postrotate
-		killall -HUP potcoind
-	endscript
-}

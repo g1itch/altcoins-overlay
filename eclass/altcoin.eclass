@@ -11,7 +11,7 @@
 # from bitcoin, litecoin etc)
 
 DB_VER="4.8"
-inherit autotools db-use eutils user
+inherit autotools base bash-completion-r1 db-use eutils user
 
 LICENSE="MIT"
 
@@ -20,28 +20,30 @@ RDEPEND="
 	dev-libs/openssl:0[-bindist]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	net-misc/altcoin-daemon
-	upnp? (
-		net-libs/miniupnpc
-	)
 "
+
+[[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc )"
 
 DEPEND="${RDEPEND}
 	>=app-shells/bash-4.1
 	sys-apps/sed
 "
 
+eshopts_push -s extglob
+
 # @ECLASS-VARIABLE: COIN_NAME
 # @DESCRIPTION:
 # Set this variable before the inherit line
 # if your coin or daemon have a nonstandard names
 
-COIN_NAME=${COIN_NAME:-${PN:0:-1}}
+COIN_NAME=${COIN_NAME:-${PN%@(d|-cli)}}
 
+ISDAEMON=
 
 altcoin_pkg_setup() {
 	local UG="${COIN_NAME}"
 	enewgroup "${UG}"
-	enewuser "${UG}" -1 -1 /var/lib/${MY_PN} "${UG}"
+	enewuser "${UG}" -1 -1 /var/lib/${COIN_NAME} "${UG}"
 }
 
 
@@ -76,6 +78,7 @@ altcoin_src_configure() {
 
 
 altcoin_src_compile() {
+	[ -f Makefile ] && base_src_compile && return 0
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \
 		  -f makefile.unix "${OPTS[@]}" ${PN}
@@ -105,6 +108,9 @@ altcoin_src_install() {
 	echo "# Config file for ${PN} (look at /etc/conf.d/altcoin-daemon)" > \
 		 "${D}"/etc/conf.d/${PN}
 
+	local bashcomp=contrib/${COIN_NAME}d.bash-completion
+	[ -f $bashcomp ] && newbashcomp $bashcomp ${PN}
+
 	for doc in {README,README.md}; do
 		[ -f $doc ] && dodoc $doc
 	done
@@ -125,5 +131,6 @@ altcoin_src_install() {
 	fi
 }
 
+eshopts_pop
 
 EXPORT_FUNCTIONS pkg_setup src_prepare src_configure src_compile src_test src_install

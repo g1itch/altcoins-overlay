@@ -7,9 +7,10 @@ EAPI=5
 inherit base versionator altcoin
 
 MY_PN="digibyte"
+MY_PV="4.03"
 DESCRIPTION="Digibyte crypto-currency p2p network daemon"
 HOMEPAGE="http://digibyte.co/"
-SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/${PV}.zip -> ${MY_PN}-${PV}.zip"
+SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/v${MY_PV}.zip -> ${MY_PN}-${PV}.zip"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -21,7 +22,7 @@ RDEPEND+="
 "
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}/${MY_PN}-${PV}"
+S="${WORKDIR}/${MY_PN}-${MY_PV}"
 
 src_prepare() {
 	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch

@@ -17,10 +17,16 @@ LICENSE="MIT"
 
 RDEPEND="
 	dev-libs/boost[threads(+)]
-	dev-libs/openssl:0[-bindist]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	net-misc/altcoin-daemon
 "
+
+if [[ $IUSE =~ libressl ]]; then
+	RDEPEND+="!libressl? ( dev-libs/openssl:0[-bindist] )
+			libressl? ( dev-libs/libressl )"
+else
+	RDEPEND+="dev-libs/openssl:0[-bindist]"
+fi
 
 [[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc )"
 

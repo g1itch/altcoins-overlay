@@ -13,7 +13,7 @@ SRC_URI="${HOMEPAGE}/archive/${MY_PV}.zip -> ${P}.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS="~amd64"
 IUSE=""
 
 S="${WORKDIR}/${MY_PN}-${MY_PV}"
@@ -26,7 +26,6 @@ RDEPEND="${DEPEND}
 src_prepare() {
 	replace-flags -O2 -O3
 	replace-flags -march=i686 -march=native
-	# epatch "${FILESDIR}"/${PN}-${MY_PV}-curl-openssl.patch
 	eautoreconf
 }
 

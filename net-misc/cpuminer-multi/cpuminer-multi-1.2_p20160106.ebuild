@@ -12,7 +12,7 @@ SRC_URI="${HOMEPAGE}/archive/${COMMIT}.zip -> ${P}.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS="~amd64"
 IUSE=""
 
 S="${WORKDIR}/${PN}-${COMMIT}"

@@ -32,5 +32,5 @@ src_prepare() {
 
 src_install() {
 	make DESTDIR="${D}" install
-	newinitd ${FILESDIR}/cpuminer.initd cpuminer
+	newinitd "${FILESDIR}"/cpuminer.initd cpuminer
 }

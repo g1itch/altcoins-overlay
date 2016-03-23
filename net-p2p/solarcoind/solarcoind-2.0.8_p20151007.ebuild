@@ -7,13 +7,13 @@ EAPI=5
 inherit altcoin
 
 MY_PN="solarcoin"
-COMMIT="3800ad2a03289b4407d2f79efda805d4f62c9a57"
+COMMIT="916a0181e4ef52faf60c9495ae390d7d7d8d3fd4"
 DESCRIPTION="Solarcoin crypto-currency p2p network daemon"
 HOMEPAGE="http://solarcoin.org"
 SRC_URI="https://github.com/onsightit/${MY_PN}/archive/${COMMIT}.zip -> ${P}.zip"
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
 
 RDEPEND+="virtual/bitcoin-leveldb"

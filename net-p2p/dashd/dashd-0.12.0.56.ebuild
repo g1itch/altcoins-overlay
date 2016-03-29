@@ -18,7 +18,6 @@ IUSE="examples upnp +wallet libressl"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
-	dev-libs/libsecp256k1
 "
 DEPEND+="dev-lang/yasm"
 
@@ -28,9 +27,8 @@ S="${WORKDIR}/${MY_PN}-${PV}"
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
-	epatch "${FILESDIR}"/${PVM}-sys_libsecp256k1.patch
 	eautoreconf
-	rm -r src/leveldb src/secp256k1
+	rm -r src/leveldb
 }
 
 src_configure() {
@@ -41,7 +39,6 @@ src_configure() {
 		  --without-libs \
 		  --without-utils \
 		  --with-system-leveldb \
-		  --with-system-libsecp256k1 \
 		$(use_enable wallet) \
 		$(use_with upnp miniupnpc) \
 		$(use_with libressl) \

@@ -1,22 +1,22 @@
-# Copyright 2015 Gentoo Foundation
+# Copyright 2015-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
 EAPI=5
 inherit eutils autotools flag-o-matic
 
-MY_PN="${PN}-argon2"
-MY_PV="1.0.1"
+MY_PV="${PV}-multi"
+COMMIT="b9712854ced2d68d93ab8dc4da15e5503583bc7b"
 DESCRIPTION="Multi-algo CPUMiner & Reference Cryptonote Miner (JSON-RPC 2.0)"
-HOMEPAGE="https://github.com/testzcrypto/${MY_PN}"
-SRC_URI="${HOMEPAGE}/archive/${MY_PV}.zip -> ${P}.zip"
+HOMEPAGE="https://github.com/tpruvot/${PN}"
+SRC_URI="${HOMEPAGE}/archive/${COMMIT}.zip -> ${P}.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-S="${WORKDIR}/${MY_PN}-${MY_PV}"
+S="${WORKDIR}/${PN}-${COMMIT}"
 
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}
@@ -25,11 +25,12 @@ RDEPEND="${DEPEND}
 
 src_prepare() {
 	replace-flags -O2 -O3
-	replace-flags -march=i686 -march=native
+	replace-flags -march=x86-64 -march=native
+	epatch "${FILESDIR}"/${PN}-1.1-curl-openssl.patch
 	eautoreconf
 }
 
 src_install() {
 	make DESTDIR="${D}" install
-	newinitd ${FILESDIR}/cpuminer.initd cpuminer
+	newinitd "${FILESDIR}"/cpuminer.initd cpuminer
 }

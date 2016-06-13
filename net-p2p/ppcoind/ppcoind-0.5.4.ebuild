@@ -3,20 +3,15 @@
 # $Id$
 
 EAPI=5
+COIN_SYMBOL="PPC"
+MY_PV="${PV}ppc"
 
 inherit altcoin
 
-MY_PN="ppcoin"
-MY_PV="${PV}ppc"
-
-DESCRIPTION="Peercoin crypto-currency p2p network daemon"
 HOMEPAGE="http://peercoin.net/"
-SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/v${MY_PV}.zip -> ${P}.zip"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
-
-
-S="${WORKDIR}/${MY_PN}-${MY_PV}"

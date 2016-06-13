@@ -1,16 +1,15 @@
-# Copyright 2015 Gentoo Foundation
+# Copyright 2015-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
 EAPI=5
-
-inherit base versionator altcoin
-
-MY_PN="digibyte"
+COIN_SYMBOL="DGB"
 MY_PV="4.03"
-DESCRIPTION="Digibyte crypto-currency p2p network daemon"
+
+inherit versionator altcoin
+
 HOMEPAGE="http://digibyte.co/"
-SRC_URI="https://github.com/${MY_PN}/${MY_PN}/archive/v${MY_PV}.zip -> ${MY_PN}-${PV}.zip"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -22,12 +21,11 @@ RDEPEND+="
 "
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}/${MY_PN}-${MY_PV}"
 
 src_prepare() {
+	rm -r src/leveldb
 	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch
 	eautoreconf
-	rm -r src/leveldb
 }
 
 src_configure() {
@@ -40,8 +38,4 @@ src_configure() {
 		$(use_enable wallet) \
 		$(use_with upnp miniupnpc) \
 		${my_econf}
-}
-
-src_compile() {
-	base_src_compile
 }

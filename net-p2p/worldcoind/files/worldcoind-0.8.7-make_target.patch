@@ -1,0 +1,20 @@
+--- src/makefile.unix~	2016-06-09 13:40:59.000000000 +0300
++++ src/makefile.unix	2016-06-09 13:45:58.018242592 +0300
+@@ -158,7 +158,7 @@
+ OBJS += $(OBJS_SSE2)
+ endif
+ 
+-all: WorldcoinDaemon
++all: worldcoind
+ test check: test_worldcoin FORCE
+ 	./test_worldcoin
+ 
+@@ -199,7 +199,7 @@
+ 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
+ 	  rm -f $(@:%.o=%.d)
+ 
+-WorldcoinDaemon: $(OBJS:obj/%=obj/%)
++worldcoind: $(OBJS:obj/%=obj/%)
+ 	$(LINK) $(xCXXFLAGS) -o $@ $^ $(xLDFLAGS) $(LIBS)
+ 
+ TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))

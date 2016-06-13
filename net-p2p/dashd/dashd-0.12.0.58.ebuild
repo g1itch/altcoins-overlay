@@ -3,14 +3,12 @@
 # $Header$
 
 EAPI=5
+COIN_SYMBOL="DASH"
 
 inherit versionator altcoin
 
-MY_PN="dash"
-
-DESCRIPTION="Dash crypto-currency p2p network daemon"
 HOMEPAGE="https://www.dash.org/"
-SRC_URI="https://github.com/dashpay/${MY_PN}/archive/v${PV}.zip -> ${MY_PN}-${PV}.zip"
+SRC_URI="https://github.com/dashpay/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -21,14 +19,12 @@ RDEPEND+="
 "
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}/${MY_PN}-${PV}"
-
 
 src_prepare() {
+	rm -r src/leveldb
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	eautoreconf
-	rm -r src/leveldb
 }
 
 src_configure() {

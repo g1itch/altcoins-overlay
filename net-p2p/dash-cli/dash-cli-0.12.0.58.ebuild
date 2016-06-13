@@ -6,11 +6,9 @@ EAPI=5
 
 inherit altcoin bash-completion-r1 versionator
 
-MY_PN="dash"
-
 DESCRIPTION="Command-line JSON-RPC client for Dash crypto-currency"
 HOMEPAGE="https://www.dashpay.io/"
-SRC_URI="https://github.com/dashpay/${MY_PN}/archive/v${PV}.zip -> ${MY_PN}-${PV}.zip"
+SRC_URI="https://github.com/dashpay/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -21,7 +19,6 @@ RDEPEND+="
 "
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}/${MY_PN}-${PV}"
 
 src_prepare() {
 	rm -r src/leveldb
@@ -43,7 +40,7 @@ src_install() {
 	dobin src/${PN}
 
 	has_version "net-p2p/dashd" ||
-		newman contrib/debian/manpages/${MY_PN}d.1 ${PN}.1
+		newman contrib/debian/manpages/${COIN_NAME}d.1 ${PN}.1
 
-	newbashcomp contrib/${MY_PN}d.bash-completion ${PN}
+	newbashcomp contrib/${COIN_NAME}d.bash-completion ${PN}
 }

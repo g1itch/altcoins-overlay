@@ -1,5 +1,5 @@
 #!/sbin/runscript
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
@@ -13,12 +13,12 @@ else
 	BITCOIND_DEFAULT_DATADIR="/var/lib/${SVCNAME}"
 fi
 
-BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/${COIN}/${COIN}.conf}
-BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/${SVCNAME}}
+BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/coins/${COIN}.conf}
+BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/coins}
 BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/${SVCNAME}.pid}
 BITCOIND_DATADIR=${BITCOIND_DATADIR:-${BITCOIND_DEFAULT_DATADIR}}
-BITCOIND_USER=${BITCOIND_USER:-${COIN}}
-BITCOIND_GROUP=${BITCOIND_GROUP:-${COIN}}
+BITCOIND_USER=${BITCOIND_USER:-blockchain}
+BITCOIND_GROUP=${BITCOIND_GROUP:-blockchain}
 BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/${SVCNAME}}
 
 name="${COIN^} Daemon"
@@ -41,22 +41,20 @@ depend() {
 }
 
 start_pre() {
-	checkpath \
-	-d \
+	checkpath -d \
 	--mode 0750 \
 	--owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
 	"${BITCOIND_DATADIR}"
 
-	checkpath \
-	-d \
+	checkpath -d \
 	--mode 0755 \
 	--owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
 	"${BITCOIND_PIDDIR}"
 
 	checkpath -f \
-	-o ${BITCOIND_USER}:${BITCOIND_GROUP} \
-	-m 0660 \
-	${BITCOIND_CONFIGFILE}
+	--mode 0660 \
+	--owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
+	"${BITCOIND_CONFIGFILE}"
 
 	checkconfig || return 1
 }

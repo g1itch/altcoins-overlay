@@ -11,7 +11,7 @@
 # from bitcoin, litecoin etc)
 
 DB_VER="4.8"
-inherit autotools base bash-completion-r1 db-use eutils user
+inherit autotools cmake-utils bash-completion-r1 db-use eutils user
 
 LICENSE="MIT"
 
@@ -44,12 +44,23 @@ eshopts_push -s extglob
 
 COIN_NAME=${COIN_NAME:-${PN%@(d|-cli)}}
 
+# @ECLASS-VARIABLE: COIN_SYMBOL
+# @DESCRIPTION:
+# Set this variable before the inherit line
+# to provide coin info
+
 ISDAEMON=
 
+DESCRIPTION=${DESCRIPTION:-"${COIN_NAME^} crypto-currency p2p network daemon"}
+
+MY_PV=${MY_PV:-${PV}}
+
+S="${WORKDIR}"/${COIN_NAME}-${MY_PV}
+
+
 altcoin_pkg_setup() {
-	local UG="${COIN_NAME}"
-	enewgroup "${UG}"
-	enewuser "${UG}" -1 -1 /var/lib/${COIN_NAME} "${UG}"
+	enewgroup blockchain 420
+	enewuser blockchain 420 -1 -1 blockchain
 }
 
 
@@ -84,7 +95,8 @@ altcoin_src_configure() {
 
 
 altcoin_src_compile() {
-	[ -f Makefile ] && base_src_compile && return 0
+	[ -f Makefile ] && default_src_compile && return 0
+	[ -f CMakeLists.txt ] && cmake-utils_src_compile && return 0
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \
 		  -f makefile.unix "${OPTS[@]}" ${PN}
@@ -92,22 +104,34 @@ altcoin_src_compile() {
 
 
 altcoin_src_test() {
+	[[ -f Makefile || -f CMakeLists.txt ]] && die 'Not implemented!'
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \
 		  -f makefile.unix "${OPTS[@]}" test || die 'Tests failed'
 }
 
 
+altcoin_install_inf() {
+	# check monero and eth!
+	[ -z ${COIN_RPC_PORT} ] && COIN_RPC_PORT=`src/${PN} --help 2>&1 | grep -m1 rpcport | sed -ne "s/^.*default: \([0-9]*\)[ |)].*/\1/p"`
+	echo '{"symbol": "'${COIN_SYMBOL}'", ' \
+		 '"coin": "'${COIN_NAME}'", ' \
+		 '"homepage": "'${HOMEPAGE}'", ' \
+		 '"port": '${COIN_RPC_PORT}'}' > "${D}"etc/coins/${COIN_NAME}.inf
+}
+
 altcoin_src_install() {
-	local UG="${COIN_NAME}" \
-		  CONFIG_FILE=/etc/${COIN_NAME}/${COIN_NAME}.conf
+	# masternode?
+	local CONFIG_FILE=/etc/coins/${COIN_NAME}.conf
 	dobin src/${PN}
 
-	dodir /etc/${COIN_NAME}
+	dodir /etc/coins
 	echo "# http://www.bitcoin.org/smf/index.php?topic=644.0" > \
 		 "${D}"${CONFIG_FILE}
-	fowners ${UG}:${UG} ${CONFIG_FILE}
+	fowners blockchain:blockchain ${CONFIG_FILE}
 	fperms 600 ${CONFIG_FILE}
+
+	altcoin_install_inf
 
 	dosym /etc/init.d/altcoin-daemon /etc/init.d/${PN}
 	dodir /etc/conf.d

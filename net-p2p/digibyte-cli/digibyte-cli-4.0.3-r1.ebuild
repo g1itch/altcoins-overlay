@@ -5,7 +5,7 @@
 EAPI=5
 MY_PV="4.03"
 
-inherit altcoin bash-completion-r1 versionator
+inherit altcoin versionator
 
 DESCRIPTION="Command-line JSON-RPC client for Digibyte crypto-currency"
 HOMEPAGE="http://digibyte.co/"

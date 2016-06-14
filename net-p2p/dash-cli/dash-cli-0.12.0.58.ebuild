@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit altcoin bash-completion-r1 versionator
+inherit altcoin versionator
 
 DESCRIPTION="Command-line JSON-RPC client for Dash crypto-currency"
 HOMEPAGE="https://www.dashpay.io/"

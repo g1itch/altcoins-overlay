@@ -24,5 +24,6 @@ src_prepare() {
 	mv Source src
 	epatch "${FILESDIR}"/${PN}-0.8.6.2-sys_leveldb.patch
 	epatch "${FILESDIR}"/${PN}-0.8.7-make_target.patch
+	epatch "${FILESDIR}"/${PN}-0.8.7-miniupnpc.patch
 	altcoin_src_prepare
 }

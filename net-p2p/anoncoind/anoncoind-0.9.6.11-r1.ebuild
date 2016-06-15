@@ -25,7 +25,7 @@ src_prepare() {
 
 src_configure() {
 	local my_econf=
-	hasq test $FEATURES && my_econf="${my_econf} --enable-tests"
+	has test $FEATURES || my_econf="${my_econf} --disable-tests"
 	econf --with-gui=no \
 		  --without-libs \
 		  --without-utils \

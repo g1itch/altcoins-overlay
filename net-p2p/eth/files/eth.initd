@@ -1,0 +1,37 @@
+#!/sbin/runscript
+# Copyright 2016 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+ETH_PIDDIR=${ETH_PIDDIR:-/var/run/coins}
+ETH_PIDFILE=${ETH_PIDFILE:-${ETH_PIDDIR}/${SVCNAME}.pid}
+ETH_DATADIR=${ETH_DATADIR:-/var/lib/eth}
+ETH_USER=${ETH_USER:-blockchain}
+ETH_GROUP=${ETH_GROUP:-blockchain}
+ETH_BIN=${ETH_BIN:-/usr/bin/${SVCNAME}}
+
+name="Ethereum Node"
+description="A command-line Ethereum full-node that can be controlled via RPC"
+
+command="${ETH_BIN}"
+command_args="--datadir \"${ETH_DATADIR}\" -j ${ETH_OPTS}"
+start_stop_daemon_args="-u ${ETH_USER} -e HOME=${ETH_DATADIR} \
+                        -bm -N ${ETH_NICE:-19}"
+pidfile="${ETH_PIDFILE}"
+retry=60
+
+depend() {
+	need localmount net
+}
+
+start_pre() {
+	checkpath -d \
+	--mode 0750 \
+	--owner "${ETH_USER}:${ETH_GROUP}" \
+	"${ETH_DATADIR}"
+
+	checkpath -d \
+	--mode 0755 \
+	--owner "${ETH_USER}:${ETH_GROUP}" \
+	"${ETH_PIDDIR}"
+}

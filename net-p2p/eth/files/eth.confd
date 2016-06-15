@@ -1,0 +1,23 @@
+# Config file for /etc/init.d/eth
+
+# What directory to write pidfile to? (created and owned by $ETH_USER)
+#ETH_PIDDIR="/var/run/coins"
+
+# What filename to give the pidfile
+#ETH_PIDFILE="${ETH_PIDDIR}/${SVCNAME}.pid"
+
+# Where to write coin data (be mindful that the blockchain is large)
+#ETH_DATADIR="/var/lib/eth
+
+# User and group to own altcoin-daemon process
+#ETH_USER=blockchain
+#ETH_GROUP=blockchain
+
+# Path to altcoin daemon executable
+#ETH_BIN="/usr/bin/${SVCNAME}"
+
+# Nice value to run altcoin-daemon under
+#ETH_NICE=19
+
+# Additional options
+#ETH_OPTS=""

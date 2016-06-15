@@ -7,7 +7,7 @@ COIN_NAME="ethereum"
 COIN_SYMBOL="ETH"
 COIN_RPC_PORT=8545
 
-inherit cmake-utils git-r3 altcoin
+inherit git-r3 altcoin cmake-utils
 
 MY_PN="webthree-umbrella"
 HOMEPAGE="https://www.ethereum.org/"
@@ -39,21 +39,19 @@ RDEPEND+="
 	dev-libs/libnatspec
 	app-crypt/libscrypt"
 
-src_prepare() {
-	cmake-utils_src_prepare
-}
 
 src_configure() {
 	# -DEVMJIT sys-devel/llvm?
 	local mycmakeargs=(
-		-DCMAKE_BUILD_TYPE=Release
 		-DGUI=0
 		-DSOLIDITY=0
 		-DETHASHCL=0
 		-DTOOLS=0
 	)
 	use upnp || mycmakeargs+=(-DMINIUPNPC=0)
-	hasq test $FEATURES || mycmakeargs+=(-DTESTS=0)
+	has test $FEATURES || mycmakeargs+=(-DTESTS=0)
+	# cmake_comment_add_subdirectory libnatspec
+	# cmake_comment_add_subdirectory libscrypt
 	cmake-utils_src_configure
 }
 

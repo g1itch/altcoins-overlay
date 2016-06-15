@@ -55,6 +55,7 @@ DESCRIPTION=${DESCRIPTION:-"${COIN_NAME^} crypto-currency p2p network daemon"}
 
 MY_PV=${MY_PV:-${PV}}
 
+# not if git-r3!
 S="${WORKDIR}"/${COIN_NAME}-${MY_PV}
 
 
@@ -113,6 +114,7 @@ altcoin_src_test() {
 
 altcoin_install_inf() {
 	# check monero and eth!
+	dodir /etc/coins
 	[ -z ${COIN_RPC_PORT} ] && COIN_RPC_PORT=`src/${PN} --help 2>&1 | grep -m1 rpcport | sed -ne "s/^.*default: \([0-9]*\)[ |)].*/\1/p"`
 	echo '{"symbol": "'${COIN_SYMBOL}'", ' \
 		 '"coin": "'${COIN_NAME}'", ' \
@@ -125,13 +127,12 @@ altcoin_src_install() {
 	local CONFIG_FILE=/etc/coins/${COIN_NAME}.conf
 	dobin src/${PN}
 
-	dodir /etc/coins
+	altcoin_install_inf
+
 	echo "# http://www.bitcoin.org/smf/index.php?topic=644.0" > \
 		 "${D}"${CONFIG_FILE}
 	fowners blockchain:blockchain ${CONFIG_FILE}
 	fperms 600 ${CONFIG_FILE}
-
-	altcoin_install_inf
 
 	dosym /etc/init.d/altcoin-daemon /etc/init.d/${PN}
 	dodir /etc/conf.d

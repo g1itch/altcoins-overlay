@@ -7,7 +7,7 @@
 #ETH_PIDFILE="${ETH_PIDDIR}/${SVCNAME}.pid"
 
 # Where to write coin data (be mindful that the blockchain is large)
-#ETH_DATADIR="/var/lib/eth
+#ETH_DATADIR="/var/lib/eth"
 
 # User and group to own altcoin-daemon process
 #ETH_USER=blockchain

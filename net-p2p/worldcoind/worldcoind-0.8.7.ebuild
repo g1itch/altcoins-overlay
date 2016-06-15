@@ -4,6 +4,7 @@
 
 EAPI=5
 COIN_SYMBOL="WDC"
+COIN_RPC_PORT=11082
 
 inherit altcoin
 

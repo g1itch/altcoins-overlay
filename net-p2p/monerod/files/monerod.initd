@@ -19,7 +19,7 @@ description="Crypto-currency p2p network daemon"
 command="${BITCOIND_BIN}"
 command_args="--data-dir \"${BITCOIND_DATADIR}\" --detach ${BITCOIND_OPTS}"
 start_stop_daemon_args="-u ${BITCOIND_USER} -e HOME=${BITCOIND_DATADIR} \
-                        --name ${SVCNAME} -N ${BITCOIND_NICE:-19} -w 2000"
+                        -N ${BITCOIND_NICE:-19} -w 2000"
 retry=60
 
 depend() {

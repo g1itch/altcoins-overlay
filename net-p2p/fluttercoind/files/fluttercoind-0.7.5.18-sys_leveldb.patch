@@ -1,0 +1,55 @@
+--- src/txdb-leveldb.cpp~	2014-05-10 22:37:22.000000000 +0300
++++ src/txdb-leveldb.cpp	2016-06-24 16:49:59.799391452 +0300
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"
+--- src/checkpoints.cpp~	2014-05-10 22:37:22.000000000 +0300
++++ src/checkpoints.cpp	2016-06-25 00:41:56.411923922 +0300
+@@ -6,6 +6,7 @@
+ #include <boost/foreach.hpp>
+ 
+ #include "checkpoints.h"
++#include "txdb-leveldb.h"
+ 
+ #include "txdb.h"
+ #include "main.h"
+--- src/makefile.unix~	2014-05-10 22:37:22.000000000 +0300
++++ src/makefile.unix	2016-06-25 00:55:48.861875830 +0300
+@@ -4,6 +4,7 @@
+ 
+ USE_UPNP:=0
+ USE_IPV6:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -147,17 +148,21 @@
+     obj/zerocoin/Params.o \
+     obj/zerocoin/SerialNumberSignatureOfKnowledge.o \
+     obj/zerocoin/SpendMetaData.o \
+-    obj/zerocoin/ZeroTest.o
++    obj/zerocoin/ZeroTest.o \
++    obj/txdb-leveldb.o
+ 
+ all: fluttercoind
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

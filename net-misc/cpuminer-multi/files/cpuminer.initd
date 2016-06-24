@@ -3,11 +3,11 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
-pidfile=${pidfile:-/run/${SVCNAME}.pid}
 miner_config=${miner_config:-/etc/cpuminer/${SVCNAME}.conf}
 command="/usr/bin/cpuminer"
-command_args="-qS -c ${miner_config} ${miner_args}"
-start_stop_daemon_args="-bm -N ${NICELEVEL:-20}"
+command_args="-qBS -c ${miner_config} ${miner_args}"
+start_stop_daemon_args="-N ${NICELEVEL:-20}"
+procname="${SVCNAME}"
 
 depend() {
     need net

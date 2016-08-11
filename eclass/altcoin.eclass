@@ -66,6 +66,7 @@ altcoin_pkg_setup() {
 
 
 altcoin_src_prepare() {
+	[ -f src/makefile.unix ] || return 0
 	if has_version '>=dev-libs/boost-1.52'; then
 		sed -i 's/\(-l db_cxx\)/-l boost_chrono$(BOOST_LIB_SUFFIX) \1/' \
 			src/makefile.unix
@@ -74,6 +75,7 @@ altcoin_src_prepare() {
 
 
 altcoin_src_configure() {
+	# [ -f CMakeLists.txt ] && cmake-utils_src_configure && return 0
 	OPTS=(
 		"DEBUGFLAGS="
 		"CXXFLAGS=${CXXFLAGS}"
@@ -115,7 +117,7 @@ altcoin_src_test() {
 altcoin_install_inf() {
 	# check monero and eth!
 	dodir /etc/coins
-	[ -z ${COIN_RPC_PORT} ] && COIN_RPC_PORT=`src/${PN} --help 2>&1 | grep -m1 rpcport | sed -ne "s/^.*default: \([0-9]*\)[ |)].*/\1/p"`
+	[ -z ${COIN_RPC_PORT} ] && COIN_RPC_PORT=`"${D}"usr/bin/${PN} --help 2>&1 | grep -Em1 'rpc-?port' | sed -ne "s/^.*default: \([0-9]*\)[ |)].*/\1/p"`
 	echo '{"symbol": "'${COIN_SYMBOL}'", ' \
 		 '"coin": "'${COIN_NAME}'", ' \
 		 '"homepage": "'${HOMEPAGE}'", ' \

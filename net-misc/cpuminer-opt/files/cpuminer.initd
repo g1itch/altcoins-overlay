@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+# Copyright 2015-2016 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+miner_config=${miner_config:-/etc/cpuminer/${SVCNAME}.conf}
+command="/usr/bin/cpuminer"
+command_args="-qBS -c ${miner_config} ${miner_args}"
+start_stop_daemon_args="-N ${NICELEVEL:-20}"
+procname="${SVCNAME}"
+
+depend() {
+    need net
+}

@@ -1,0 +1,21 @@
+--- configure.ac~	2015-08-24 11:54:20.000000000 +0300
++++ configure.ac	2015-09-04 23:28:26.719310648 +0300
+@@ -147,6 +147,9 @@
+    LIBCURL_CFLAGS="$LIBCURL_CFLAGS -I$with_curl/include"
+    LIBCURL_LDFLAGS="-L$with_curl/lib $LIBCURL_LDFLAGS"
+    LIBCURL="-lcurl -lz"
++else
++   LIBCURL_CHECK_CONFIG(, 7.15.2, ,
++     [AC_MSG_ERROR([Missing required libcurl >= 7.15.2])])
+ fi
+ 
+ # SSL install path (for mingw : --with-crypto=/usr/local/ssl)
+@@ -157,6 +160,8 @@
+    LIBCURL_CFLAGS="$LIBCURL_CFLAGS -I$with_crypto/include"
+    LIBCURL_LDFLAGS="-L$with_crypto/lib $LIBCURL_LDFLAGS"
+    LIBCURL="$LIBCURL -lssl -lcrypto"
++else
++   AC_CHECK_LIB([crypto], [OPENSSL_init], [], [AC_MSG_FAILURE([could not find crypto])])
+ fi
+ 
+ CFLAGS="$CFLAGS $LIBCURL_CFLAGS"

@@ -49,6 +49,13 @@ COIN_NAME=${COIN_NAME:-${PN%@(d|-cli)}}
 # Set this variable before the inherit line
 # to provide coin info
 
+# @ECLASS-VARIABLE: COIN_FAMILY
+# @DESCRIPTION:
+# Set this variable before the inherit line
+# to provide coin info (default is "bitcoin")
+
+COIN_FAMILY=${COIN_FAMILY:-bitcoin}
+
 ISDAEMON=
 
 DESCRIPTION=${DESCRIPTION:-"${COIN_NAME^} crypto-currency p2p network daemon"}
@@ -118,10 +125,12 @@ altcoin_install_inf() {
 	# check monero and eth!
 	dodir /etc/coins
 	[ -z ${COIN_RPC_PORT} ] && COIN_RPC_PORT=`"${D}"usr/bin/${PN} --help 2>&1 | grep -Em1 'rpc-?port' | sed -ne "s/^.*default: \([0-9]*\)[ |)].*/\1/p"`
-	echo '{"symbol": "'${COIN_SYMBOL}'", ' \
-		 '"coin": "'${COIN_NAME}'", ' \
-		 '"homepage": "'${HOMEPAGE}'", ' \
-		 '"port": '${COIN_RPC_PORT}'}' > "${D}"etc/coins/${COIN_NAME}.inf
+	echo -e "COIN_NAME=${COIN_NAME}" \
+		 "\nCOIN_FAMILY=${COIN_FAMILY}" \
+		 "\nCOIN_SYMBOL=${COIN_SYMBOL}" \
+		 "\nCOIN_WEBSITE=${HOMEPAGE}" \
+		 "\nCOIN_RPC_PORT=${COIN_RPC_PORT}" > \
+		 "${D}"etc/coins/${COIN_NAME}.inf
 }
 
 altcoin_src_install() {

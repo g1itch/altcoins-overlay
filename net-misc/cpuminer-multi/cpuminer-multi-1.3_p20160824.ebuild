@@ -6,9 +6,9 @@ EAPI=5
 inherit eutils autotools flag-o-matic
 
 MY_PV="${PV}-multi"
-COMMIT="8393e03089c0abde61bd5d72aba8f926c3d6eca4"
-DESCRIPTION="CPUMiner for cryptonight"
-HOMEPAGE="https://github.com/wolf9466/${PN}"
+COMMIT="40031322e829435c0af3b8941581af741bdbd021"
+DESCRIPTION="Multi-algo CPUMiner & Reference Cryptonote Miner (JSON-RPC 2.0)"
+HOMEPAGE="https://github.com/tpruvot/${PN}"
 SRC_URI="${HOMEPAGE}/archive/${COMMIT}.zip -> ${P}.zip"
 
 LICENSE="GPL-2"
@@ -26,10 +26,11 @@ RDEPEND="${DEPEND}
 src_prepare() {
 	replace-flags -O2 -O3
 	replace-flags -march=x86-64 -march=native
+	epatch "${FILESDIR}"/${PN}-1.1-curl-openssl.patch
 	eautoreconf
 }
 
 src_install() {
 	make DESTDIR="${D}" install
-	newinitd "${FILESDIR}"/minerd.initd minerd
+	newinitd "${FILESDIR}"/cpuminer.initd cpuminer
 }

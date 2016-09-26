@@ -1,0 +1,36 @@
+# Config file for /etc/init.d/altcoin-daemon
+
+# Set coin name if it's not standard
+#COIN=
+
+# Config file location
+#BITCOIND_CONFIGFILE="/etc/coins/${COIN}.conf"
+
+# What directory to write pidfile to? (created and owned by $BITCOIND_USER)
+#BITCOIND_PIDDIR="/var/run/coins"
+
+# What filename to give the pidfile
+#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/${SVCNAME}.pid"
+
+# Where to write coin data (be mindful that the blockchain is large)
+#BITCOIND_DATADIR="/var/lib/${SVCNAME}"
+
+# Wallet container file location (for cryptonote payment gate)
+#BITCOIND_WALLET_PATH=${BITCOIND_DATADIR}/wallet.dat
+
+# Wallet password (if not specified in config file, for cryptonote)
+#BITCOIND_WALLET_PASSWORD=
+
+# User and group to own altcoin-daemon process
+#BITCOIND_USER=blockchain
+#BITCOIND_GROUP=blockchain
+
+# Path to altcoin daemon executable
+#BITCOIND_BIN="/usr/bin/${SVCNAME}"
+
+# Nice value to run altcoin-daemon under
+#BITCOIND_NICE=19
+
+# Additional options
+# (avoid -conf, --config, -datadir or --data-dir, use variables above)
+#BITCOIND_OPTS=""

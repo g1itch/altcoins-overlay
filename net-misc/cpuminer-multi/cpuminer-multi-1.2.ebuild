@@ -20,7 +20,8 @@ S="${WORKDIR}/${PN}-${MY_PV}"
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}
 	dev-libs/jansson
-	dev-libs/openssl"
+	dev-libs/openssl
+	!net-misc/cpuminer-opt"
 
 src_prepare() {
 	replace-flags -O2 -O3

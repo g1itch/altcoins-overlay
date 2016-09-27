@@ -1,0 +1,26 @@
+--- sysinfos.c~	2016-01-24 18:52:18.000000000 +0200
++++ sysinfos.c	2016-01-25 18:09:35.156453614 +0200
+@@ -19,6 +19,10 @@
+  "/sys/class/hwmon/hwmon1/temp1_input"
+ #define HWMON_ALT2 \
+  "/sys/class/hwmon/hwmon0/temp1_input"
++#define HWMON_ALT3 \
++ "/sys/devices/platform/coretemp.0/hwmon/hwmon0/temp2_input"
++#define HWMON_ALT4 \
++ "/sys/class/hwmon/hwmon0/temp2_input"
+ 
+ static float linux_cputemp(int core)
+ {
+@@ -33,6 +37,12 @@
+ 		fd = fopen(HWMON_ALT2, "r");
+ 
+ 	if (!fd)
++		fd = fopen(HWMON_ALT3, "r");
++
++	if (!fd)
++		fd = fopen(HWMON_ALT4, "r");
++
++	if (!fd)
+ 		return tc;
+ 
+ 	if (fscanf(fd, "%d", &val))

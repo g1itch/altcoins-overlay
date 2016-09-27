@@ -20,13 +20,14 @@ S="${WORKDIR}/${PN}-${COMMIT}"
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}
 	dev-libs/jansson
-	dev-libs/openssl"
+	dev-libs/openssl
+	!net-misc/cpuminer-multi"
 
 src_prepare() {
 	replace-flags -O2 -O3
 	replace-flags -march=x86-64 -march=native
 	append-flags -std=c++11
-	epatch "${FILESDIR}"/${PN}-1.1-curl-openssl.patch
+	epatch "${FILESDIR}"/cpuminer-multi-1.1-curl-openssl.patch
 	eautoreconf
 }
 

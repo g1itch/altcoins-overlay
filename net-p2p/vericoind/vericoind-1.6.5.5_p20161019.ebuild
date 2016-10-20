@@ -8,7 +8,8 @@ COIN_SYMBOL="VRC"
 inherit altcoin
 
 HOMEPAGE="http://www.vericoin.info/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/${PV}.tar.gz -> ${P}.tar.gz"
+COMMIT="a9600333852ca0ed226d2fde3347bb48bd4fe0f5"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -16,6 +17,7 @@ IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
 
 RDEPEND+="virtual/bitcoin-leveldb"
 
+S="${WORKDIR}/${COIN_NAME}-${COMMIT}"
 
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-1.6.4-sys_leveldb.patch

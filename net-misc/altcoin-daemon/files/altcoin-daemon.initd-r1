@@ -24,7 +24,7 @@ BITCOIND_GROUP=${BITCOIND_GROUP:-blockchain}
 BITCOIND_BIN_DEFAULT=/usr/bin/${SVCNAME}
 BITCOIND_WALLET_PATH=${BITCOIND_WALLET_PATH:-${BITCOIND_DATADIR}/wallet.dat}
 
-if [ ${COIN_FAMILY} == "cryptonote" ]; then
+if [[ ${COIN_FAMILY} == "cryptonote" ]]; then
     if [ ! -x ${BITCOIND_BIN_DEFAULT} ]; then
 	BITCOIND_BIN_DEFAULT=/usr/bin/${COIN}_walletd
 	BITCOIND_HAVE_WALLET=yes

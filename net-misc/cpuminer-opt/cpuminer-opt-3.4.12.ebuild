@@ -5,16 +5,17 @@
 EAPI=5
 inherit eutils autotools flag-o-matic
 
+COMMIT="06f82c5b973b263f765a336b65be82cd3827cdb0"
 DESCRIPTION="Multi-algo CPUMiner & Reference Cryptonote Miner (JSON-RPC 2.0)"
-HOMEPAGE="https://github.com/felixbrucker/${PN}"
-SRC_URI="${HOMEPAGE}/archive/${PV}.tar.gz -> ${P}.tar.gz"
+HOMEPAGE="https://github.com/JayDDee/${PN}"
+SRC_URI="${HOMEPAGE}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-S="${WORKDIR}/${PN}-${PV}"
+S="${WORKDIR}/${PN}-${COMMIT}"
 
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}
@@ -28,6 +29,7 @@ src_prepare() {
 	append-flags -std=c++11
 	epatch "${FILESDIR}"/cpuminer-multi-1.1-curl-openssl.patch
 	epatch "${FILESDIR}"/cpuminer-multi-1.2-hwmon_alt4.patch
+	epatch "${FILESDIR}"/${PN}-3.4.12-no-hodl.patch
 	eautoreconf
 }
 

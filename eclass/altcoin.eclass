@@ -1,4 +1,4 @@
-# Copyright 2015 Gentoo Foundation
+# Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 #
@@ -15,17 +15,26 @@ inherit autotools cmake-utils bash-completion-r1 db-use eutils user
 
 LICENSE="MIT"
 
+# @ECLASS-VARIABLE: COIN_NEEDS_SSL
+# @DESCRIPTION:
+# Set this variable before the inherit line
+# to remove dependency on dev-libs/openssl
+
+COIN_NEEDS_SSL=${COIN_NEEDS_SSL:-1}
+
 RDEPEND="
 	dev-libs/boost[threads(+)]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	net-misc/altcoin-daemon
 "
 
-if [[ $IUSE =~ libressl ]]; then
-	RDEPEND+="!libressl? ( dev-libs/openssl:0[-bindist] )
+if [ "${COIN_NEEDS_SSL}" = "1" ]; then
+	if [[ $IUSE =~ libressl ]]; then
+		RDEPEND+="!libressl? ( dev-libs/openssl:0[-bindist] )
 			libressl? ( dev-libs/libressl )"
-else
-	RDEPEND+="dev-libs/openssl:0[-bindist]"
+	else
+		RDEPEND+="dev-libs/openssl:0[-bindist]"
+	fi
 fi
 
 [[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc )"
@@ -60,6 +69,7 @@ ISDAEMON=
 
 DESCRIPTION=${DESCRIPTION:-"${COIN_NAME^} crypto-currency p2p network daemon"}
 
+MY_PN=${MY_PN:-${PN}}
 MY_PV=${MY_PV:-${PV}}
 
 # not if git-r3!
@@ -100,7 +110,8 @@ altcoin_src_configure() {
 	fi
 
 	use ipv6 || OPTS+=("USE_IPV6=-")
-	use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
+	[[ $IUSE =~ cpu_flags_x86_sse2 ]] && \
+		use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
 }
 
 
@@ -109,7 +120,7 @@ altcoin_src_compile() {
 	[ -f CMakeLists.txt ] && cmake-utils_src_compile && return 0
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \
-		  -f makefile.unix "${OPTS[@]}" ${PN}
+		  -f makefile.unix "${OPTS[@]}" ${MY_PN}
 }
 
 

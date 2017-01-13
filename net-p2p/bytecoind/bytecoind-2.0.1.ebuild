@@ -1,13 +1,14 @@
-# Copyright 2016 Gentoo Foundation
+# Copyright 2016-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
 EAPI=5
 COIN_SYMBOL="BCN"
+COIN_FAMILY="cryptonote"
 
 inherit cmake-utils altcoin
 
-COMMIT="5c8a153225a8d1d005e6fa7fd6df1848c00c9684"
+COMMIT="d56f1c51664d9868403480867e8e68df49993e1e"
 HOMEPAGE="https://bytecoin.org/"
 SRC_URI="https://github.com/amjuarez/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 

@@ -1,0 +1,106 @@
+#!/sbin/runscript
+# Copyright 1999-2017 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+COIN=${COIN:-${SVCNAME:0:-1}}
+
+BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/coins/${COIN}.conf}
+BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/coins}
+BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/${SVCNAME}.pid}
+BITCOIND_DATADIR=${BITCOIND_DATADIR:-/var/lib/${SVCNAME}}
+BITCOIND_USER=${BITCOIND_USER:-blockchain}
+BITCOIND_GROUP=${BITCOIND_GROUP:-blockchain}
+
+BITCOIND_WALLET_PATH=${BITCOIND_WALLET_PATH:-${BITCOIND_DATADIR}/wallet.dat}
+
+BITCOIND_BIN_DEFAULT=/usr/bin/forknoted
+if [ ! -x ${BITCOIND_BIN_DEFAULT} ]; then
+    BITCOIND_BIN_DEFAULT=/usr/bin/forknote_walletd
+    BITCOIND_HAVE_WALLET=yes
+fi
+BITCOIND_BIN=${BITCOIND_BIN:-${BITCOIND_BIN_DEFAULT}}
+
+name="${COIN^} Daemon"
+description="Crypto-currency p2p network daemon"
+
+command="${BITCOIND_BIN}"
+command_args="--data-dir \"${BITCOIND_DATADIR}\" --local --daemon \
+	    --log-file \"${BITCOIND_DATADIR}/debug.log\" \
+	    ${BITCOIND_OPTS}"
+start_stop_daemon_args="-u ${BITCOIND_USER} -e HOME=${BITCOIND_DATADIR} \
+                        -N ${BITCOIND_NICE:-19}"
+procname="${SVCNAME}"
+retry=60
+
+depend() {
+    need localmount net
+}
+
+start_pre() {
+    if [ ${COIN} == 'forknoted' ]; then
+	eerror ""
+	eerror "ERROR: forknoted needs the coin config!"
+	eerror "You should generate it or take one of those available on"
+	eerror "https://github.com/forknote/configs"
+	eerror "Read more on http://forknote.net/guides/"
+	eerror ""
+	return 1
+    fi
+    
+    checkpath -d \
+	      --mode 0750 \
+	      --owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
+	      "${BITCOIND_DATADIR}"
+
+    checkpath -d \
+	      --mode 0755 \
+	      --owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
+	      "${BITCOIND_PIDDIR}"
+
+    if [ -f "${BITCOIND_CONFIGFILE}" ]; then
+	checkpath -f \
+		  --mode 0660 \
+		  --owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
+		  "${BITCOIND_CONFIGFILE}"
+	command_args+=" --config \"${BITCOIND_CONFIGFILE}\""
+	checkconfig || return 1
+    fi
+
+    if [ -n ${BITCOIND_HAVE_WALLET} ]; then
+	local WALLET_PATH=`sed -ne 's/^container-file *= *\(.*\)$/\1/p' "${BITCOIND_CONFIGFILE}"`
+	if [ -z ${WALLET_PATH} ]; then
+	    # command_args+=" -w \"${BITCOIND_WALLET_PATH}\""
+	    # both parameters must be in same place (config or args)
+	    WALLET_PATH=${BITCOIND_WALLET_PATH}
+	    echo "container-file = ${WALLET_PATH}" >> ${BITCOIND_CONFIGFILE}
+	fi
+	[ -f "${WALLET_PATH}" ] || bash -c "${command} ${command_args} -g"
+	checkpath -f \
+		  --mode 0600 \
+		  --owner "${BITCOIND_USER}:${BITCOIND_GROUP}" \
+		  "${WALLET_PATH}"
+    fi
+}
+
+checkconfig() {
+    if ! grep -qs '^container-password *=' "${BITCOIND_CONFIGFILE}" ; then
+	eerror ""
+	eerror "ERROR: You must set a secure container-password to run ${SVCNAME}."
+	eerror "The setting must appear in ${BITCOIND_CONFIGFILE}"
+	eerror ""
+	eerror "This password is security critical to securing wallet."
+	eerror "You can generate a suitable random password using the following"
+	eerror "command from the shell:"
+	eerror ""
+	eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+	eerror ""
+	eerror "It is also recommended that you also set alertnotify so you are "
+	eerror "notified of problems:"
+	eerror ""
+	eerror "ie: alertnotify=echo %%s | mail -s \"${COIN} Alert\"" \
+	       "admin@foo.com"
+	eerror ""
+	return 1
+    fi
+}

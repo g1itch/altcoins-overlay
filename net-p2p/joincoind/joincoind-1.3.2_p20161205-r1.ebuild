@@ -5,15 +5,15 @@
 EAPI=5
 COIN_SYMBOL="J"
 
-inherit versionator altcoin
+inherit versionator autotools-utils altcoin
 
-HOMEPAGE="http://www.vericoin.info/"
+HOMEPAGE="http://joincoinz.com/"
 COMMIT="cdd870f6c94a0e825b0070f868cb55e0af8cf4eb"
 SRC_URI="https://github.com/pallas1/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
+IUSE="examples ipv6 upnp"
 
 RDEPEND+="virtual/bitcoin-leveldb"
 

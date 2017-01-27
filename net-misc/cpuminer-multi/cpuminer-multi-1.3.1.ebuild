@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Gentoo Foundation
+# Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
@@ -6,17 +6,16 @@ EAPI=5
 inherit eutils autotools flag-o-matic
 
 MY_PV="${PV}-multi"
-COMMIT="40031322e829435c0af3b8941581af741bdbd021"
 DESCRIPTION="Multi-algo CPUMiner & Reference Cryptonote Miner (JSON-RPC 2.0)"
 HOMEPAGE="https://github.com/tpruvot/${PN}"
-SRC_URI="${HOMEPAGE}/archive/${COMMIT}.zip -> ${P}.zip"
+SRC_URI="${HOMEPAGE}/archive/v${MY_PV}.zip -> ${P}.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-S="${WORKDIR}/${PN}-${COMMIT}"
+S="${WORKDIR}/${PN}-${MY_PV}"
 
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}

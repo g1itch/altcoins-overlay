@@ -1,0 +1,40 @@
+--- src/txdb-leveldb.cpp~	2017-01-11 11:39:47.000000000 +0200
++++ src/txdb-leveldb.cpp	2017-01-21 18:18:10.954610699 +0200
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "txdb.h"
+--- src/makefile.unix~	2017-01-11 11:39:47.000000000 +0200
++++ src/makefile.unix	2017-01-21 18:17:33.726613244 +0200
+@@ -4,6 +4,7 @@
+ 
+ USE_UPNP:=0
+ USE_WALLET:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -150,13 +151,17 @@
+ 
+ all: bitbayd
+ 
++OBJS += obj/txdb-leveldb.o
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

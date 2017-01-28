@@ -1,4 +1,4 @@
-# Copyright 2016 Gentoo Foundation
+# Copyright 2016-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
@@ -12,7 +12,7 @@ SRC_URI="https://github.com/${COIN_NAME}foundation/${COIN_NAME}/archive/v${PV}.t
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples ipv6 upnp cpu_flags_x86_sse2" # ! no sse2
+IUSE="examples ipv6 upnp"
 
 
 src_prepare() {

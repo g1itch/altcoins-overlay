@@ -22,6 +22,14 @@ LICENSE="MIT"
 
 COIN_NEEDS_SSL=${COIN_NEEDS_SSL:-1}
 
+# @ECLASS-VARIABLE: COIN_BOOST_MIN
+# @DESCRIPTION:
+# Set this variable before the inherit line
+# to figure out minimum required boost ver
+
+COIN_BOOST_MIN=${COIN_BOOST_MIN:-}
+
+
 RDEPEND="
 	dev-libs/boost[threads(+)]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
@@ -31,13 +39,19 @@ RDEPEND="
 if [ "${COIN_NEEDS_SSL}" = "1" ]; then
 	if [[ $IUSE =~ libressl ]]; then
 		RDEPEND+="!libressl? ( dev-libs/openssl:0[-bindist] )
-			libressl? ( dev-libs/libressl )"
+			libressl? ( dev-libs/libressl ) "
 	else
-		RDEPEND+="dev-libs/openssl:0[-bindist]"
+		RDEPEND+=" dev-libs/openssl:0[-bindist] "
 	fi
 fi
 
-[[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc )"
+if [ -z ${COIN_BOOST_MIN} ]; then
+	RDEPEND+="dev-libs/boost[threads(+)] "
+else
+	RDEPEND+=">=dev-libs/boost-${COIN_BOOST_MIN}[threads(+)] "
+fi
+
+[[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc ) "
 
 DEPEND="${RDEPEND}
 	>=app-shells/bash-4.1

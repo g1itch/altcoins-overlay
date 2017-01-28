@@ -28,7 +28,4 @@ src_prepare() {
 src_install() {
 	mv src/${MY_PN} src/${PN}
 	altcoin_src_install
-	local manpath=contrib/debian/manpages
-	newman ${manpath}/novacoind.1 ${PN}.1
-	newman ${manpath}/novacoin.conf.5 ${COIN_NAME}.conf.5
 }

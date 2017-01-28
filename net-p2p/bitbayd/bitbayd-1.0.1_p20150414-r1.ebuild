@@ -23,10 +23,3 @@ src_prepare() {
 	epatch "${FILESDIR}"/1.0.1-sys_leveldb.patch
 	altcoin_src_prepare
 }
-
-src_install() {
-	altcoin_src_install
-	local manpath=contrib/debian/manpages
-	newman ${manpath}/novacoind.1 ${PN}.1
-	newman ${manpath}/novacoin.conf.5 ${COIN_NAME}.conf.5
-}

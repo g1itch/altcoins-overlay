@@ -183,10 +183,10 @@ altcoin_src_install() {
 	done
 
 	local manpath=contrib/debian/manpages
-	for man in ${manpath}/{bitcoind,${PN}}.1; do
+	for man in ${manpath}/{bitcoind,novacoind,${PN}}.1; do
 		[ -f $man ] && newman $man ${PN}.1
 	done
-	for man in ${manpath}/{bitcoin,${COIN_NAME}}.conf.5; do
+	for man in ${manpath}/{bitcoin,novacoin,${COIN_NAME}}.conf.5; do
 		[ -f $man ] && newman $man ${COIN_NAME}.conf.5
 	done
 

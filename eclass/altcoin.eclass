@@ -126,6 +126,7 @@ altcoin_src_configure() {
 	use ipv6 || OPTS+=("USE_IPV6=-")
 	[[ $IUSE =~ cpu_flags_x86_sse2 ]] && \
 		use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
+	[ $IUSE =~ && use wallet ] || OPTS+=("USE_WALLET=0")
 }
 
 

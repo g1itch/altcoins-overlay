@@ -13,7 +13,7 @@ SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/${MY_PV}.t
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples ipv6 upnp" # no upnp!
+IUSE="examples ipv6"
 
 # USE_LEVELDB:=0
 # RDEPEND+="virtual/bitcoin-leveldb"

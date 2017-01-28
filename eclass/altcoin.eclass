@@ -117,7 +117,7 @@ altcoin_src_configure() {
 		"$@"
 	)
 
-	if use upnp; then
+	if [ $IUSE =~ upnp && use upnp ]; then
 		OPTS+=("USE_UPNP=1")
 	else
 		OPTS+=("USE_UPNP=-")

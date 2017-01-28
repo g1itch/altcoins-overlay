@@ -1,0 +1,41 @@
+--- src/txdb-leveldb.cpp~	2016-09-17 20:30:17.000000000 +0300
++++ src/txdb-leveldb.cpp	2017-01-28 17:11:06.202266884 +0200
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"
+--- src/makefile.unix~	2016-09-17 20:30:17.000000000 +0300
++++ src/makefile.unix	2017-01-28 17:10:29.006269426 +0200
+@@ -6,6 +6,7 @@
+ QT_CORE = ${QT_DIR}/QtCore
+ 
+ USE_UPNP:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -165,14 +166,17 @@
+ 
+ all: vTorrentd
+ 
++OBJS += obj/txdb-leveldb.o
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
+-
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

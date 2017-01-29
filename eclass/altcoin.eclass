@@ -117,16 +117,18 @@ altcoin_src_configure() {
 		"$@"
 	)
 
-	if [ $IUSE =~ upnp && use upnp ]; then
-		OPTS+=("USE_UPNP=1")
-	else
-		OPTS+=("USE_UPNP=-")
+	if [[ $IUSE =~ upnp ]]; then
+		use upnp && OPTS+=("USE_UPNP=1") || OPTS+=("USE_UPNP=-")
 	fi
 
 	use ipv6 || OPTS+=("USE_IPV6=-")
+
 	[[ $IUSE =~ cpu_flags_x86_sse2 ]] && \
 		use cpu_flags_x86_sse2 && OPTS+=("USE_SSE2=1")
-	[ $IUSE =~ && use wallet ] || OPTS+=("USE_WALLET=0")
+
+	if [[ $IUSE =~ wallet ]]; then
+		use wallet || OPTS+=("USE_WALLET=0")
+	fi
 }
 
 

@@ -37,5 +37,5 @@ src_install() {
 	has_version "net-p2p/${COIN_NAME}d" ||
 		newman contrib/debian/manpages/${COIN_NAME}d.1 ${PN}.1
 
-	newbashcomp contrib/${COIN_NAME}d.bash-completion ${PN}
+	newbashcomp contrib/bitcoind.bash-completion ${PN}
 }

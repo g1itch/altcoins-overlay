@@ -97,6 +97,7 @@ altcoin_pkg_setup() {
 
 
 altcoin_src_prepare() {
+	[ -f configure.ac ] && eautoreconf && return 0
 	[ -f src/makefile.unix ] || return 0
 	if has_version '>=dev-libs/boost-1.52'; then
 		sed -i 's/\(-l db_cxx\)/-l boost_chrono$(BOOST_LIB_SUFFIX) \1/' \

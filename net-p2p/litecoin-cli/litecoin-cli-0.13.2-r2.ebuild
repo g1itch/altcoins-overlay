@@ -9,18 +9,12 @@ inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Litecoin crypto-currency"
 HOMEPAGE="https://litecoin.org/"
-SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
-
-src_prepare() {
-	rm -r src/leveldb
-	epatch "${FILESDIR}"/${PV}-sys_leveldb.patch
-	eautoreconf
-}
 
 src_configure() {
 	# To avoid executable GNU stack.
@@ -30,19 +24,17 @@ src_configure() {
 		--disable-static \
 		--disable-tests \
 		--with-system-leveldb \
+		--with-system-univalue \
 		--with-system-libsecp256k1  \
+		--without-gui \
 		--without-libs \
-		--without-daemon  \
-		--without-gui     \
-		--without-qrencode \
+		--without-daemon \
 		--with-utils
 }
 
 src_install() {
 	dobin src/${PN}
 
-	has_version "net-p2p/litecoind" ||
-		newman contrib/debian/manpages/${COIN_NAME}d.1 ${PN}.1
-
+	newman contrib/debian/manpages/bitcoin-cli.1 ${PN}.1
 	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
 }

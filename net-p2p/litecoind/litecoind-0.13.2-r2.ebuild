@@ -3,26 +3,28 @@
 # $Id$
 
 EAPI=5
-
 COIN_SYMBOL="LTC"
+COIN_NEEDS_SSL=0
 
-inherit altcoin
+inherit versionator altcoin
 
 HOMEPAGE="https://litecoin.org/"
-SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="examples upnp +wallet"
+IUSE="examples upnp +wallet zmq"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
+	dev-libs/univalue
+	zmq? ( net-libs/zeromq )
 "
 
 src_prepare() {
 	rm -r src/leveldb
-	epatch "${FILESDIR}"/${PV}-sys_leveldb.patch
+	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch
 	eautoreconf
 }
 
@@ -31,21 +33,20 @@ src_configure() {
 	append-ldflags -Wl,-z,noexecstack
 
 	local my_econf=
-	if use upnp; then
-		my_econf="${my_econf} --with-miniupnpc --enable-upnp-default"
-	else
-		my_econf="${my_econf} --without-miniupnpc --disable-upnp-default"
-	fi
+	has test $FEATURES || my_econf="${my_econf} --disable-tests"
 	econf \
-		$(use_enable wallet)\
+		$(use_with upnp miniupnpc) \
+		$(use_enable upnp upnp-default) \
+		$(use_enable wallet) \
+		$(use_enable zmq) \
 		--disable-ccache \
 		--disable-static \
-		--disable-tests \
 		--with-system-leveldb \
+		--with-system-univalue \
 		--with-system-libsecp256k1  \
+		--without-utils \
 		--without-libs \
-		--with-daemon  \
-		--without-gui     \
-		--without-qrencode \
+		--without-gui \
+		--with-daemon \
 		${my_econf}
 }

@@ -1,4 +1,4 @@
-# Copyright 2016 Gentoo Foundation
+# Copyright 2016-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
@@ -27,14 +27,14 @@ src_prepare() {
 }
 
 src_configure() {
+	append-ldflags -Wl,-z,noexecstack
 	local my_econf=
 	has test $FEATURES || my_econf="${my_econf} --disable-tests"
-	# CXXFLAGS+=" -I. -I$(db_includedir "${DB_VER}")"
-	econf --with-gui=no \
-		  --without-qrcode \
+	econf --without-gui \
 		  --without-cli \
 		  --with-system-leveldb \
-		$(use_enable wallet) \
-		$(use_with upnp miniupnpc) \
-		${my_econf}
+		  $(use_enable wallet) \
+		  $(use_enable upnp upnp-default) \
+		  $(use_with upnp miniupnpc) \
+		  ${my_econf}
 }

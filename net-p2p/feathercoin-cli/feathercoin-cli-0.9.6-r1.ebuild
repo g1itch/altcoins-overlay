@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit altcoin versionator
+inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Feathercoin crypto-currency"
 HOMEPAGE="http://feathercoin.com/"
@@ -18,14 +18,9 @@ DEPEND+="dev-lang/yasm"
 
 S="${WORKDIR}"/${COIN_NAME^}-${PV}
 
-src_prepare() {
-	eautoreconf
-}
-
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack
-	econf --with-gui=no \
-		  --without-qrcode \
+	econf --without-gui \
 		  --disable-tests \
 		  --without-daemon \
 		  --with-cli
@@ -34,8 +29,6 @@ src_configure() {
 src_install() {
 	dobin src/${PN}
 
-	has_version "net-p2p/${COIN_NAME}d" ||
-		newman contrib/debian/manpages/${COIN_NAME}d.1 ${PN}.1
-
-	newbashcomp contrib/${COIN_NAME}d.bash-completion ${PN}
+	newman contrib/debian/manpages/${PN}.1 ${PN}.1
+	newbashcomp contrib/bitcoind.bash-completion ${PN}
 }

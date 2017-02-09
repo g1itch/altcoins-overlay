@@ -5,7 +5,7 @@
 EAPI=5
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite"
+PYTHON_REQ_USE="sqlite" # ipv6?
 
 inherit eutils python-r1 gnome2-utils
 
@@ -17,10 +17,9 @@ SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz -> ${P}.ta
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="ssl libressl qt4 qt5"
-REQUIRED_USE="
-	${PYTHON_REQUIRED_USE}
-	qt5? ( !qt4 )"
+IUSE="ssl libressl qt4 opencl"
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+# qt5? ( !qt4 )
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
@@ -29,9 +28,11 @@ RDEPEND="${DEPEND}
 		libressl? ( dev-libs/libressl )
 	)
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
-	qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )"
+	opencl? ( dev-python/numpy dev-python/pyopencl )"
+	# qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
 
 S="${WORKDIR}"/${MY_PN}-${PV}
+
 
 src_compile() { :; }
 

@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python{2_7,3_4} )
 
 inherit cmake-utils python-single-r1
 
-DESCRIPTION="Open Transactions - Libraries and CLI"
+DESCRIPTION="Open Transactions - Library"
 HOMEPAGE="http://opentransactions.org/"
 
 CHAISCRIPT_COMMIT="e7b6ee6cf9e795d968b375244895589d4c6fc6c4"
@@ -49,6 +49,11 @@ PATCHES=(
 
 src_prepare() {
 	rmdir deps/gtest
+	use test || cmake_comment_add_subdirectory tests
+	pushd deps
+	cmake_comment_add_subdirectory gtest
+	popd
+
 	mv ../ChaiScript-${CHAISCRIPT_COMMIT}/* deps/ChaiScript
 	mv ../lucre-${LUCRE_COMMIT}/* deps/lucre
 	mv ../simpleini-${SIMPLEINI_COMMIT}/* deps/simpleini
@@ -68,11 +73,6 @@ src_configure() {
 		$(cmake-utils_use_build doc DOCUMENTATION)
 		$(cmake-utils_use_build test TESTS)
 	)
-
-	use test || cmake_comment_add_subdirectory tests
-	pushd deps
-	cmake_comment_add_subdirectory gtest
-	popd
 
 	use openssl || mycmakeargs+=(
 			-DOT_CRYPTO_USING_OPENSSL=OFF

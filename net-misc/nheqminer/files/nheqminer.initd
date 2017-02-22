@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+# Copyright 2017 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+command="/usr/bin/nheqminer"
+[ ${miner_use_tor} ] && command="/usr/bin/torsocks ${command}"
+command_args="-l ${miner_location} -u ${miner_user} ${miner_args}"
+start_stop_daemon_args="-b -N ${NICELEVEL:-20}"
+procname="${SVCNAME}"
+
+depend() {
+    need net
+    [ ${miner_use_tor} ] && need tor
+}

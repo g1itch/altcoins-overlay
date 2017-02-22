@@ -1,0 +1,15 @@
+# Use tor for stratum connection?
+miner_use_tor=
+
+# Stratum server:port
+miner_location=
+
+# Username (bitcoinaddress)
+miner_user=
+
+# Other args:
+# -a [port]	Local API port (default: 0 = do not bind)
+# -t [num_thrds]	Number of CPU threads
+# -e [ext]	Force CPU ext (0 = SSE2, 1 = AVX, 2 = AVX2)
+# NVIDIA CUDA settings, see nheqminer -h
+# miner_args="-t 2"

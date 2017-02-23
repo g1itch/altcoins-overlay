@@ -10,8 +10,8 @@ PYTHON_REQ_USE="sqlite" # ipv6?
 inherit eutils python-r1 gnome2-utils versionator
 
 MY_PN="PyBitmessage"
-DESCRIPTION="P2P communications protocol"
-COMMIT="d8ae44f9eeb33402e2599b9d4b6e994faa2f0273"
+DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
+COMMIT="30952f91cfe236dfd9f8f59ab6d808521c4b4553"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
@@ -25,6 +25,7 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
 	dev-python/msgpack
+	x11-misc/xdg-utils
 	ssl? (
 		!libressl? ( dev-libs/openssl:0[-bindist] )
 		libressl? ( dev-libs/libressl )
@@ -55,10 +56,12 @@ src_install () {
 	import sys
 	sys.path.append("@SITEDIR@")
 	os.chdir("@SITEDIR@")
-	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py')
+	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py', *sys.argv[1:])
 	EOF
 
 	touch src/__init__.py || die
+	use qt4 || rm -rf src/bitmessageqt
+	use ncurses || rm -rf src/bitmessagecurses
 
 	install_python() {
 		python_moduleinto ${PN}

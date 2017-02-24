@@ -20,3 +20,10 @@ src_prepare() {
 	epatch "${FILESDIR}"/${P}-sys_leveldb.patch
 	altcoin_src_prepare
 }
+
+src_install() {
+	altcoin_src_install
+	ewarn 'This coin is probably dead since 2016!'
+	ewarn 'Use with caution!'
+	ewarn 'Look at https://bitcointalk.org/index.php?topic=586320.4580'
+}

@@ -5,36 +5,50 @@
 EAPI=5
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite" # ipv6?
+PYTHON_REQ_USE="sqlite"
 
-inherit eutils python-r1 gnome2-utils
+inherit eutils python-r1 gnome2-utils versionator
 
 MY_PN="PyBitmessage"
-DESCRIPTION="P2P communications protocol"
+DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
+COMMIT="484d4abb3c651e869c98b0fce7531acb7cdf3f4f"
 HOMEPAGE="https://bitmessage.org"
-SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="ssl libressl qt4 opencl"
+IUSE="ssl libressl qt4 ncurses menu opencl"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 # qt5? ( !qt4 )
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
+	dev-python/msgpack
+	x11-misc/xdg-utils
 	ssl? (
 		!libressl? ( dev-libs/openssl:0[-bindist] )
 		libressl? ( dev-libs/libressl )
 	)
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
-	opencl? ( dev-python/numpy dev-python/pyopencl )"
-	# qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
+	ncurses? ( dev-python/pythondialog[${PYTHON_USEDEP}] )
+	menu? ( dev-python/pygobject[${PYTHON_USEDEP}] )
+	opencl? ( dev-python/numpy[${PYTHON_USEDEP}]
+			  dev-python/pyopencl[${PYTHON_USEDEP}] )"
+# qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
 
-S="${WORKDIR}"/${MY_PN}-${PV}
+S="${WORKDIR}"/${MY_PN}-${COMMIT}
 
+src_prepare() {
+	local PVM=$(get_version_component_range 1-2)
+	epatch "${FILESDIR}"/${PVM}-desktop-network.patch
+	epatch "${FILESDIR}"/${PVM}-ipv6.patch
+}
 
-src_compile() { :; }
+src_compile() {
+	cd src/bitmsghash/
+	emake
+}
 
 src_install () {
 	cat >> "${T}"/${PN}-wrapper <<-EOF || die
@@ -43,10 +57,11 @@ src_install () {
 	import sys
 	sys.path.append("@SITEDIR@")
 	os.chdir("@SITEDIR@")
-	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py')
+	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py', *sys.argv[1:])
 	EOF
 
-	touch src/__init__.py || die
+	use qt4 || rm -rf src/bitmessageqt
+	use ncurses || rm -rf src/bitmessagecurses
 
 	install_python() {
 		python_moduleinto ${PN}
@@ -61,7 +76,7 @@ src_install () {
 
 	python_foreach_impl install_python
 
-	dodoc README.md debian/changelog
+	dodoc README.md
 	doman man/*
 
 	if use qt4; then

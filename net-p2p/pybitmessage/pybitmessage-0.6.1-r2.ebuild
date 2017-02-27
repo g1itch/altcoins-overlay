@@ -5,22 +5,20 @@
 EAPI=5
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite"
+PYTHON_REQ_USE="sqlite,ipv6"
 
-inherit eutils python-r1 gnome2-utils versionator
+inherit eutils python-r1 gnome2-utils
 
 MY_PN="PyBitmessage"
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="0fa0599cd4b4c43f601fb897f27b780332b201b1"
 HOMEPAGE="https://bitmessage.org"
-SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="ssl libressl qt4 ncurses menu opencl"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
-# qt5? ( !qt4 )
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
@@ -33,22 +31,12 @@ RDEPEND="${DEPEND}
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
 	ncurses? ( dev-python/pythondialog[${PYTHON_USEDEP}] )
 	menu? ( dev-python/pygobject[${PYTHON_USEDEP}] )
-	opencl? ( dev-python/numpy[${PYTHON_USEDEP}]
-			  dev-python/pyopencl[${PYTHON_USEDEP}] )"
-# qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
+	opencl? ( dev-python/numpy dev-python/pyopencl )"
 
-S="${WORKDIR}"/${MY_PN}-${COMMIT}
+S="${WORKDIR}"/${MY_PN}-${PV}
 
-src_prepare() {
-	local PVM=$(get_version_component_range 1-2)
-	epatch "${FILESDIR}"/${PVM}-desktop-network.patch
-	epatch "${FILESDIR}"/${PVM}-ipv6.patch
-}
 
-src_compile() {
-	cd src/bitmsghash/
-	emake
-}
+src_compile() { :; }
 
 src_install () {
 	cat >> "${T}"/${PN}-wrapper <<-EOF || die
@@ -57,11 +45,12 @@ src_install () {
 	import sys
 	sys.path.append("@SITEDIR@")
 	os.chdir("@SITEDIR@")
-	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py', *sys.argv[1:])
+	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py')
 	EOF
 
 	use qt4 || rm -rf src/bitmessageqt
 	use ncurses || rm -rf src/bitmessagecurses
+	touch src/__init__.py || die
 
 	install_python() {
 		python_moduleinto ${PN}
@@ -76,7 +65,7 @@ src_install () {
 
 	python_foreach_impl install_python
 
-	dodoc README.md
+	dodoc README.md debian/changelog
 	doman man/*
 
 	if use qt4; then

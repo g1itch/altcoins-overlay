@@ -1,0 +1,317 @@
+diff --git a/.gitignore b/.gitignore
+index 7da86d2..a11f6fa 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -11,3 +11,5 @@ src/**/*.o
+ src/**/*.so
+ build/lib.*
+ build/temp.*
++dist
++*.egg-info
+diff --git a/MANIFEST.in b/MANIFEST.in
+index e69de29..2d29971 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -0,0 +1,3 @@
++include COPYING
++include README.md
++recursive-include desktop *
+diff --git a/setup.py b/setup.py
+index cb1658b..e5a0fb7 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,10 +1,14 @@
++#!/usr/bin/env python2.7
++
+ import os
++import sys
+ try:
+-    from setuptools import setup, find_packages, Extension
++    from setuptools import setup, Extension
+     haveSetuptools = True
+ except ImportError:
+     haveSetuptools = False
+-import sys
++
++from importlib import import_module
+ 
+ from src.version import softwareVersion
+ 
+@@ -16,6 +20,7 @@ packageManager = {
+     "openSUSE": "zypper install",
+     "Fedora": "dnf install",
+     "Guix": "guix package -i",
++    "Gentoo": "emerge"
+ }
+ 
+ packageName = {
+@@ -27,6 +32,7 @@ packageName = {
+         "openSUSE": "python-qt",
+         "Fedora": "PyQt4",
+         "Guix": "python2-pyqt@4.11.4",
++        "Gentoo": "dev-python/PyQt4"
+     },
+     "msgpack": {
+         "OpenBSD": "py-msgpack",
+@@ -36,9 +42,11 @@ packageName = {
+         "openSUSE": "python-msgpack-python",
+         "Fedora": "python2-msgpack",
+         "Guix": "python2-msgpack",
++        "Gentoo": "dev-python/msgpack"
+     }
+ }
+ 
++
+ def detectOS():
+     if detectOS.result is not None:
+         return detectOS.result
+@@ -52,29 +60,33 @@ def detectOS():
+         with open("/etc/os-release", 'rt') as osRelease:
+             for line in osRelease:
+                 if line.startswith("NAME="):
+-                    if "fedora" in line.lower():
++                    line = line.lower()
++                    if "fedora" in line:
+                         detectOS.result = "Fedora"
+-                    elif "opensuse" in line.lower():
++                    elif "opensuse" in line:
+                         detectOS.result = "openSUSE"
+-                    elif "ubuntu" in line.lower():
++                    elif "ubuntu" in line:
+                         detectOS.result = "Ubuntu"
+-                    elif "debian" in line.lower():
++                    elif "debian" in line:
+                         detectOS.result = "Debian"
++                    elif "gentoo" in line or "calculate" in line:
++                        detectOS.result = "Gentoo"
+                     else:
+                         detectOS.result = None
+     return detectOS.result
+ 
++
+ def detectPrereqs(missing=False):
+     available = []
+     try:
+-        import PyQt4.QtCore
++        import_module("PyQt4.QtCore")
+         if not missing:
+             available.append("PyQt")
+     except ImportError:
+         if missing:
+             available.append("PyQt")
+     try:
+-        import msgpack
++        import_module("msgpack")
+         if not missing:
+             available.append("msgpack")
+     except ImportError:
+@@ -82,19 +94,27 @@ def detectPrereqs(missing=False):
+             available.append("msgpack")
+     return available
+ 
++
+ def prereqToPackages():
+     print "You can install the requirements by running, as root:"
+-    print "%s %s" % (packageManager[detectOS()], " ".join(packageName[x][detectOS()] for x in detectPrereqs(True)))
++    print "%s %s" % (
++        packageManager[detectOS()], " ".join(
++            packageName[x][detectOS()] for x in detectPrereqs(True)))
++
+ 
+ if __name__ == "__main__":
+     detectOS.result = None
+     detectPrereqs.result = None
+     if "PyQt" in detectPrereqs(True):
+-        print "You only need PyQt if you want to use the GUI. When only running as a daemon, this can be skipped."
+-        print "However, you would have to install it manually because setuptools does not support pyqt."
++        print "You only need PyQt if you want to use the GUI. " \
++            "When only running as a daemon, this can be skipped.\n" \
++            "However, you would have to install it manually " \
++            "because setuptools does not support pyqt."
+     if detectPrereqs(True) != [] and detectOS() in packageManager:
+         if detectOS() is not None:
+-            print "It looks like you're using %s. It is highly recommended to use the package manager instead of setuptools." % (detectOS())
++            print "It looks like you're using %s. " \
++                "It is highly recommended to use the package manager " \
++                "instead of setuptools." % (detectOS())
+             prereqToPackages()
+             sys.exit()
+     if not haveSetuptools:
+@@ -105,56 +125,55 @@ if __name__ == "__main__":
+     with open(os.path.join(here, 'README.md')) as f:
+         README = f.read()
+ 
+-    bitmsghash = Extension('bitmsghash.bitmsghash',
+-        sources = ['src/bitmsghash/bitmsghash.cpp'],
+-        libraries = ['pthread', 'crypto'],
++    bitmsghash = Extension(
++        'pybitmessage.bitmsghash.bitmsghash',
++        sources=['src/bitmsghash/bitmsghash.cpp'],
++        libraries=['pthread', 'crypto'],
+     )
+ 
+     dist = setup(
+         name='pybitmessage',
+         version=softwareVersion,
+-        description='',
++        description="Reference client for Bitmessage: "
++        "a P2P communications protocol",
+         long_description=README,
+         license='MIT',
+         # TODO: add author info
+         #author='',
+         #author_email='',
+-        url='https://github.com/Bitmessage/PyBitmessage/',
++        url='https://bitmessage.org',
+         # TODO: add keywords
+         #keywords='',
+-        install_requires = ['msgpack-python'],
+-        classifiers = [
++        install_requires=['msgpack-python'],
++        classifiers=[
+             "License :: OSI Approved :: MIT License"
+-            "Operating System :: MacOS :: MacOS X",
+-            "Operating System :: Microsoft :: Windows",
+-            "Operating System :: POSIX :: Linux",
+-            "Programming Language :: Python :: 2.7.3",
+-            "Programming Language :: Python :: 2.7.4",
+-            "Programming Language :: Python :: 2.7.5",
+-            "Programming Language :: Python :: 2.7.6",
+-            "Programming Language :: Python :: 2.7.7",
+-            "Programming Language :: Python :: 2.7.8",
+-            "Programming Language :: Python :: 2.7.9",
+-            "Programming Language :: Python :: 2.7.10",
+-            "Programming Language :: Python :: 2.7.11",
+-            "Programming Language :: Python :: 2.7.12",
+-            "Programming Language :: Python :: 2.7.13",
++            "Operating System :: OS Independent",
++            "Programming Language :: Python :: 2.7 :: Only",
++            "Topic :: Internet",
++            "Topic :: Security :: Cryptography",
++            "Topic :: Software Development :: Libraries :: Python Modules",
++        ],
++        package_dir={'pybitmessage': 'src'},
++        packages=[
++            'pybitmessage',
++            'pybitmessage.bitmessageqt',
++            'pybitmessage.bitmessagecurses',
++            'pybitmessage.messagetypes',
++            'pybitmessage.network',
++            'pybitmessage.pyelliptic',
++            'pybitmessage.socks',
+         ],
+-        package_dir={'':'src'},
+-        packages=['','bitmessageqt', 'bitmessagecurses', 'messagetypes', 'network', 'pyelliptic', 'socks'],
+-        package_data={'': ['bitmessageqt/*.ui', 'bitmsghash/*.cl', 'keys/*.pem', 'translations/*.ts', 'translations/*.qm', 'images/*.png', 'images/*.ico', 'images/*.icns']},
+-        ext_modules = [bitmsghash],
++        package_data={'': [
++            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
++            'translations/*.ts', 'translations/*.qm',
++            'images/*.png', 'images/*.ico', 'images/*.icns'
++        ]},
++        ext_modules=[bitmsghash],
+         zip_safe=False,
+-        entry_points="""\
+-        [console_scripts]
+-        bitmessage = bitmessagemain:Main.start
+-        """,
++        #entry_points={
++        #    'console_scripts': [
++        #        'pybitmessage = pybitmessage.bitmessagemain:main'
++        #    ]
++        #},
++        scripts=['src/pybitmessage']
+     )
+-    if (dist.command_obj.get('install_scripts')):
+-        with open(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 'wt') as f:
+-            f.write("#!/bin/sh\n")
+-            f.write(dist.command_obj['build'].executable + " " + \
+-                os.path.join(dist.command_obj['install'].install_lib,
+-                os.path.basename(dist.command_obj['bdist_egg'].egg_output),
+-                'bitmessagemain.py') + "\n")
+-        os.chmod(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 0555)
+diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
+index 707b6b6..c98f759 100755
+--- a/src/bitmessagemain.py
++++ b/src/bitmessagemain.py
+@@ -9,17 +9,22 @@
+ 
+ # The software version variable is now held in shared.py
+ 
++import os
++import sys
++
++app_dir = os.path.dirname(os.path.abspath(__file__))
++os.chdir(app_dir)
++sys.path.insert(0, app_dir)
++
+ import depends
+ depends.check_dependencies()
+ 
+ import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
+ # The next 3 are used for the API
+ from singleinstance import singleinstance
+-import os
+ import socket
+ import ctypes
+ from struct import pack
+-import sys
+ from subprocess import call
+ import time
+ 
+@@ -28,7 +33,6 @@ from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenCon
+ 
+ import defaults
+ import shared
+-from helper_sql import sqlQuery
+ import knownnodes
+ import state
+ import shutdown
+@@ -45,13 +49,13 @@ from class_addressGenerator import addressGenerator
+ from class_smtpDeliver import smtpDeliver
+ from class_smtpServer import smtpServer
+ from bmconfigparser import BMConfigParser
+-from debug import logger
+ 
+ # Helper Functions
+ import helper_bootstrap
+ import helper_generic
+ from helper_threading import *
+ 
++
+ def connectToStream(streamNumber):
+     state.streamsInWhichIAmParticipating.append(streamNumber)
+     selfInitiatedConnections[streamNumber] = {}
+@@ -309,9 +313,14 @@ class Main:
+         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+         return {'address':address,'port':port}
+ 
+-if __name__ == "__main__":
++
++def main():
+     mainprogram = Main()
+-    mainprogram.start(BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
++    mainprogram.start(
++        BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
++
++if __name__ == "__main__":
++    main()
+ 
+ 
+ # So far, the creation of and management of the Bitmessage protocol and this
+diff --git a/src/pybitmessage b/src/pybitmessage
+index e69de29..decebff 100644
+--- a/src/pybitmessage
++++ b/src/pybitmessage
+@@ -0,0 +1,11 @@
++#!/usr/bin/python2.7
++
++import os
++import pkg_resources
++
++dist = pkg_resources.get_distribution('pybitmessage')
++script_file = os.path.join(dist.location, dist.key, 'bitmessagemain.py')
++new_globals = globals()
++new_globals.update(__file__=script_file)
++
++execfile(script_file, new_globals)

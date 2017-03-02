@@ -11,9 +11,8 @@ inherit eutils distutils-r1 gnome2-utils versionator
 
 MY_PN="PyBitmessage"
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="741ac5ca053d98f28460f56a3e73bf54a8b60255"
 HOMEPAGE="https://bitmessage.org"
-SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
@@ -24,7 +23,7 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
-	dev-python/msgpack
+	dev-python/msgpack[${PYTHON_USEDEP}]
 	x11-misc/xdg-utils
 	ssl? (
 		!libressl? ( dev-libs/openssl:0[-bindist] )
@@ -37,13 +36,12 @@ RDEPEND="${DEPEND}
 			  dev-python/pyopencl[${PYTHON_USEDEP}] )"
 # qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
 
-S="${WORKDIR}"/${MY_PN}-${COMMIT}
+S="${WORKDIR}"/${MY_PN}-${PV}
 
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-desktop-network.patch
-	epatch "${FILESDIR}"/${PVM}-ipv6.patch
-	epatch "${FILESDIR}"/${PVM}-setuptools-minimal.patch
+	epatch "${FILESDIR}"/${PV}-setup-fix.patch
 }
 
 src_install () {

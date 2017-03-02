@@ -1,0 +1,23 @@
+diff --git a/setup.py b/setup.py
+index 2c769a6..5620d28 100644
+--- a/setup.py
++++ b/setup.py
+@@ -159,12 +159,12 @@ if __name__ == "__main__":
+         print "It looks like you're missing setuptools."
+         sys.exit()
+ 
+-    if detectPrereqs(True) != []:
+-        print "Press Return to continue"
+-        try:
+-            nothing = raw_input()
+-        except NameError:
+-            pass
++#    if detectPrereqs(True) != []:
++#        print "Press Return to continue"
++#        try:
++#            nothing = raw_input()
++#        except NameError:
++#            pass
+ 
+     here = os.path.abspath(os.path.dirname(__file__))
+     with open(os.path.join(here, 'README.md')) as f:

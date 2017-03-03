@@ -18,11 +18,11 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="ssl libressl qt4 ncurses menu opencl"
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+REQUIRED_USE="${PYTHON_REQUIRED_USE} menu? ( qt4 )"
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
-	dev-python/msgpack
+	dev-python/msgpack[${PYTHON_USEDEP}]
 	x11-misc/xdg-utils
 	ssl? (
 		!libressl? ( dev-libs/openssl:0[-bindist] )
@@ -31,7 +31,8 @@ RDEPEND="${DEPEND}
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
 	ncurses? ( dev-python/pythondialog[${PYTHON_USEDEP}] )
 	menu? ( dev-python/pygobject[${PYTHON_USEDEP}] )
-	opencl? ( dev-python/numpy dev-python/pyopencl )"
+	opencl? ( dev-python/numpy[${PYTHON_USEDEP}]
+			  dev-python/pyopencl[${PYTHON_USEDEP}] )"
 
 S="${WORKDIR}"/${MY_PN}-${PV}
 

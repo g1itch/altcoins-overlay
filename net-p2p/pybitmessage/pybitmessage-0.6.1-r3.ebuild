@@ -14,10 +14,12 @@ DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
+LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
+
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="ssl libressl qt4 ncurses menu opencl"
+IUSE="ssl libressl qt4 ncurses menu opencl ${LINGUAS[@]/#/linguas_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE} menu? ( qt4 )"
 
 DEPEND="${PYTHON_DEPS}"
@@ -37,9 +39,22 @@ RDEPEND="${DEPEND}
 S="${WORKDIR}"/${MY_PN}-${PV}
 
 
-src_compile() { :; }
+src_compile() {
+	cd src/bitmsghash/
+	emake
+}
 
 src_install () {
+	local lang
+	for lang in ${LINGUAS[@]}; do
+		use linguas_${lang} || \
+			rm -f src/translations/bitmessage_${lang}.{ts,qm}
+	done
+
+	use qt4 || rm -rf src/bitmessageqt
+	use ncurses || rm -rf src/bitmessagecurses
+	touch src/__init__.py || die
+
 	cat >> "${T}"/${PN}-wrapper <<-EOF || die
 	#!/usr/bin/env python
 	import os
@@ -48,10 +63,6 @@ src_install () {
 	os.chdir("@SITEDIR@")
 	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py')
 	EOF
-
-	use qt4 || rm -rf src/bitmessageqt
-	use ncurses || rm -rf src/bitmessagecurses
-	touch src/__init__.py || die
 
 	install_python() {
 		python_moduleinto ${PN}

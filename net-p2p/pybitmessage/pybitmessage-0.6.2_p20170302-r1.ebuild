@@ -45,6 +45,7 @@ src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-desktop-network.patch
 	epatch "${FILESDIR}"/0.6.2-setup-fix.patch
+	epatch "${FILESDIR}"/0.6.2-ipv6.patch
 
 	local lang
 	for lang in ${LINGUAS[@]}; do

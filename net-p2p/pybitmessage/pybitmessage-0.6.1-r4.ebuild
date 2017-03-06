@@ -61,7 +61,7 @@ src_install () {
 	import sys
 	sys.path.append("@SITEDIR@")
 	os.chdir("@SITEDIR@")
-	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py')
+	os.execl('@PYTHON@', '@EPYTHON@', '@SITEDIR@/bitmessagemain.py', *sys.argv[1:])
 	EOF
 
 	install_python() {

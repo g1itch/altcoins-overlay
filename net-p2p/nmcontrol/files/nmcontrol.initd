@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+# Copyright 2017 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+namecoin_config_path=${namecoin_config_path:-/etc/coins/namecoin.conf}
+command="/usr/bin/nmcontrol"
+command_args="--daemon=1 --confdir=/etc/nmcontrol \
+	--data.update.namecoin=${namecoin_config_path}"
+start_stop_daemon_args="-N ${NICELEVEL:-20}"
+procname="${SVCNAME}"
+
+depend() {
+    need net namecoind
+}

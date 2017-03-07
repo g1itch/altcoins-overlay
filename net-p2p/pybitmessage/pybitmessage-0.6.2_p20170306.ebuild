@@ -11,7 +11,7 @@ inherit eutils distutils-r1 gnome2-utils versionator
 
 MY_PN="PyBitmessage"
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="bea675f9a6057719ce22777a7671cd27d7381794"
+COMMIT="5d545dbcab5ec8920f380054088027d94cf4d6c9"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
@@ -20,23 +20,28 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="ssl libressl qt4 ncurses menu opencl ${LINGUAS[@]/#/linguas_}"
-REQUIRED_USE="${PYTHON_REQUIRED_USE} menu? ( qt4 )"
+IUSE="ssl libressl qt4 ncurses opencl sound qrcode ${LINGUAS[@]/#/linguas_}"
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 # qt5? ( !qt4 )
 
 DEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}
 	dev-python/msgpack[${PYTHON_USEDEP}]
-	x11-misc/xdg-utils
 	ssl? (
 		!libressl? ( dev-libs/openssl:0[-bindist] )
 		libressl? ( dev-libs/libressl )
 	)
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
 	ncurses? ( dev-python/pythondialog[${PYTHON_USEDEP}] )
-	menu? ( dev-python/pygobject[${PYTHON_USEDEP}] )
 	opencl? ( dev-python/numpy[${PYTHON_USEDEP}]
-			  dev-python/pyopencl[${PYTHON_USEDEP}] )"
+			  dev-python/pyopencl[${PYTHON_USEDEP}] )
+	sound? ( || ( media-sound/gst123
+				  media-sound/mpg123
+				  media-sound/alsa-utils ) )
+	qrcode? ( dev-python/qrcode[${PYTHON_USEDEP}] )"
+# x11-misc/xdg-utils
+# menu? ( dev-python/pygobject[${PYTHON_USEDEP}]
+# dev-python/notify2[${PYTHON_USEDEP}]  ) <- notifications
 # qt5? ( dev-python/PyQt5[${PYTHON_USEDEP}] )
 
 S="${WORKDIR}"/${MY_PN}-${COMMIT}

@@ -1,10 +1,6 @@
---- configure.ac~	2015-09-04 17:30:43.000000000 +0300
-+++ configure.ac	2015-10-12 17:14:42.928099167 +0300
-@@ -496,10 +496,22 @@
-   ])
- fi
- 
-+dnl Check for leveldb, only if explicitly requested
+--- configure.ac~	2017-03-01 22:31:53.000000000 +0200
++++ configure.ac	2017-03-12 15:05:50.737868568 +0200
+@@ -541,7 +541,18 @@
  LEVELDB_CPPFLAGS=
  LIBLEVELDB=
  LIBMEMENV=
@@ -24,14 +20,14 @@
  AC_SUBST(LEVELDB_CPPFLAGS)
  AC_SUBST(LIBLEVELDB)
  AC_SUBST(LIBMEMENV)
---- src/leveldbwrapper.cpp~	2015-09-04 17:30:43.000000000 +0300
-+++ src/leveldbwrapper.cpp	2015-10-12 17:17:39.637431708 +0300
-@@ -11,7 +11,7 @@
+--- src/dbwrapper.cpp~	2017-03-01 22:31:53.000000000 +0200
++++ src/dbwrapper.cpp	2017-03-12 15:06:37.713867344 +0200
+@@ -12,7 +12,7 @@
  #include <leveldb/cache.h>
  #include <leveldb/env.h>
  #include <leveldb/filter_policy.h>
 -#include <memenv.h>
 +#include <leveldb/helpers/memenv.h>
+ #include <stdint.h>
  
- void HandleError(const leveldb::Status& status) throw(leveldb_error)
- {
+ void HandleError(const leveldb::Status& status) throw(dbwrapper_error)

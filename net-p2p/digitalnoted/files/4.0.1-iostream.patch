@@ -1,0 +1,10 @@
+--- src/CryptoNoteCore/SwappedMap.h~	2017-01-02 18:07:28.000000000 +0200
++++ src/CryptoNoteCore/SwappedMap.h	2017-03-27 11:57:39.276947393 +0300
+@@ -8,6 +8,7 @@
+ #include <cstdint>
+ #include <fstream>
+ #include <iomanip>
++#include <iostream>
+ #include <list>
+ #include <unordered_map>
+ #include <string>

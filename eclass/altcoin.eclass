@@ -10,7 +10,7 @@
 # This eclass is used in ebuilds for altcoins (wallet daemons forked
 # from bitcoin, litecoin etc)
 
-DB_VER="4.8"
+DB_VER=${DB_VER:-4.8}
 inherit autotools cmake-utils bash-completion-r1 db-use eutils user
 
 LICENSE="MIT"

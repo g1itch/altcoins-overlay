@@ -7,15 +7,13 @@ EAPI=5
 inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Digibyte crypto-currency"
-COMMIT="077cec16d82e371ccf6ffda38f59ddd07b421d2e"
 HOMEPAGE="http://digibyte.co/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE=""
 
-S="${WORKDIR}/${COIN_NAME}-${COMMIT}"
 
 src_configure() {
 	econf \

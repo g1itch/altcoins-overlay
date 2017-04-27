@@ -134,7 +134,7 @@ altcoin_src_configure() {
 
 
 altcoin_src_compile() {
-	[ -f Makefile ] && default_src_compile && return 0
+	[[ -f Makefile && -f configure ]] && default_src_compile && return 0
 	[ -f CMakeLists.txt ] && cmake-utils_src_compile && return 0
 	cd src || die
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" \

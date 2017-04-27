@@ -1,0 +1,11 @@
+--- src/net.cpp~	2016-06-07 19:40:11.000000000 +0300
++++ src/net.cpp	2017-04-12 12:30:32.959170272 +0300
+@@ -1229,7 +1229,7 @@
+ // The first name is used as information source for addrman.
+ // The second name should resolve to a list of seed addresses.
+ static const char *strDNSSeed[][2] = {
+-    {"walletbuilders.com", "node.walletbuilders.com"},
++//    {"walletbuilders.com", "node.walletbuilders.com"},
+ };
+ 
+ void ThreadDNSAddressSeed(void* parg)

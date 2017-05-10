@@ -9,8 +9,7 @@ COIN_FAMILY="cryptonote"
 inherit altcoin cmake-utils
 
 HOMEPAGE="http://karbowanec.com/"
-COMMIT="5bf41189a429c43f24a6de7f468daf0c94ebbdfb"
-SRC_URI="https://github.com/seredat/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/seredat/${COIN_NAME}/archive/v.${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -19,7 +18,7 @@ IUSE="+wallet"
 DEPEND+="dev-lang/python
 	net-libs/miniupnpc"
 
-S="${WORKDIR}"/${COIN_NAME}-${COMMIT}
+S="${WORKDIR}"/${COIN_NAME}-v.${PV}
 
 src_prepare() {
 	cmake-utils_src_prepare

@@ -23,6 +23,7 @@ S="${WORKDIR}"/${COIN_NAME}currency-${PV}
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-miniupnpc_1.9.patch
 	altcoin_src_prepare
 }
 

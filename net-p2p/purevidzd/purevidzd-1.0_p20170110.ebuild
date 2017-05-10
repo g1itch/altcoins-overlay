@@ -16,6 +16,7 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="examples ipv6 upnp +wallet"
 
+DEPEND+="virtual/awk"
 RDEPEND+="virtual/bitcoin-leveldb"
 
 S="${WORKDIR}"/vidzcoin-${COMMIT}

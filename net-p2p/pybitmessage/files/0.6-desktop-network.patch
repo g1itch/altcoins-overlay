@@ -1,6 +1,8 @@
---- desktop/pybitmessage.desktop~	2017-02-13 14:38:59.000000000 +0200
-+++ desktop/pybitmessage.desktop	2017-02-13 17:34:39.745212054 +0200
-@@ -6,4 +6,4 @@
+diff --git a/desktop/pybitmessage.desktop b/desktop/pybitmessage.desktop
+index 0597044..c30276e 100644
+--- a/desktop/pybitmessage.desktop
++++ b/desktop/pybitmessage.desktop
+@@ -6,4 +6,4 @@ Comment=Send encrypted messages
  Exec=pybitmessage %F
  Icon=pybitmessage
  Terminal=false

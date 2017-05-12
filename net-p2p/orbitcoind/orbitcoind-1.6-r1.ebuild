@@ -15,6 +15,7 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="examples ipv6 upnp"
 
+DEPEND+="virtual/awk"
 RDEPEND+="virtual/bitcoin-leveldb"
 
 S="${WORKDIR}"/${COIN_NAME^}-${MY_PV}

@@ -1,0 +1,17 @@
+--- src/net.cpp~	2016-09-22 11:52:28.000000000 +0300
++++ src/net.cpp	2017-05-19 13:58:59.012479468 +0300
+@@ -16,10 +16,10 @@
+ #endif
+ 
+ #ifdef USE_UPNP
+-#include <miniwget.h>
+-#include <miniupnpc.h>
+-#include <upnpcommands.h>
+-#include <upnperrors.h>
++#include <miniupnpc/miniwget.h>
++#include <miniupnpc/miniupnpc.h>
++#include <miniupnpc/upnpcommands.h>
++#include <miniupnpc/upnperrors.h>
+ #endif
+ 
+ using namespace std;

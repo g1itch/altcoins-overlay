@@ -7,19 +7,20 @@ COIN_SYMBOL="BEEZ"
 
 inherit versionator altcoin
 
-MY_PN="BeezerCoin"
+MyPN="BeezerCoin"
 HOMEPAGE="http://scrypt.ispace.co.uk/beezercoin"
 COMMIT="ba6eb17c74372907fcc5d89e5e8069b6d3e8985a"
-SRC_URI="https://github.com/Marty19/${MY_PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/Marty19/${MyPN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
+IUSE="examples ipv6 upnp"
 
-RDEPEND+="virtual/bitcoin-leveldb"
+S="${WORKDIR}/${MyPN}-${COMMIT}"
 
-S="${WORKDIR}/${MY_PN}-${COMMIT}"
 
 src_prepare() {
-	rm Makefile
+	local PVM=$(get_version_component_range 1-2)
+	epatch "${FILESDIR}"/${PVM}-miniupnpc_include.patch
+	epatch "${FILESDIR}"/${PVM}-miniupnpc_1.9.patch
 }

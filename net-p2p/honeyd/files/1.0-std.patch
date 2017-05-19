@@ -1,0 +1,11 @@
+--- src/makefile.unix~	2017-05-19 17:40:11.000000000 +0300
++++ src/makefile.unix	2017-05-19 17:41:58.510308896 +0300
+@@ -93,7 +93,7 @@
+ 
+ # CXXFLAGS can be specified on the make command line, so we use xCXXFLAGS that only
+ # adds some defaults in front. Unfortunately, CXXFLAGS=... $(CXXFLAGS) does not work.
+-xCXXFLAGS=-O2 $(EXT_OPTIONS) -pthread -Wall -Wextra -Wno-ignored-qualifiers -Wformat -Wformat-security -Wno-unused-parameter \
++xCXXFLAGS=-std=c++11 -O2 $(EXT_OPTIONS) -pthread -Wall -Wextra -Wno-ignored-qualifiers -Wformat -Wformat-security -Wno-unused-parameter \
+     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
+ 
+ # LDFLAGS can be specified on the make command line, so we use xLDFLAGS that only

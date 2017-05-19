@@ -1,0 +1,11 @@
+--- src/chainparams.cpp~	2017-04-06 05:49:59.000000000 +0300
++++ src/chainparams.cpp	2017-05-19 18:31:11.474178701 +0300
+@@ -104,7 +104,7 @@
+         base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x50)(0x9E)(0x4)(0x2F).convert_to_container<std::vector<unsigned char> >();
+ 
+         // Honey dns seeds
+-        vSeeds.push_back(CDNSSeedData("ForkSeed",  "104.129.5.209"));
++         // vSeeds.push_back(CDNSSeedData("ForkSeed",  "104.129.5.209"));
+          // vSeeds.push_back(CDNSSeedData("Seed01",  "91.134.120.210"));
+          // vSeeds.push_back(CDNSSeedData("Seed02",  "64.137.250.17"));
+          // vSeeds.push_back(CDNSSeedData("bit-coin.pw", "node.bit-coin.pw")); // seed nodes from user krilson

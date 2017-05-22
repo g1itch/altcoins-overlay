@@ -5,17 +5,14 @@
 EAPI=5
 inherit eutils autotools flag-o-matic
 
-COMMIT="0155cd1bfe8b1ca67079fe9130e5e1da03d5b820"
 DESCRIPTION="Optimized multi algo CPU miner"
 HOMEPAGE="https://github.com/JayDDee/${PN}"
-SRC_URI="${HOMEPAGE}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="${HOMEPAGE}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
-
-S="${WORKDIR}/${PN}-${COMMIT}"
 
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}

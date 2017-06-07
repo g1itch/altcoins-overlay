@@ -1,0 +1,40 @@
+--- src/txdb-leveldb.cpp~	2016-12-21 21:20:17.000000000 +0200
++++ src/txdb-leveldb.cpp	2017-06-07 13:21:51.956638014 +0300
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"
+--- src/makefile.unix~	2016-12-21 21:20:17.000000000 +0200
++++ src/makefile.unix	2017-06-07 13:22:44.118191081 +0300
+@@ -3,6 +3,7 @@
+ # file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ 
+ USE_UPNP:=0
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -165,13 +166,17 @@
+ test check: test_shadow FORCE
+ 	./test_shadow
+ 
++OBJS += obj/txdb-leveldb.o
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ 
+ # auto-generated dependencies:

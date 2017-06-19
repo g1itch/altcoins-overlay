@@ -4,12 +4,13 @@
 
 EAPI=5
 COIN_NEEDS_SSL=0
+MY_PV=${PV/_/}
 
 inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Litecoin crypto-currency"
 HOMEPAGE="https://litecoin.org/"
-SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}-project/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${MY_PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"

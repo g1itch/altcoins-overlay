@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Gentoo Foundation
+# Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
@@ -7,30 +7,25 @@ COIN_SYMBOL="ANC"
 
 inherit altcoin versionator
 
+MY_PV=5e441d8
 DESCRIPTION="Command-line JSON-RPC client for Anoncoin crypto-currency"
 HOMEPAGE="https://anoncoin.net/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+
+RESTRICT="nomirror"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE=""
 
-RDEPEND+="virtual/bitcoin-leveldb"
-
-src_prepare() {
-	rm -r src/leveldb
-	local PVM=$(get_version_component_range 1-2)
-	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
-	eautoreconf
-}
+S="${WORKDIR}"/${COIN_NAME}-${MY_PV}
 
 src_configure() {
-	econf --with-gui=no \
-		  --disable-tests \
+	econf --disable-tests \
+		  --without-gui \
 		  --without-daemon \
 		  --without-libs \
-		  --with-utils \
-		  --with-system-leveldb
+		  --with-utils
 }
 
 src_install() {

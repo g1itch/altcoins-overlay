@@ -12,7 +12,7 @@ inherit distutils-r1 gnome2-utils
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="a3a55e53c4e4c4e1b3bf2125b781e01e76a0786b"
+COMMIT="cc3cf777596f43be63310daeae804bd640b015f9"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -22,14 +22,14 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="libressl ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/linguas_}"
+IUSE="libressl +msgpack ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/linguas_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
 
 RDEPEND="${DEPEND}
-	|| ( dev-python/msgpack[${PYTHON_USEDEP}]
-		 dev-python/u-msgpack[${PYTHON_USEDEP}] )
+	msgpack? ( || ( dev-python/msgpack[${PYTHON_USEDEP}]
+		 dev-python/u-msgpack[${PYTHON_USEDEP}] ) )
 	!libressl? ( dev-libs/openssl:0[-bindist] )
 	libressl? ( dev-libs/libressl )
 	ncurses? ( dev-python/pythondialog[${PYTHON_USEDEP}] )
@@ -48,7 +48,6 @@ S="${WORKDIR}"/${MY_PN}-${COMMIT}
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/0.6.2-ipv6.patch
-	"${FILESDIR}"/0.6.2-new-packages.patch
 )
 
 src_prepare() {

@@ -18,7 +18,7 @@ IUSE=""
 
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}"/${MyPN}-${COMMIT}
+S="${WORKDIR}"/${MyPN}-${MY_PV}
 
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack

@@ -7,7 +7,7 @@ COIN_SYMBOL="BTA"
 # COIN_FAMILY="DASH" ?
 MY_PN="BATAd"
 MyPN="BATA-SOURCE"
-MY_PV=${PV}-rc1_Linux64
+MY_PV=${PV}_Linux64_4
 
 inherit versionator altcoin
 

@@ -4,7 +4,7 @@
 
 EAPI=5
 MyPN="BATA-SOURCE"
-MY_PV=${PV}-rc1_Linux64
+MY_PV=${PV}_Linux64_4
 
 inherit altcoin
 

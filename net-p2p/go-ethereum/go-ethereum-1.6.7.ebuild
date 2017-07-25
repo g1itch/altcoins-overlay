@@ -4,8 +4,8 @@
 EAPI=6
 
 DESCRIPTION="Official golang implementation of the Ethereum protocol"
-HOMEPAGE="https://github.com/ethereum/go-ethereum"
-SRC_URI="https://github.com/ethereum/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+HOMEPAGE="https://github.com/ethereum/${PN}"
+SRC_URI="${HOMEPAGE}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3+ LGPL-3+"
 SLOT="0"
@@ -29,6 +29,6 @@ src_install() {
 
 	dobin build/bin/geth
 	use evm && dobin build/bin/evm
-        newinitd "${FILESDIR}"/geth.initd geth
-        newconfd "${FILESDIR}"/geth.confd geth
+		newinitd "${FILESDIR}"/geth.initd geth
+		newconfd "${FILESDIR}"/geth.confd geth
 }

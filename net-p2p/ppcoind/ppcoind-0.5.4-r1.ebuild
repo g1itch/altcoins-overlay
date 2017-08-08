@@ -4,12 +4,13 @@
 
 EAPI=5
 COIN_SYMBOL="PPC"
+MY_CN="peercoin"
 MY_PV="${PV}ppc"
 
 inherit altcoin
 
 HOMEPAGE="http://peercoin.net/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/${MY_CN}/${MY_CN}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"

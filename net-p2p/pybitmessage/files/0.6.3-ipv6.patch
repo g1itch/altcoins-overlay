@@ -1,0 +1,90 @@
+diff --git a/src/class_outgoingSynSender.py b/src/class_outgoingSynSender.py
+index 9b3eac1..7f9b297 100644
+--- a/src/class_outgoingSynSender.py
++++ b/src/class_outgoingSynSender.py
+@@ -45,17 +45,23 @@ class outgoingSynSender(threading.Thread, StoppableThread):
+                     with knownnodes.knownNodesLock:
+                         peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
+                         priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
+-                except ValueError: # no known nodes
++                except ValueError:  # no known nodes
+                     self.stop.wait(1)
+                     continue
++
++                try:
++                    peer_is_onion = peer.host.find(".onion") != -1
++                except AttributeError:
++                    logger.error("Peer host is %r!", peer.host)
++                    continue
+                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
+-                    if peer.host.find(".onion") == -1:
++                    if not peer_is_onion:
+                         priority /= 10 # hidden services have 10x priority over plain net
+                     else:
+                         # don't connect to self
+                         if peer.host == BMConfigParser().get('bitmessagesettings', 'onionhostname') and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport"):
+                             continue
+-                elif peer.host.find(".onion") != -1: # onion address and so proxy
++                elif peer_is_onion:  # onion address and so proxy
+                     continue
+                 if priority <= 0.001: # everyone has at least this much priority
+                     priority = 0.001
+diff --git a/src/class_receiveDataThread.py b/src/class_receiveDataThread.py
+index 4e86196..fc40ea9 100644
+--- a/src/class_receiveDataThread.py
++++ b/src/class_receiveDataThread.py
+@@ -568,7 +568,10 @@ class receiveDataThread(threading.Thread):
+             hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+             return hostStandardFormat
+         else:
+-            hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
++            try:
++                hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
++            except ValueError:
++                return False
+             if hostStandardFormat == "":
+                 # This can happen on Windows systems which are not 64-bit compatible 
+                 # so let us drop the IPv6 address. 
+diff --git a/src/class_sendDataThread.py b/src/class_sendDataThread.py
+index 792fedd..34e638d 100644
+--- a/src/class_sendDataThread.py
++++ b/src/class_sendDataThread.py
+@@ -143,6 +143,8 @@ class sendDataThread(threading.Thread):
+                         payload = ''
+                         for hostDetails in data:
+                             timeLastReceivedMessageFromThisNode, streamNumber, services, host, port = hostDetails
++                            if host is None:
++                                break
+                             payload += pack(
+                                 '>Q', timeLastReceivedMessageFromThisNode)  # now uses 64-bit time
+                             payload += pack('>I', streamNumber)
+diff --git a/src/class_singleListener.py b/src/class_singleListener.py
+index 7626542..85d0dcb 100644
+--- a/src/class_singleListener.py
++++ b/src/class_singleListener.py
+@@ -96,7 +96,8 @@ class singleListener(threading.Thread, StoppableThread):
+                               errno.EPFNOSUPPORT,
+                               errno.EADDRNOTAVAIL,
+                               errno.ENOPROTOOPT,
+-                              errno.EINVAL)):
++                              errno.EINVAL,
++                              'getsockaddrarg: bad family')):
+                 sock = self._createListenSocket(socket.AF_INET)
+             else:
+                 raise
+diff --git a/src/protocol.py b/src/protocol.py
+index 7ad0db1..243ff96 100644
+--- a/src/protocol.py
++++ b/src/protocol.py
+@@ -99,7 +99,10 @@ def checkIPAddress(host, private=False):
+             return False
+         return hostStandardFormat
+     else:
+-        hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
++        try:
++            hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
++        except ValueError:
++            return False
+         if hostStandardFormat == "":
+             # This can happen on Windows systems which are not 64-bit compatible 
+             # so let us drop the IPv6 address. 

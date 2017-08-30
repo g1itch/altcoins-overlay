@@ -7,10 +7,10 @@ COIN_SYMBOL="BTA"
 # COIN_FAMILY="DASH" ?
 MY_PN="BATAd"
 MyPN="BATA-SOURCE"
-MY_PV=${PV}_Linux64_4
 
-inherit versionator altcoin
+inherit altcoin
 
+MY_PV=${PV}-Linux
 HOMEPAGE="http://www.bata.io/"
 SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
@@ -25,8 +25,7 @@ S="${WORKDIR}"/${MyPN}-${MY_PV}
 
 src_prepare() {
 	rm -r src/leveldb
-	local PVM=$(get_version_component_range 1-2)
-	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/0.10-sys_leveldb.patch
 	altcoin_src_prepare
 }
 

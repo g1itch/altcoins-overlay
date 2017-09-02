@@ -12,7 +12,7 @@ inherit distutils-r1 gnome2-utils
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="022e0ce59327eec009f92023660d65ccd9a744f4"
+COMMIT="fc960cbf86d6f948e04d58ee10ed6f1c73233be2"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -52,7 +52,6 @@ PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/0.6.3-ipv6.patch
 	"${FILESDIR}"/0.6.3-notify.patch
-	"${FILESDIR}"/0.6.3-setup-fix.patch
 )
 
 src_prepare() {

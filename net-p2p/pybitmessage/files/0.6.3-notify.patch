@@ -1,5 +1,5 @@
 diff --git a/setup.py b/setup.py
-index 0da5680..31550c7 100644
+index 9357284..178b8c6 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -2,6 +2,7 @@
@@ -46,7 +46,7 @@ index 0da5680..31550c7 100644
              },
              classifiers=[
                  "License :: OSI Approved :: MIT License"
-@@ -271,16 +284,36 @@ if __name__ == "__main__":
+@@ -271,16 +284,39 @@ if __name__ == "__main__":
                  'translations/*.ts', 'translations/*.qm',
                  'images/*.png', 'images/*.ico', 'images/*.icns'
              ]},
@@ -74,6 +74,9 @@ index 0da5680..31550c7 100644
 +                    '[gir, notify2]'
 +                ],
 +                'bitmessage.notification.sound': [
++                    'theme.canberra = pybitmessage.plugins.sound_canberra',
++                    'file.gstreamer = pybitmessage.plugins.sound_gstreamer'
++                    '[gir]',
 +                    'file.fallback = pybitmessage.plugins.sound_playfile'
 +                    '[sound]'
 +                ],
@@ -88,7 +91,7 @@ index 0da5680..31550c7 100644
              scripts=['src/pybitmessage'],
              cmdclass={'install': InstallCmd}
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 014831b..23fa546 100644
+index 014831b..dd77b7e 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -1,21 +1,10 @@
@@ -162,7 +165,18 @@ index 014831b..23fa546 100644
  
      # the maximum frequency of message sounds in seconds
      maxSoundFrequencySec = 60
-@@ -868,14 +850,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -349,6 +331,10 @@ class MyForm(settingsmixin.SMainWindow):
+             _translate(
+                 "MainWindow", "Set avatar..."),
+             self.on_action_AddressBookSetAvatar)
++        self.actionAddressBookSetSound = \
++            self.ui.addressBookContextMenuToolbar.addAction(
++                _translate("MainWindow", "Set notification sound..."),
++                self.on_action_AddressBookSetSound)
+         self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(
+             _translate(
+                 "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
+@@ -868,14 +854,6 @@ class MyForm(settingsmixin.SMainWindow):
              self.raise_()
              self.activateWindow()
  
@@ -177,7 +191,7 @@ index 014831b..23fa546 100644
      # show the application window
      def appIndicatorShow(self):
          if self.actionShow is None:
-@@ -905,32 +879,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -905,32 +883,19 @@ class MyForm(settingsmixin.SMainWindow):
              self.appIndicatorShowOrHideWindow()"""
  
      # Show the program window and select inbox tab
@@ -217,7 +231,7 @@ index 014831b..23fa546 100644
  
      # Show the program window and select send tab
      def appIndicatorSend(self):
-@@ -1228,261 +1189,135 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1228,261 +1193,135 @@ class MyForm(settingsmixin.SMainWindow):
          self.tray.setContextMenu(m)
          self.tray.show()
  
@@ -384,9 +398,9 @@ index 014831b..23fa546 100644
 -        # whether to play a sound or not
 -        play = True
 +        def _choose_ext(basename):
-+            for ext in ('.wav', '.mp3', '.oga'):
-+                if os.path.isfile(basename + ext):
-+                    return ext
++            for ext in sound.extensions:
++                if os.path.isfile(os.extsep.join([basename, ext])):
++                    return os.extsep + ext
  
          # if the address had a known label in the address book
 -        if label is not None:
@@ -515,7 +529,7 @@ index 014831b..23fa546 100644
 +
 +        try:
 +            self.indicatorUpdate = get_plugin('indicator')(self)
-+        except TypeError:
++        except (NameError, TypeError):
 +            self.indicatorUpdate = _noop_update
  
      # initialise the message notifier
@@ -572,7 +586,7 @@ index 014831b..23fa546 100644
  
      # tree
      def treeWidgetKeyPressEvent(self, event):
-@@ -1663,15 +1498,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1663,15 +1502,18 @@ class MyForm(settingsmixin.SMainWindow):
  
      def setStatusIcon(self, color):
          # print 'setting status icon color'
@@ -595,7 +609,7 @@ index 014831b..23fa546 100644
              if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                  BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
                  self.statusBar().showMessage(_translate(
-@@ -1689,10 +1527,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1689,10 +1531,11 @@ class MyForm(settingsmixin.SMainWindow):
                  ":/newPrefix/images/yellowicon.png"))
              shared.statusIconColor = 'yellow'
              # if a new connection has been established then show a notification
@@ -611,7 +625,7 @@ index 014831b..23fa546 100644
              self.connected = True
  
              if self.actionStatus is not None:
-@@ -1705,10 +1544,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1705,10 +1548,11 @@ class MyForm(settingsmixin.SMainWindow):
              self.pushButtonStatusIcon.setIcon(
                  QIcon(":/newPrefix/images/greenicon.png"))
              shared.statusIconColor = 'green'
@@ -627,7 +641,7 @@ index 014831b..23fa546 100644
              self.connected = True
  
              if self.actionStatus is not None:
-@@ -2253,11 +2093,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2253,11 +2097,19 @@ class MyForm(settingsmixin.SMainWindow):
          else:
              acct = ret
          self.propagateUnreadCount(acct.address)
@@ -651,7 +665,7 @@ index 014831b..23fa546 100644
          if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
              if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                  self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
-@@ -2851,9 +2699,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2851,9 +2703,6 @@ class MyForm(settingsmixin.SMainWindow):
          shutdown.doCleanShutdown()
          self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
          self.tray.hide()
@@ -661,7 +675,68 @@ index 014831b..23fa546 100644
  
          self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
          shared.thisapp.cleanup()
-@@ -4525,7 +4370,7 @@ def run():
+@@ -3336,6 +3185,7 @@ class MyForm(settingsmixin.SMainWindow):
+         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
+         self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
+         self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
++        self.popMenuAddressBook.addAction(self.actionAddressBookSetSound)
+         self.popMenuAddressBook.addSeparator()
+         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
+         normal = True
+@@ -3739,7 +3589,51 @@ class MyForm(settingsmixin.SMainWindow):
+             return False
+ 
+         return True
+-        
++
++    def on_action_AddressBookSetSound(self):
++        widget = self.ui.tableWidgetAddressBook
++        self.setAddressSound(widget.item(widget.currentRow(), 0).text())
++
++    def setAddressSound(self, addr):
++        filters = [unicode(_translate(
++            "MainWindow", "Sound files (%s)" %
++            ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
++        ))]
++        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
++            self, _translate("MainWindow", "Set notification sound..."),
++            filter=';;'.join(filters)
++        ))
++
++        if not sourcefile:
++            return
++
++        destdir = os.path.join(state.appdata, 'sounds')
++        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
++        destination = os.path.join(destdir, destfile)
++
++        if sourcefile == destination:
++            return
++
++        pattern = destfile.lower()
++        for item in os.listdir(destdir):
++            if item.lower() == pattern:
++                overwrite = QtGui.QMessageBox.question(
++                    self, _translate("MainWindow", "Message"),
++                    _translate(
++                        "MainWindow",
++                        "You have already set a notification sound"
++                        " for this address book entry."
++                        " Do you really want to overwrite it?"),
++                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No
++                ) == QtGui.QMessageBox.Yes
++                if overwrite:
++                    QtCore.QFile.remove(os.path.join(destdir, item))
++                break
++
++        if not QtCore.QFile.copy(sourcefile, destination):
++            logger.error(
++                'couldn\'t copy %s to %s', sourcefile, destination)
++
+     def on_context_menuYourIdentities(self, point):
+         currentItem = self.getCurrentItem()
+         self.popMenuYourIdentities = QtGui.QMenu(self)
+@@ -4525,7 +4419,7 @@ def run():
      myapp = MyForm()
  
      myapp.appIndicatorInit(app)
@@ -672,10 +747,10 @@ index 014831b..23fa546 100644
          'bitmessagesettings', 'dontconnect')
 diff --git a/src/bitmessageqt/sound.py b/src/bitmessageqt/sound.py
 new file mode 100644
-index 0000000..4b6aaf0
+index 0000000..9c86a9a
 --- /dev/null
 +++ b/src/bitmessageqt/sound.py
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,21 @@
 +# -*- coding: utf-8 -*-
 +
 +# sound type constants
@@ -695,6 +770,8 @@ index 0000000..4b6aaf0
 +        SOUND_DISCONNECTED,
 +        SOUND_CONNECTION_GREEN
 +    )
++
++extensions = ('wav', 'mp3', 'oga')
 diff --git a/src/plugins/indicator_libmessaging.py b/src/plugins/indicator_libmessaging.py
 new file mode 100644
 index 0000000..96ab151
@@ -834,6 +911,53 @@ index 288be48..6601ada 100644
 +    """Returns first available plugin `from get_plugins()` if any."""
 +    for plugin in get_plugins(*args, **kwargs):
 +        return plugin
+diff --git a/src/plugins/sound_canberra.py b/src/plugins/sound_canberra.py
+new file mode 100644
+index 0000000..094901e
+--- /dev/null
++++ b/src/plugins/sound_canberra.py
+@@ -0,0 +1,21 @@
++# -*- coding: utf-8 -*-
++
++from pybitmessage.bitmessageqt import sound
++
++import pycanberra
++
++_canberra = pycanberra.Canberra()
++
++_theme = {
++    sound.SOUND_UNKNOWN: 'message-new-email',
++    sound.SOUND_CONNECTED: 'network-connectivity-established',
++    sound.SOUND_DISCONNECTED: 'network-connectivity-lost',
++    sound.SOUND_CONNECTION_GREEN: 'network-connectivity-established'
++}
++
++
++def connect_plugin(category, label=None):
++    try:
++        _canberra.play(0, pycanberra.CA_PROP_EVENT_ID, _theme[category], None)
++    except (KeyError, pycanberra.CanberraException):
++        pass
+diff --git a/src/plugins/sound_gstreamer.py b/src/plugins/sound_gstreamer.py
+new file mode 100644
+index 0000000..062da3f
+--- /dev/null
++++ b/src/plugins/sound_gstreamer.py
+@@ -0,0 +1,14 @@
++# -*- coding: utf-8 -*-
++
++import gi
++gi.require_version('Gst', '1.0')
++from gi.repository import Gst  # noqa: E402
++
++Gst.init(None)
++_player = Gst.ElementFactory.make("playbin", "player")
++
++
++def connect_plugin(sound_file):
++    _player.set_state(Gst.State.NULL)
++    _player.set_property("uri", "file://" + sound_file)
++    _player.set_state(Gst.State.PLAYING)
 diff --git a/src/plugins/sound_playfile.py b/src/plugins/sound_playfile.py
 new file mode 100644
 index 0000000..c8216d0

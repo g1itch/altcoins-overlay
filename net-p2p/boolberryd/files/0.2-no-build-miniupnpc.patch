@@ -1,0 +1,48 @@
+--- CMakeLists.txt~	2017-09-14 13:46:42.000000000 +0300
++++ CMakeLists.txt	2017-09-14 13:48:31.968113341 +0300
+@@ -11,7 +11,7 @@
+ set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+ enable_testing()
+ 
+-include_directories(src contrib contrib/epee/include "${CMAKE_BINARY_DIR}/version")
++include_directories(src contrib/epee/include "${CMAKE_BINARY_DIR}/version")
+ add_definitions(-DSTATICLIB)
+ 
+ set(TESTNET FALSE CACHE BOOL "Compile for testnet")
+--- contrib/CMakeLists.txt~	2017-09-14 13:49:20.000000000 +0300
++++ contrib/CMakeLists.txt	2017-09-14 13:57:40.990612215 +0300
+@@ -1,3 +1,4 @@
++if(MINIUPNPC)
+ set(UPNPC_BUILD_STATIC ON CACHE BOOL "Build static library")
+ set(UPNPC_BUILD_SHARED OFF CACHE BOOL "Build shared library")
+ set(UPNPC_BUILD_TESTS OFF CACHE BOOL "Build test executables")
+@@ -9,3 +10,4 @@
+ elseif(NOT MSVC)
+   set_property(TARGET upnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-undef -Wno-unused-result -Wno-unused-value")
+ endif()
++endif()
+--- src/common/miniupnp_helper.h~	2017-09-14 14:11:31.000000000 +0300
++++ src/common/miniupnp_helper.h	2017-09-14 14:14:42.791997881 +0300
+@@ -67,7 +67,11 @@
+       const char * minissdpdpath = 0;
+ 
+       int error = 0;
++#if MINIUPNPC_API_VERSION < 14
+       m_devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
++#else
++      m_devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 2, &error);
++#endif
+       if(error)
+       {
+         LOG_PRINT_L0("Failed to call upnpDiscover");
+--- src/CMakeLists.txt~	2017-08-02 02:04:57.000000000 +0300
++++ src/CMakeLists.txt	2017-09-14 15:53:06.786398351 +0300
+@@ -51,7 +51,7 @@
+ 
+ add_executable(daemon ${DAEMON} ${P2P} ${CURRENCY_PROTOCOL})
+ add_dependencies(daemon version)
+-target_link_libraries(daemon rpc currency_core crypto common upnpc-static ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES})
++target_link_libraries(daemon rpc currency_core crypto common miniupnpc ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES})
+                      
+ add_executable(connectivity_tool ${CONN_TOOL})
+ add_dependencies(connectivity_tool version)

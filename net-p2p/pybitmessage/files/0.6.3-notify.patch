@@ -1,5 +1,5 @@
 diff --git a/setup.py b/setup.py
-index 9357284..178b8c6 100644
+index 9357284..dc80393 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -2,6 +2,7 @@
@@ -18,10 +18,10 @@ index 9357284..178b8c6 100644
  def compilerToPackages():
      if not detectOS() in compiling:
          return
-@@ -177,6 +179,14 @@ def compilerToPackages():
+@@ -202,6 +204,14 @@ class InstallCmd(install):
+             except (EOFError, NameError):
+                 pass
  
- class InstallCmd(install):
-     def run(self):
 +        # prepare icons directories
 +        os.makedirs('desktop/icons/scalable')
 +        shutil.copyfile(
@@ -30,9 +30,9 @@ index 9357284..178b8c6 100644
 +        shutil.copyfile(
 +            'desktop/icon24.png', 'desktop/icons/24x24/pybitmessage.png')
 +
-         detectOS.result = None
-         prereqs = detectPrereqs()
-         if prereqs and detectOS() in packageManager:
+         return install.run(self)
+ 
+ 
 @@ -253,8 +263,11 @@ if __name__ == "__main__":
              #keywords='',
              install_requires=installRequires,
@@ -91,7 +91,7 @@ index 9357284..178b8c6 100644
              scripts=['src/pybitmessage'],
              cmdclass={'install': InstallCmd}
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 014831b..dd77b7e 100644
+index 014831b..bb90bb4 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -1,21 +1,10 @@
@@ -116,7 +116,25 @@ index 014831b..dd77b7e 100644
  except Exception as err:
      logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
      logger.critical(logmsg, exc_info=True)
-@@ -62,15 +51,15 @@ import platform
+@@ -32,7 +21,7 @@ import shared
+ from bitmessageui import *
+ from bmconfigparser import BMConfigParser
+ import defaults
+-from namecoin import namecoinConnection, ensureNamecoinOptions
++from namecoin import namecoinConnection
+ from newaddressdialog import *
+ from newaddresswizard import *
+ from messageview import MessageView
+@@ -53,31 +42,26 @@ from iconglossary import *
+ from connect import *
+ import locale
+ import sys
+-from time import strftime, localtime, gmtime
+ import time
+ import os
+ import hashlib
+ from pyelliptic.openssl import OpenSSL
+-import platform
  import textwrap
  import debug
  import random
@@ -128,14 +146,23 @@ index 014831b..dd77b7e 100644
  import helper_search
  import l10n
  import openclpow
- import types
+-import types
 -from utils import *
-+from utils import (
-+    str_broadcast_subscribers, str_chan, identiconize, avatarize)
- from collections import OrderedDict
+-from collections import OrderedDict
++from utils import str_broadcast_subscribers, avatarize
  from account import *
- from class_objectHashHolder import objectHashHolder
-@@ -87,9 +76,10 @@ import state
+-from class_objectHashHolder import objectHashHolder
+-from class_singleWorker import singleWorker
+ from dialogs import AddAddressDialog
+ from helper_generic import powQueueSize
+-from inventory import Inventory, PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
++from inventory import (
++    Inventory, PendingDownloadQueue, PendingUpload,
++    PendingUploadDeadlineException)
+ import knownnodes
+ import paths
+ from proofofwork import getPowType
+@@ -87,9 +71,10 @@ import state
  from statusbar import BMStatusBar
  import throttle
  from version import softwareVersion
@@ -147,9 +174,11 @@ index 014831b..dd77b7e 100644
  except ImportError:
      get_plugins = False
  
-@@ -144,16 +134,8 @@ def change_translation(newlocale):
+@@ -142,24 +127,15 @@ def change_translation(newlocale):
+         except:
+             logger.error("Failed to set locale to %s", lang, exc_info=True)
  
- class MyForm(settingsmixin.SMainWindow):
+-class MyForm(settingsmixin.SMainWindow):
  
 -    # sound type constants
 -    SOUND_NONE = 0
@@ -158,14 +187,21 @@ index 014831b..dd77b7e 100644
 -    SOUND_CONNECTED = 3
 -    SOUND_DISCONNECTED = 4
 -    SOUND_CONNECTION_GREEN = 5
--
++class MyForm(settingsmixin.SMainWindow):
+ 
      # the last time that a message arrival sound was played
 -    lastSoundTime = datetime.datetime.now() - datetime.timedelta(days=1)
 +    lastSoundTime = datetime.now() - timedelta(days=1)
  
      # the maximum frequency of message sounds in seconds
      maxSoundFrequencySec = 60
-@@ -349,6 +331,10 @@ class MyForm(settingsmixin.SMainWindow):
+ 
+-    str_chan = '[chan]'
+-    
+     REPLY_TYPE_SENDER = 0
+     REPLY_TYPE_CHAN = 1
+ 
+@@ -349,6 +325,10 @@ class MyForm(settingsmixin.SMainWindow):
              _translate(
                  "MainWindow", "Set avatar..."),
              self.on_action_AddressBookSetAvatar)
@@ -176,7 +212,7 @@ index 014831b..dd77b7e 100644
          self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(
              _translate(
                  "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
-@@ -868,14 +854,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -868,14 +848,6 @@ class MyForm(settingsmixin.SMainWindow):
              self.raise_()
              self.activateWindow()
  
@@ -191,7 +227,7 @@ index 014831b..dd77b7e 100644
      # show the application window
      def appIndicatorShow(self):
          if self.actionShow is None:
-@@ -905,32 +883,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -905,32 +877,19 @@ class MyForm(settingsmixin.SMainWindow):
              self.appIndicatorShowOrHideWindow()"""
  
      # Show the program window and select inbox tab
@@ -231,7 +267,7 @@ index 014831b..dd77b7e 100644
  
      # Show the program window and select send tab
      def appIndicatorSend(self):
-@@ -1228,261 +1193,135 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1228,261 +1187,135 @@ class MyForm(settingsmixin.SMainWindow):
          self.tray.setContextMenu(m)
          self.tray.show()
  
@@ -276,13 +312,13 @@ index 014831b..dd77b7e 100644
      def getUnread(self):
 -        unreadMessages = 0
 -        unreadSubscriptions = 0
--
++        counters = [0, 0]
+ 
 -        queryreturn = sqlQuery(
 -            '''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
 -        for row in queryreturn:
 -            msgid, toAddress, read = row
-+        counters = [0, 0]
- 
+-
 -            try:
 -                if toAddress == str_broadcast_subscribers:
 -                    toLabel = str_broadcast_subscribers
@@ -576,7 +612,7 @@ index 014831b..dd77b7e 100644
 +            if _plugin:
 +                self._player = _plugin
 +            else:
-+                logger.warning("No sound notification.sound plugin found")
++                logger.warning("No notification.sound plugin found")
 +
 +    def notifierShow(
 +            self, title, subtitle, category, label=None, icon=None):
@@ -586,7 +622,7 @@ index 014831b..dd77b7e 100644
  
      # tree
      def treeWidgetKeyPressEvent(self, event):
-@@ -1663,15 +1502,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1663,15 +1496,18 @@ class MyForm(settingsmixin.SMainWindow):
  
      def setStatusIcon(self, color):
          # print 'setting status icon color'
@@ -609,7 +645,7 @@ index 014831b..dd77b7e 100644
              if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                  BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
                  self.statusBar().showMessage(_translate(
-@@ -1689,10 +1531,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1689,10 +1525,11 @@ class MyForm(settingsmixin.SMainWindow):
                  ":/newPrefix/images/yellowicon.png"))
              shared.statusIconColor = 'yellow'
              # if a new connection has been established then show a notification
@@ -625,7 +661,7 @@ index 014831b..dd77b7e 100644
              self.connected = True
  
              if self.actionStatus is not None:
-@@ -1705,10 +1548,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1705,10 +1542,11 @@ class MyForm(settingsmixin.SMainWindow):
              self.pushButtonStatusIcon.setIcon(
                  QIcon(":/newPrefix/images/greenicon.png"))
              shared.statusIconColor = 'green'
@@ -641,7 +677,7 @@ index 014831b..dd77b7e 100644
              self.connected = True
  
              if self.actionStatus is not None:
-@@ -2253,11 +2097,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2253,11 +2091,19 @@ class MyForm(settingsmixin.SMainWindow):
          else:
              acct = ret
          self.propagateUnreadCount(acct.address)
@@ -665,7 +701,7 @@ index 014831b..dd77b7e 100644
          if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
              if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                  self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
-@@ -2851,9 +2703,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2851,9 +2697,6 @@ class MyForm(settingsmixin.SMainWindow):
          shutdown.doCleanShutdown()
          self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
          self.tray.hide()
@@ -675,7 +711,7 @@ index 014831b..dd77b7e 100644
  
          self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
          shared.thisapp.cleanup()
-@@ -3336,6 +3185,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3336,6 +3179,7 @@ class MyForm(settingsmixin.SMainWindow):
          self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
          self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
          self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
@@ -683,7 +719,7 @@ index 014831b..dd77b7e 100644
          self.popMenuAddressBook.addSeparator()
          self.popMenuAddressBook.addAction(self.actionAddressBookNew)
          normal = True
-@@ -3739,7 +3589,51 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3739,7 +3583,51 @@ class MyForm(settingsmixin.SMainWindow):
              return False
  
          return True
@@ -736,7 +772,7 @@ index 014831b..dd77b7e 100644
      def on_context_menuYourIdentities(self, point):
          currentItem = self.getCurrentItem()
          self.popMenuYourIdentities = QtGui.QMenu(self)
-@@ -4525,7 +4419,7 @@ def run():
+@@ -4525,7 +4413,7 @@ def run():
      myapp = MyForm()
  
      myapp.appIndicatorInit(app)

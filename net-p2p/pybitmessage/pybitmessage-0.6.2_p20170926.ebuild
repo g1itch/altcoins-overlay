@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="849583642874d2144e26c49f629de3dd8f82a66b"
+COMMIT="08748fa9aeb992c4ace43e0a9fe2ea487b7b0d75"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -71,6 +71,12 @@ src_install () {
 	distutils-r1_src_install
 	dodoc README.md
 	doman man/${PN}.1.gz
+
+	if use daemon; then
+		local DN="bitmessaged"
+		newconfd "${FILESDIR}"/${DN}.confd  ${DN}
+		newinitd "${FILESDIR}"/${DN}.initd ${DN}
+	fi
 }
 
 pkg_preinst() {

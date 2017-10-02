@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# Copyright 2017 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+bitmessage_user=${bitmessage_user:-blockchain}
+bitmessage_datadir=${bitmessage_datadir:-/var/lib/${SVCNAME}}
+
+command="/usr/bin/pybitmessage"
+command_args="-d"
+start_stop_daemon_args="-N ${NICELEVEL:-20} \
+-u ${bitmessage_user} -e BITMESSAGE_HOME=${bitmessage_datadir}"
+pidfile="${bitmessage_datadir}/singleton.lock"
+
+start_pre() {
+    checkpath -d \
+	--mode 0750 \
+	--owner "${bitmessage_user}" \
+	"${bitmessage_datadir}"
+}

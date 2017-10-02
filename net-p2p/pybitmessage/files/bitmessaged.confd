@@ -1,0 +1,5 @@
+# User to run pybitmessage as
+# bitmessage_user=blockchain
+
+# Where to store keys.dat and messages.dat
+# bitmessage_datadir=

@@ -1,0 +1,131 @@
+--- a/src/bitmessageqt/__init__.py
++++ b/src/bitmessageqt/__init__.py
+@@ -2119,25 +2119,31 @@ class MyForm(settingsmixin.SMainWindow):
+                     self.statusBar().showMessage(_translate(
+                         "MainWindow", "Sending email gateway registration request"), 10000)
+ 
+-    def click_pushButtonAddAddressBook(self):
+-        self.AddAddressDialogInstance = AddAddressDialog(self)
+-        if self.AddAddressDialogInstance.exec_():
+-            if self.AddAddressDialogInstance.ui.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
++    def click_pushButtonAddAddressBook(self, dialog=None):
++        if not dialog:
++            dialog = AddAddressDialog(self)
++        if dialog.exec_():
++            if dialog.ui.labelAddressCheck.text() == \
++                    _translate("MainWindow", "Address is valid."):
+                 # First we must check to see if the address is already in the
+                 # address book. The user cannot add it again or else it will
+                 # cause problems when updating and deleting the entry.
+-                address = addBMIfNotPresent(str(
+-                    self.AddAddressDialogInstance.ui.lineEditAddress.text()))
+-                label = self.AddAddressDialogInstance.ui.newAddressLabel.text().toUtf8()
+-                self.addEntryToAddressBook(address,label)
++                address = addBMIfNotPresent(
++                    str(dialog.ui.lineEditAddress.text()))
++                label = str(dialog.ui.newAddressLabel.text().toUtf8())
++                self.addEntryToAddressBook(address, label)
+             else:
+                 self.statusBar().showMessage(_translate(
+-                    "MainWindow", "The address you entered was invalid. Ignoring it."), 10000)
++                    "MainWindow",
++                    "The address you entered was invalid. Ignoring it."
++                ), 10000)
+ 
+-    def addEntryToAddressBook(self,address,label):
+-        queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
++    def addEntryToAddressBook(self, address, label):
++        queryreturn = sqlQuery(
++            '''select * from addressbook where address=?''', address)
+         if queryreturn == []:
+-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
++            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
++                       label, address)
+             self.rerenderMessagelistFromLabels()
+             self.rerenderMessagelistToLabels()
+             self.rerenderAddressBook()
+@@ -2910,19 +2916,10 @@ class MyForm(settingsmixin.SMainWindow):
+         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
+         addressAtCurrentInboxRow = tableWidget.item(
+             currentInboxRow, 1).data(Qt.UserRole)
+-        # Let's make sure that it isn't already in the address book
+-        queryreturn = sqlQuery('''select * from addressbook where address=?''',
+-                               addressAtCurrentInboxRow)
+-        if queryreturn == []:
+-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
+-                       '--New entry. Change label in Address Book.--',
+-                       addressAtCurrentInboxRow)
+-            self.rerenderAddressBook()
+-            self.statusBar().showMessage(_translate(
+-                "MainWindow", "Entry added to the Address Book. Edit the label to your liking."), 10000)
+-        else:
+-            self.statusBar().showMessage(_translate(
+-                "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."), 10000)
++        self.ui.tabWidget.setCurrentIndex(1)
++        dialog = AddAddressDialog(self)
++        dialog.ui.lineEditAddress.setText(addressAtCurrentInboxRow)
++        self.click_pushButtonAddAddressBook(dialog)
+ 
+     def on_action_InboxAddSenderToBlackList(self):
+         tableWidget = self.getCurrentMessagelist()
+diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
+index bb90bb4..0cedf8c 100644
+--- a/src/bitmessageqt/__init__.py
++++ b/src/bitmessageqt/__init__.py
+@@ -864,6 +864,12 @@ class MyForm(settingsmixin.SMainWindow):
+             self.actionShow.setChecked(False)
+             self.appIndicatorShowOrHideWindow()
+ 
++    def appIndicatorSwitchQuietMode(self):
++        BMConfigParser().set(
++            'bitmessagesettings', 'showtraynotifications',
++            str(not self.actionQuiet.isChecked())
++        )
++
+     # application indicator show or hide
+     """# application indicator show or hide
+     def appIndicatorShowBitmessage(self):
+@@ -1157,6 +1163,14 @@ class MyForm(settingsmixin.SMainWindow):
+         if not sys.platform[0:3] == 'win':
+             m.addAction(self.actionShow)
+ 
++        # quiet mode
++        self.actionQuiet = QtGui.QAction(_translate(
++            "MainWindow", "Quiet Mode"), m, checkable=True)
++        self.actionQuiet.setChecked(not BMConfigParser().getboolean(
++            'bitmessagesettings', 'showtraynotifications'))
++        self.actionQuiet.triggered.connect(self.appIndicatorSwitchQuietMode)
++        m.addAction(self.actionQuiet)
++
+         # Send
+         actionSend = QtGui.QAction(_translate(
+             "MainWindow", "Send"), m, checkable=False)
+diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
+index bb90bb4..15efee0 100644
+--- a/src/bitmessageqt/__init__.py
++++ b/src/bitmessageqt/__init__.py
+@@ -3980,8 +3980,9 @@ class settingsDialog(QtGui.QDialog):
+         else:
+             try:
+                 import tempfile
+-                file = tempfile.NamedTemporaryFile(dir=paths.lookupExeFolder(), delete=True)
+-                file.close # should autodelete
++                tempfile.NamedTemporaryFile(
++                    dir=paths.lookupExeFolder(), delete=True
++                ).close()  # should autodelete
+             except:
+                 self.ui.checkBoxPortableMode.setDisabled(True)
+ 
+diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
+index 15efee0..b6f103b 100644
+--- a/src/bitmessageqt/__init__.py
++++ b/src/bitmessageqt/__init__.py
+@@ -1985,7 +1985,7 @@ class MyForm(settingsmixin.SMainWindow):
+         err, addr = nc.query(identities[-1].strip())
+         if err is not None:
+             self.statusBar().showMessage(_translate(
+-                "MainWindow", "Error: " + err), 10000)
++                "MainWindow", "Error: %1").arg(err), 10000)
+         else:
+             identities[-1] = addr
+             self.ui.lineEditTo.setText("; ".join(identities))

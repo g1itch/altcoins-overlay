@@ -1,0 +1,81 @@
+diff --git a/src/class_singleCleaner.py b/src/class_singleCleaner.py
+index 2e4140b..d82d09f 100644
+--- a/src/class_singleCleaner.py
++++ b/src/class_singleCleaner.py
+@@ -68,7 +68,7 @@ class singleCleaner(threading.Thread, StoppableThread):
+             # If we are running as a daemon then we are going to fill up the UI
+             # queue which will never be handled by a UI. We should clear it to
+             # save memory.
+-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
++            if shared.thisapp.daemon:
+                 queues.UISignalQueue.queue.clear()
+             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
+                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
+diff --git a/src/helper_generic.py b/src/helper_generic.py
+index b750e51..933d6d3 100644
+--- a/src/helper_generic.py
++++ b/src/helper_generic.py
+@@ -6,7 +6,7 @@ from multiprocessing import current_process
+ from threading import current_thread, enumerate
+ import traceback
+ 
+-from bmconfigparser import BMConfigParser
++import shared
+ from debug import logger
+ import queues
+ import shutdown
+@@ -54,7 +54,7 @@ def signal_handler(signal, frame):
+     if current_thread().name != "PyBitmessage":
+         return
+     logger.error("Got signal %i", signal)
+-    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
++    if shared.thisapp.daemon:
+         shutdown.doCleanShutdown()
+     else:
+         allThreadTraceback(frame)
+diff --git a/src/shutdown.py b/src/shutdown.py
+index a066104..3831644 100644
+--- a/src/shutdown.py
++++ b/src/shutdown.py
+@@ -5,7 +5,6 @@ import time
+ 
+ from class_outgoingSynSender import outgoingSynSender
+ from class_sendDataThread import sendDataThread
+-from bmconfigparser import BMConfigParser
+ from debug import logger
+ from helper_sql import sqlQuery, sqlStoredProcedure
+ from helper_threading import StoppableThread
+@@ -66,7 +65,7 @@ def doCleanShutdown():
+             except Queue.Empty:
+                 break
+ 
+-    if BMConfigParser().safeGetBoolean('bitmessagesettings','daemon'):
++    if shared.thisapp.daemon:
+         logger.info('Clean shutdown complete.')
+         shared.thisapp.cleanup()
+         os._exit(0)
+diff --git a/src/tr.py b/src/tr.py
+index c185690..cf7f16a 100644
+--- a/src/tr.py
++++ b/src/tr.py
+@@ -1,6 +1,6 @@
+ import os
+ 
+-from bmconfigparser import BMConfigParser
++import shared
+ 
+ # This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
+ class translateClass:
+@@ -17,7 +17,11 @@ def _translate(context, text, disambiguation = None, encoding = None, n = None):
+     return translateText(context, text, n)
+ 
+ def translateText(context, text, n = None):
+-    if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
++    try:
++        is_daemon = shared.thisapp.daemon
++    except AttributeError:  # inside the plugin
++        is_daemon = False
++    if not is_daemon:
+         try:
+             from PyQt4 import QtCore, QtGui
+         except Exception as err:

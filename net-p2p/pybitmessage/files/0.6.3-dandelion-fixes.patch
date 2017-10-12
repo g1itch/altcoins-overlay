@@ -1,0 +1,11 @@
+--- a/src/class_singleCleaner.py
++++ b/src/class_singleCleaner.py
+@@ -128,7 +128,7 @@ class singleCleaner(threading.Thread, StoppableThread):
+             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+                 connection.clean()
+             # dandelion fluff trigger by expiration
+-            for h, t in DandelionStems().timeouts:
++            for h, t in DandelionStems().timeouts.iteritems():
+                 if time.time() > t:
+                     DandelionStems().remove(h)
+ 

@@ -68,32 +68,3 @@
  
      def on_action_InboxAddSenderToBlackList(self):
          tableWidget = self.getCurrentMessagelist()
-diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index bb90bb4..15efee0 100644
---- a/src/bitmessageqt/__init__.py
-+++ b/src/bitmessageqt/__init__.py
-@@ -3980,8 +3980,9 @@ class settingsDialog(QtGui.QDialog):
-         else:
-             try:
-                 import tempfile
--                file = tempfile.NamedTemporaryFile(dir=paths.lookupExeFolder(), delete=True)
--                file.close # should autodelete
-+                tempfile.NamedTemporaryFile(
-+                    dir=paths.lookupExeFolder(), delete=True
-+                ).close()  # should autodelete
-             except:
-                 self.ui.checkBoxPortableMode.setDisabled(True)
- 
-diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 15efee0..b6f103b 100644
---- a/src/bitmessageqt/__init__.py
-+++ b/src/bitmessageqt/__init__.py
-@@ -1985,7 +1985,7 @@ class MyForm(settingsmixin.SMainWindow):
-         err, addr = nc.query(identities[-1].strip())
-         if err is not None:
-             self.statusBar().showMessage(_translate(
--                "MainWindow", "Error: " + err), 10000)
-+                "MainWindow", "Error: %1").arg(err), 10000)
-         else:
-             identities[-1] = addr
-             self.ui.lineEditTo.setText("; ".join(identities))

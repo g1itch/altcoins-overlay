@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="a746ba9da7ea51ab6fd308ee502d53307720efee"
+COMMIT="4b40d4bce1a9a23abda072d502a5e2adc89e7498"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -67,8 +67,6 @@ src_prepare() {
 		use linguas_${lang} || \
 			rm -f src/translations/bitmessage_${lang}.{ts,qm}
 	done
-
-	cp "${FILESDIR}"/can-icon.svg desktop/
 }
 
 src_install () {

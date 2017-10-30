@@ -1,6 +1,5 @@
 # Copyright 2016-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="VRC"
@@ -8,7 +7,7 @@ COIN_SYMBOL="VRC"
 inherit versionator altcoin
 
 HOMEPAGE="http://www.vericoin.info/"
-COMMIT="a9600333852ca0ed226d2fde3347bb48bd4fe0f5"
+COMMIT="0d853092265274b943999815957637051b99b5dc"
 SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
@@ -23,6 +22,5 @@ S="${WORKDIR}/${COIN_NAME}-${COMMIT}"
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
-	epatch "${FILESDIR}"/${PVM}-miniupnpc_1.9.patch
 	altcoin_src_prepare
 }

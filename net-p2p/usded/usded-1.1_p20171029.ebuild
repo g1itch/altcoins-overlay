@@ -11,13 +11,14 @@ inherit altcoin
 
 HOMEPAGE="http://usde.co/"
 MyPN="${COIN_NAME}-master"
-SRC_URI="https://github.com/owner232/${MyPN}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
+COMMIT="c7b7e11d5bb32cb93ee1f3ffd63535b57cf798a8"
+SRC_URI="https://github.com/owner232/${MyPN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="cpu_flags_x86_sse2 examples ipv6 upnp"
 
-S="${WORKDIR}/${MyPN}-${MY_PV}"
+S="${WORKDIR}/${MyPN}-${COMMIT}"
 
 
 src_prepare() {

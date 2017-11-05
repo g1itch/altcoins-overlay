@@ -36,6 +36,6 @@ src_configure() {
 src_install() {
 	dobin src/${PN}
 
-	newman contrib/debian/manpages/bitcoin-cli.1 ${PN}.1
+	newman doc/man/litecoin-cli.1 ${PN}.1
 	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
 }

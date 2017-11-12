@@ -12,7 +12,7 @@ SRC_URI="https://github.com/onsightit/${COIN_NAME}/archive/${MY_PV}.tar.gz -> ${
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="cpu_flags_x86_sse2 examples upnp +wallet zmq"
 
 RDEPEND+="

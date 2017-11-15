@@ -1,6 +1,5 @@
 # Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="USDE"
@@ -11,7 +10,7 @@ inherit altcoin
 
 HOMEPAGE="http://usde.co/"
 MyPN="${COIN_NAME}-master"
-COMMIT="c7b7e11d5bb32cb93ee1f3ffd63535b57cf798a8"
+COMMIT="94d2e72b1a5e51abe1ccdf511efd9979dc14f36c"
 SRC_URI="https://github.com/owner232/${MyPN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
@@ -25,6 +24,7 @@ src_prepare() {
 	rm .gitattributes .gitignore
 	mkdir -p src/obj/zerocoin
 	epatch "${FILESDIR}"/1.0-sys_leveldb.patch
+	epatch "${FILESDIR}"/1.0-miniupnpc_1.9.patch
 	altcoin_src_prepare
 }
 

@@ -1,6 +1,5 @@
 # Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="DASH"
@@ -22,7 +21,7 @@ RDEPEND+="
 
 src_prepare() {
 	rm -r src/leveldb
-	local PVM=$(get_version_component_range 1-3)
+	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	eautoreconf
 }

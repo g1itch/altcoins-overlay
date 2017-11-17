@@ -1,6 +1,5 @@
 # Copyright 2015-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="SLR"
@@ -18,6 +17,8 @@ RDEPEND+="virtual/bitcoin-leveldb"
 
 
 src_prepare() {
-	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch
+	local PVM=$(get_version_component_range 1-2)
+	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-miniupnpc_1.9.patch
 	altcoin_src_prepare
 }

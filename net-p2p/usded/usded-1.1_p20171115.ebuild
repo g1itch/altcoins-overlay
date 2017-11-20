@@ -10,7 +10,7 @@ inherit altcoin
 
 HOMEPAGE="http://usde.co/"
 MyPN="${COIN_NAME}-master"
-COMMIT="94d2e72b1a5e51abe1ccdf511efd9979dc14f36c"
+COMMIT="5d10c2717f25c618c0637f2294c67ea46e2b5d74"
 SRC_URI="https://github.com/owner232/${MyPN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
@@ -24,7 +24,6 @@ src_prepare() {
 	rm .gitattributes .gitignore
 	mkdir -p src/obj/zerocoin
 	epatch "${FILESDIR}"/1.0-sys_leveldb.patch
-	epatch "${FILESDIR}"/1.0-miniupnpc_1.9.patch
 	altcoin_src_prepare
 }
 

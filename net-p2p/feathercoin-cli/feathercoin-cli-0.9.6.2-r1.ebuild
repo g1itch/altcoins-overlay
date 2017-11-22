@@ -7,7 +7,8 @@ inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Feathercoin crypto-currency"
 HOMEPAGE="http://feathercoin.com/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+MY_PV=${PV}-prod
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -15,7 +16,7 @@ IUSE=""
 
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}"/${COIN_NAME^}-${PV}
+S="${WORKDIR}"/${COIN_NAME^}-${MY_PV}
 
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack

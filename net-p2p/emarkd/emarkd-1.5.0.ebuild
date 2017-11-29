@@ -1,6 +1,5 @@
 # Copyright 2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="DEM"
@@ -21,7 +20,7 @@ RDEPEND+="virtual/bitcoin-leveldb"
 S="${WORKDIR}"/${MY_PN:0:-1}-${PV}
 
 src_prepare() {
-	epatch "${FILESDIR}"/1-sys_leveldb.patch
+	epatch "${FILESDIR}"/1.4-sys_leveldb.patch
 	altcoin_src_prepare
 }
 

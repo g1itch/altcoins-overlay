@@ -6,7 +6,7 @@ inherit eutils autotools flag-o-matic
 
 DESCRIPTION="Optimized multi algo CPU miner"
 HOMEPAGE="https://github.com/JayDDee/${PN}"
-COMMIT="aaa48599adec31d4feb8a583e5bea8e89b2627c3"
+COMMIT="4b57ac0eb9a24bc753fde281b3b842631b0a9d2a"
 SRC_URI="${HOMEPAGE}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"

@@ -12,7 +12,7 @@ SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples upnp +wallet"
+IUSE="examples upnp +wallet cpu_flags_x86_sse2"
 
 RDEPEND+=">=dev-libs/leveldb-1.18-r1"
 DEPEND+="dev-lang/yasm"
@@ -35,6 +35,7 @@ src_configure() {
 		  --with-system-leveldb \
 		  $(use_enable wallet) \
 		  $(use_enable upnp upnp-default) \
+		  $(use_enable cpu_flags_x86_sse2 sse2) \
 		  $(use_with upnp miniupnpc) \
 		  ${my_econf}
 }

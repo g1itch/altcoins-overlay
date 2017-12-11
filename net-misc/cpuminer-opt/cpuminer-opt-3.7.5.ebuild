@@ -6,15 +6,12 @@ inherit eutils autotools flag-o-matic
 
 DESCRIPTION="Optimized multi algo CPU miner"
 HOMEPAGE="https://github.com/JayDDee/${PN}"
-COMMIT="4b57ac0eb9a24bc753fde281b3b842631b0a9d2a"
-SRC_URI="${HOMEPAGE}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="${HOMEPAGE}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
-
-S="${WORKDIR}/${PN}-${COMMIT}"
+IUSE="cpu_flags_x86_avx2"
 
 DEPEND="net-misc/curl"
 RDEPEND="${DEPEND}
@@ -26,6 +23,7 @@ src_prepare() {
 	replace-flags -O2 -O3
 	append-cflags -march=native
 	append-cxxflags -std=c++11
+	use cpu_flags_x86_avx2 && append-cflags -DFOUR_WAY
 	epatch "${FILESDIR}"/cpuminer-multi-1.1-curl-openssl.patch
 	eautoreconf
 }

@@ -1,0 +1,40 @@
+--- src/txdb-leveldb.cpp~	2017-10-24 22:43:56.000000000 +0300
++++ src/txdb-leveldb.cpp	2017-10-31 16:42:12.095968379 +0200
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "txdb.h"
+ #include "util.h"
+--- src/makefile.unix~	2017-10-31 16:41:34.000000000 +0200
++++ src/makefile.unix	2017-10-31 16:43:10.351470997 +0200
+@@ -6,6 +6,7 @@
+ USE_IPV6:=1
+ USE_AVX:=1
+ USE_AVX2:=0
++USE_SYSTEM_LEVELDB:=0
+ 
+ 
+ LINK:=$(CXX)
+@@ -149,13 +150,17 @@
+ 
+ all: veriumd
+ 
++OBJS += obj/txdb-leveldb.o
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # Assembler implementation
+ DEFS += -DUSE_ASM

@@ -28,7 +28,4 @@ src_prepare() {
 src_install() {
 	mv src/${MY_PN} src/${PN}
 	altcoin_src_install
-	ewarn 'This coin is probably dead since april 2017!'
-	ewarn 'Use with caution!'
-	ewarn "Look at ${HOMEPAGE}"
 }

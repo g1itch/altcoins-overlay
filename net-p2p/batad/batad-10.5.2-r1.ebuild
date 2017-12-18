@@ -9,7 +9,7 @@ MyPN="BATA-SOURCE"
 
 inherit altcoin
 
-MY_PV=${PV}-Win64
+MY_PV=${PV}-Linux
 HOMEPAGE="http://www.bata.io/"
 SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 

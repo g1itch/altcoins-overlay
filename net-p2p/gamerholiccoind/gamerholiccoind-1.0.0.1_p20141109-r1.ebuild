@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="GHC"
@@ -25,6 +24,7 @@ src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	epatch "${FILESDIR}"/${PVM}-miniupnpc_1.9.patch
+	epatch "${FILESDIR}"/${PVM}-boost_array.patch
 	altcoin_src_prepare
 }
 

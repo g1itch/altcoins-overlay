@@ -21,7 +21,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="daemon libressl +msgpack gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/linguas_}"
+IUSE="daemon libressl +msgpack gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -65,7 +65,7 @@ src_prepare() {
 
 	local lang
 	for lang in ${LINGUAS[@]}; do
-		use linguas_${lang} || \
+		use l10n_${lang} || \
 			rm -f src/translations/bitmessage_${lang}.{ts,qm}
 	done
 }

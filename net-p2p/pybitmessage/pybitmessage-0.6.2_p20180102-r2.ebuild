@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="3cb9547389e41bbf8b7cd8e258e91db57614e4b6"
+COMMIT="c9851b9f41da4db4365ef080b1533ab845992bd1"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -21,7 +21,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="daemon libressl +msgpack gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/linguas_}"
+IUSE="daemon libressl +msgpack gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -37,7 +37,7 @@ RDEPEND="${DEPEND}
 		dev-python/pyopencl[${PYTHON_USEDEP}]
 	)
 	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
-	sound? ( || ( dev-python/gst-python[${PYTHON_USEDEP}]
+	sound? ( || ( dev-python/gst-python:1.0[${PYTHON_USEDEP}]
 				  media-sound/gst123
 				  media-libs/gst-plugins-base:1.0
 				  media-sound/mpg123
@@ -65,7 +65,7 @@ src_prepare() {
 
 	local lang
 	for lang in ${LINGUAS[@]}; do
-		use linguas_${lang} || \
+		use l10n_${lang} || \
 			rm -f src/translations/bitmessage_${lang}.{ts,qm}
 	done
 }

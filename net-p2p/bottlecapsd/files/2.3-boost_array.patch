@@ -1,0 +1,11 @@
+--- src/net.cpp~	2018-01-15 18:44:34.000000000 +0200
++++ src/net.cpp	2018-01-15 18:45:54.649887346 +0200
+@@ -57,7 +57,7 @@
+ static CNode* pnodeLocalHost = NULL;
+ CAddress addrSeenByPeer(CService("0.0.0.0", 0), nLocalServices);
+ uint64 nLocalHostNonce = 0;
+-array<int, THREAD_MAX> vnThreadsRunning;
++boost::array<int, THREAD_MAX> vnThreadsRunning;
+ static std::vector<SOCKET> vhListenSocket;
+ CAddrMan addrman;
+ 

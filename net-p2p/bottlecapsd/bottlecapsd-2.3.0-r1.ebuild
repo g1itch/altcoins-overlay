@@ -1,4 +1,4 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -15,5 +15,6 @@ IUSE="examples ipv6 upnp"
 
 src_prepare() {
 	epatch "${FILESDIR}"/2.2-miniupnpc_1.9.patch
+	epatch "${FILESDIR}"/2.3-boost_array.patch
 	altcoin_src_prepare
 }

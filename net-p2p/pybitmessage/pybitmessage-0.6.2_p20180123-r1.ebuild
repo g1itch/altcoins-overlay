@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="01c8f3b66d5c40e3d3fdda6f884bc76ea9193380"
+COMMIT="d6df4470e1153fc01f32691cdff7bc415c73a4f7"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -44,7 +44,8 @@ RDEPEND="${DEPEND}
 				  media-sound/alsa-utils ) )
 	qrcode? ( dev-python/qrcode[${PYTHON_USEDEP}] )
 	libnotify? ( dev-python/pygobject[${PYTHON_USEDEP}]
-				 dev-python/notify2[${PYTHON_USEDEP}] )
+				 dev-python/notify2[${PYTHON_USEDEP}]
+				 x11-themes/hicolor-icon-theme )
 	libcanberra? ( dev-python/pycanberra[${PYTHON_USEDEP}] )
 	gnome-keyring? ( dev-python/gnome-keyring-python[${PYTHON_USEDEP}] )
 "
@@ -56,7 +57,7 @@ PATCHES=(
 	"${FILESDIR}"/0.6.3-ipv6.patch
 	"${FILESDIR}"/0.6.3-keystore.patch
 	"${FILESDIR}"/0.6.3-daemon-fixes.patch
-	"${FILESDIR}"/0.6.3-ui-refactoring.patch
+#	"${FILESDIR}"/0.6.3-ui-refactoring.patch
 	"${FILESDIR}"/0.6.3-mark-all-read-quickfix.patch
 )
 

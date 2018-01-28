@@ -55,7 +55,6 @@ PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/0.6.3-ipv6.patch
 	"${FILESDIR}"/0.6.3-daemon-fixes.patch
-	"${FILESDIR}"/0.6.3-ui-refactoring.patch
 	"${FILESDIR}"/0.6.3-mark-all-read-quickfix.patch
 )
 

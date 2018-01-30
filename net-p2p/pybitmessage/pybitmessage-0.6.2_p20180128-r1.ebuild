@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="d6df4470e1153fc01f32691cdff7bc415c73a4f7"
+COMMIT="cc63c1270bbfe5cdc33ae5705de68d5f0700a546"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -21,7 +21,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="daemon libressl +msgpack libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
+IUSE="daemon libressl +msgpack gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -47,6 +47,7 @@ RDEPEND="${DEPEND}
 				 dev-python/notify2[${PYTHON_USEDEP}]
 				 x11-themes/hicolor-icon-theme )
 	libcanberra? ( dev-python/pycanberra[${PYTHON_USEDEP}] )
+	gnome-keyring? ( dev-python/gnome-keyring-python[${PYTHON_USEDEP}] )
 "
 
 S="${WORKDIR}"/${MY_PN}-${COMMIT}
@@ -54,8 +55,7 @@ S="${WORKDIR}"/${MY_PN}-${COMMIT}
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/0.6.3-ipv6.patch
-	"${FILESDIR}"/0.6.3-daemon-fixes.patch
-	"${FILESDIR}"/0.6.3-mark-all-read-quickfix.patch
+	"${FILESDIR}"/0.6.3-ui-changes.patch
 )
 
 src_prepare() {

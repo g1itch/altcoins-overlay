@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="9e79386595bd7f8c2fa43b837e5afd1ca5b85fc5"
+COMMIT="4ba5702cc22fa8b52e3b7dba3f9df44b1f28b197"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -20,7 +20,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS=""
 IUSE="daemon libressl +msgpack systemd gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
@@ -56,7 +56,6 @@ PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/0.6.3-ipv6.patch
 	"${FILESDIR}"/0.6.3-keystore.patch
-	"${FILESDIR}"/0.6.3-ui-refactoring.patch
 )
 
 src_prepare() {

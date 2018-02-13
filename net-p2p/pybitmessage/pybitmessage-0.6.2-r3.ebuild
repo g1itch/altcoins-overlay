@@ -1,6 +1,5 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
 EAPI=5
 
@@ -18,7 +17,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS=""
 IUSE="ssl libressl qt4 ncurses opencl sound ${LINGUAS[@]/#/linguas_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 

@@ -1,36 +1,36 @@
-# Copyright 2016-2017 Gentoo Foundation
+# Copyright 2016-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
-EAPI=5
-inherit eutils autotools flag-o-matic git-r3
+EAPI=6
+inherit autotools flag-o-matic git-r3
 
 
-DESCRIPTION="Multi-algo CPUMiner & Reference Cryptonote Miner (JSON-RPC 2.0)"
+DESCRIPTION="Optimized multi algo CPU miner"
 HOMEPAGE="https://github.com/JayDDee/${PN}"
 EGIT_REPO_URI="${HOMEPAGE}"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
-IUSE=""
+IUSE="cpu_flags_x86_sse2 cpu_flags_x86_avx2 curl"
+REQUIRED_USE="cpu_flags_x86_sse2"
 
-DEPEND="net-misc/curl"
+DEPEND="curl? ( >=net-misc/curl-7.15[ssl] )"
 RDEPEND="${DEPEND}
+	dev-libs/gmp:0
 	dev-libs/jansson
-	dev-libs/openssl
+	dev-libs/openssl:0
 	!net-misc/cpuminer-multi"
 
 src_prepare() {
+	default
 	replace-flags -O2 -O3
 	replace-flags -march=x86-64 -march=native
-	append-cxxflags -std=c++11
-	epatch "${FILESDIR}"/cpuminer-multi-1.1-curl-openssl.patch
-	epatch "${FILESDIR}"/cpuminer-multi-1.2-hwmon_alt4.patch
+	use cpu_flags_x86_avx2 && append-cflags -DFOUR_WAY
 	eautoreconf
 }
 
 src_install() {
-	make DESTDIR="${D}" install
+	default
 	newinitd "${FILESDIR}"/cpuminer.initd cpuminer
 }

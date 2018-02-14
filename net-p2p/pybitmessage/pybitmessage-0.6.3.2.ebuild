@@ -12,7 +12,7 @@ MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
 HOMEPAGE="https://bitmessage.org"
-SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/v${PV}.tar.gz
+SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${PV}.tar.gz
 	-> ${P}.tar.gz"
 
 LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )

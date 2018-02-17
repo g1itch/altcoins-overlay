@@ -1,0 +1,1693 @@
+commit dd03cf408e2ec99ceb690cd8c7d225a4da129e1e
+Author: Dmitri Bogomolov <4glitch@gmail.com>
+Date:   Thu Feb 15 23:19:22 2018 +0200
+
+    Moving SQL into separate modules, WIP
+
+diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
+index 7bbd7dd..e931c97 100644
+--- a/src/bitmessageqt/__init__.py
++++ b/src/bitmessageqt/__init__.py
+@@ -29,7 +29,6 @@ import locale
+ import time
+ import os
+ import hashlib
+-from pyelliptic.openssl import OpenSSL
+ import textwrap
+ import debug
+ import random
+@@ -37,8 +36,9 @@ from sqlite3 import register_adapter
+ import string
+ from datetime import datetime, timedelta
+ from helper_ackPayload import genAckPayload
+-from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
+-import helper_search
++from helper_sql import (
++    sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure)
++import helper_db
+ import l10n
+ import openclpow
+ from utils import str_broadcast_subscribers, avatarize
+@@ -1092,12 +1092,12 @@ class MyForm(settingsmixin.SMainWindow):
+         if acct is None:
+             acct = BMAccount(fromAddress)
+         acct.parseMessage(toAddress, fromAddress, subject, "")
+-            
++
+         items = []
+-        #to
+-        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
++        # to
++        MessageList_AddressWidget(items, toAddress, acct.toLabel, not read)
+         # from
+-        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
++        MessageList_AddressWidget(items, fromAddress, acct.fromLabel, not read)
+         # subject
+         MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
+         # time received
+@@ -1134,7 +1134,8 @@ class MyForm(settingsmixin.SMainWindow):
+         tableWidget.setUpdatesEnabled(False)
+         tableWidget.setSortingEnabled(False)
+         tableWidget.setRowCount(0)
+-        queryreturn = helper_search.search_sql(xAddress, account, "sent", where, what, False)
++        queryreturn = helper_db.search_sql(
++            xAddress, account, "sent", where, what, False)
+ 
+         for row in queryreturn:
+             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
+@@ -1167,8 +1168,9 @@ class MyForm(settingsmixin.SMainWindow):
+         tableWidget.setSortingEnabled(False)
+         tableWidget.setRowCount(0)
+ 
+-        queryreturn = helper_search.search_sql(xAddress, account, folder, where, what, unreadOnly)
+-        
++        queryreturn = helper_db.search_sql(
++            xAddress, account, folder, where, what, unreadOnly)
++
+         for row in queryreturn:
+             msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
+             self.addMessageListItemInbox(tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read)
+@@ -1811,8 +1813,7 @@ class MyForm(settingsmixin.SMainWindow):
+ 
+         newRows = {}
+         # subscriptions
+-        queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
+-        for row in queryreturn:
++        for row in helper_db.get_subscriptions():
+             label, address = row
+             newRows[address] = [label, AccountMixin.SUBSCRIPTION]
+         # chans
+@@ -1822,8 +1823,7 @@ class MyForm(settingsmixin.SMainWindow):
+             if (account.type == AccountMixin.CHAN and BMConfigParser().safeGetBoolean(address, 'enabled')):
+                 newRows[address] = [account.getLabel(), AccountMixin.CHAN]
+         # normal accounts
+-        queryreturn = sqlQuery('SELECT * FROM addressbook')
+-        for row in queryreturn:
++        for row in helper_db.get_addressbook():
+             label, address = row
+             newRows[address] = [label, AccountMixin.NORMAL]
+ 
+@@ -2039,35 +2039,16 @@ class MyForm(settingsmixin.SMainWindow):
+                         stealthLevel = BMConfigParser().safeGetInt(
+                             'bitmessagesettings', 'ackstealthlevel')
+                         ackdata = genAckPayload(streamNumber, stealthLevel)
+-                        t = ()
+-                        sqlExecute(
+-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+-                            '',
+-                            toAddress,
+-                            ripe,
+-                            fromAddress,
+-                            subject,
+-                            message,
+-                            ackdata,
+-                            int(time.time()), # sentTime (this will never change)
+-                            int(time.time()), # lastActionTime
+-                            0, # sleepTill time. This will get set when the POW gets done.
+-                            'msgqueued',
+-                            0, # retryNumber
+-                            'sent', # folder
+-                            encoding, # encodingtype
+-                            BMConfigParser().getint('bitmessagesettings', 'ttl')
+-                            )
++                        helper_db.put_sent(
++                            toAddress, fromAddress, subject, message, ackdata,
++                            'msgqueued', encoding, ripe
++                        )
+ 
+-                        toLabel = ''
+-                        queryreturn = sqlQuery('''select label from addressbook where address=?''',
+-                                               toAddress)
+-                        if queryreturn != []:
+-                            for row in queryreturn:
+-                                toLabel, = row
++                        toLabel = helper_db.get_label(toAddress) or ''
+ 
+                         self.displayNewSentMessage(
+-                            toAddress, toLabel, fromAddress, subject, message, ackdata)
++                            toAddress, toLabel, fromAddress, subject,
++                            message, ackdata)
+                         queues.workerQueue.put(('sendmessage', toAddress))
+ 
+                         self.ui.comboBoxSendFrom.setCurrentIndex(0)
+@@ -2097,29 +2078,13 @@ class MyForm(settingsmixin.SMainWindow):
+                 # user interface when the POW is done generating.
+                 streamNumber = decodeAddress(fromAddress)[2]
+                 ackdata = genAckPayload(streamNumber, 0)
+-                toAddress = str_broadcast_subscribers
+-                ripe = ''
+-                t = ('', # msgid. We don't know what this will be until the POW is done. 
+-                     toAddress, 
+-                     ripe, 
+-                     fromAddress, 
+-                     subject, 
+-                     message, 
+-                     ackdata, 
+-                     int(time.time()), # sentTime (this will never change)
+-                     int(time.time()), # lastActionTime
+-                     0, # sleepTill time. This will get set when the POW gets done.
+-                     'broadcastqueued', 
+-                     0, # retryNumber
+-                     'sent', # folder
+-                     encoding, # encoding type
+-                     BMConfigParser().getint('bitmessagesettings', 'ttl')
+-                     )
+-                sqlExecute(
+-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+-
+-                toLabel = str_broadcast_subscribers
+-                
++                toAddress = toLabel = str_broadcast_subscribers
++
++                helper_db.put_sent(
++                    toAddress, fromAddress, subject, message, ackdata,
++                    'broadcastqueued', encoding
++                )
++
+                 self.displayNewSentMessage(
+                     toAddress, toLabel, fromAddress, subject, message, ackdata)
+ 
+@@ -2236,9 +2201,12 @@ class MyForm(settingsmixin.SMainWindow):
+                 continue
+             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
+                 continue
+-            elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
++            elif not helper_db.check_match(
++                    toAddress, fromAddress, subject, message,
++                    self.getCurrentSearchOption(tab),
++                    self.getCurrentSearchLine(tab)):
+                 continue
+-            
++
+             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
+             self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
+             sent.setCurrentCell(0, 0)
+@@ -2256,7 +2224,10 @@ class MyForm(settingsmixin.SMainWindow):
+             if tab == 1:
+                 tab = 2
+             tableWidget = self.widgetConvert(treeWidget)
+-            if not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
++            if not helper_db.check_match(
++                    toAddress, fromAddress, subject, message,
++                    self.getCurrentSearchOption(tab),
++                    self.getCurrentSearchLine(tab)):
+                 continue
+             if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) in ["inbox", None]:
+                 ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
+@@ -2295,10 +2266,7 @@ class MyForm(settingsmixin.SMainWindow):
+         except AttributeError:
+             return
+ 
+-        # First we must check to see if the address is already in the
+-        # address book. The user cannot add it again or else it will
+-        # cause problems when updating and deleting the entry.
+-        if shared.isAddressInMyAddressBook(address):
++        if not helper_db.put_addressbook(address, label):
+             self.updateStatusBar(_translate(
+                 "MainWindow",
+                 "Error: You cannot add the same address to your"
+@@ -2307,30 +2275,25 @@ class MyForm(settingsmixin.SMainWindow):
+             ))
+             return
+ 
+-        self.addEntryToAddressBook(address, label)
+-
+-    def addEntryToAddressBook(self, address, label):
+-        if shared.isAddressInMyAddressBook(address):
+-            return
+-        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', label, address)
+         self.rerenderMessagelistFromLabels()
+         self.rerenderMessagelistToLabels()
+         self.rerenderAddressBook()
+ 
+     def addSubscription(self, address, label):
+-        # This should be handled outside of this function, for error displaying
+-        # and such, but it must also be checked here.
+-        if shared.isAddressInMySubscriptionsList(address):
++        if not helper_db.put_subscriptions(label, address):
++            self.updateStatusBar(_translate(
++                "MainWindow",
++                "Error: You cannot add the same address to your"
++                " subscriptions twice. Perhaps rename the existing one"
++                " if you want."
++            ))
+             return
+-        # Add to database (perhaps this should be separated from the MyForm class)
+-        sqlExecute(
+-            '''INSERT INTO subscriptions VALUES (?,?,?)''',
+-            label, address, True
+-        )
++
+         self.rerenderMessagelistFromLabels()
+         shared.reloadBroadcastSendersForWhichImWatching()
+         self.rerenderAddressBook()
+         self.rerenderTabTreeSubscriptions()
++        return True
+ 
+     def click_pushButtonAddSubscription(self):
+         dialog = dialogs.NewSubscriptionDialog(self)
+@@ -2340,19 +2303,9 @@ class MyForm(settingsmixin.SMainWindow):
+         except AttributeError:
+             return
+ 
+-        # We must check to see if the address is already in the
+-        # subscriptions list. The user cannot add it again or else it
+-        # will cause problems when updating and deleting the entry.
+-        if shared.isAddressInMySubscriptionsList(address):
+-            self.updateStatusBar(_translate(
+-                "MainWindow",
+-                "Error: You cannot add the same address to your"
+-                " subscriptions twice. Perhaps rename the existing one"
+-                " if you want."
+-            ))
++        if not self.addSubscription(address, label):
+             return
+ 
+-        self.addSubscription(address, label)
+         # Now, if the user wants to display old broadcasts, let's get
+         # them out of the inventory and put them
+         # to the objectProcessorQueue to be processed
+@@ -2871,11 +2824,7 @@ class MyForm(settingsmixin.SMainWindow):
+         textEdit = self.getCurrentMessageTextedit()
+         if not msgid:
+             return
+-        queryreturn = sqlQuery(
+-            '''select message from inbox where msgid=?''', msgid)
+-        if queryreturn != []:
+-            for row in queryreturn:
+-                messageText, = row
++        messageText = helper_db.get_message(msgid)
+ 
+         lines = messageText.split('\n')
+         totalLines = len(lines)
+@@ -2967,18 +2916,18 @@ class MyForm(settingsmixin.SMainWindow):
+ 
+     def on_action_InboxReplyChan(self):
+         self.on_action_InboxReply(self.REPLY_TYPE_CHAN)
+-    
+-    def on_action_InboxReply(self, replyType = None):
++
++    def on_action_InboxReply(self, replyType=None):
+         tableWidget = self.getCurrentMessagelist()
+         if not tableWidget:
+             return
+-        
++
+         if replyType is None:
+             replyType = self.REPLY_TYPE_SENDER
+-        
++
+         # save this to return back after reply is done
+         self.replyFromTab = self.ui.tabWidget.currentIndex()
+-        
++
+         currentInboxRow = tableWidget.currentRow()
+         toAddressAtCurrentInboxRow = tableWidget.item(
+             currentInboxRow, 0).address
+@@ -2987,12 +2936,13 @@ class MyForm(settingsmixin.SMainWindow):
+             currentInboxRow, 1).address
+         msgid = str(tableWidget.item(
+             currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+-        queryreturn = sqlQuery(
+-            '''select message from inbox where msgid=?''', msgid)
+-        if queryreturn != []:
+-            for row in queryreturn:
+-                messageAtCurrentInboxRow, = row
+-        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, tableWidget.item(currentInboxRow, 2).subject, messageAtCurrentInboxRow)
++        messageAtCurrentInboxRow = helper_db.get_message(msgid)
++
++        acct.parseMessage(
++            toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow,
++            tableWidget.item(currentInboxRow, 2).subject,
++            messageAtCurrentInboxRow
++        )
+         widget = {
+             'subject': self.ui.lineEditSubject,
+             'from': self.ui.comboBoxSendFrom,
+@@ -3073,24 +3023,20 @@ class MyForm(settingsmixin.SMainWindow):
+             currentInboxRow, 1).data(QtCore.Qt.UserRole)
+         recipientAddress = tableWidget.item(
+             currentInboxRow, 0).data(QtCore.Qt.UserRole)
+-        # Let's make sure that it isn't already in the address book
+-        queryreturn = sqlQuery('''select * from blacklist where address=?''',
+-                               addressAtCurrentInboxRow)
+-        if queryreturn == []:
+-            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + BMConfigParser().get(recipientAddress, "label")
+-            sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
+-                       label,
+-                       addressAtCurrentInboxRow, True)
+-            self.ui.blackwhitelist.rerenderBlackWhiteList()
+-            self.updateStatusBar(_translate(
+-                "MainWindow",
+-                "Entry added to the blacklist. Edit the label to your liking.")
+-            )
+-        else:
++        label = "\"" + tableWidget.item(currentInboxRow, 2).subject + \
++            "\" in " + BMConfigParser().get(recipientAddress, "label")
++        if not helper_db.put_blacklist(label, addressAtCurrentInboxRow):
+             self.updateStatusBar(_translate(
+                 "MainWindow",
+                 "Error: You cannot add the same address to your blacklist"
+                 " twice. Try renaming the existing one if you want."))
++            return
++
++        self.ui.blackwhitelist.rerenderBlackWhiteList()
++        self.updateStatusBar(_translate(
++            "MainWindow",
++            "Entry added to the blacklist. Edit the label to your liking.")
++        )
+ 
+     def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
+         if messageLists is None:
+@@ -3142,8 +3088,7 @@ class MyForm(settingsmixin.SMainWindow):
+         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
+         tableWidget.setUpdatesEnabled(True)
+         self.propagateUnreadCount(self.getCurrentAccount, folder)
+-        self.updateStatusBar(_translate(
+-            "MainWindow", "Moved items to trash."))
++        self.updateStatusBar(_translate("MainWindow", "Moved items to trash."))
+ 
+     def on_action_TrashUndelete(self):
+         tableWidget = self.getCurrentMessagelist()
+@@ -3189,11 +3134,7 @@ class MyForm(settingsmixin.SMainWindow):
+         # Retrieve the message data out of the SQL database
+         msgid = str(tableWidget.item(
+             currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+-        queryreturn = sqlQuery(
+-            '''select message from inbox where msgid=?''', msgid)
+-        if queryreturn != []:
+-            for row in queryreturn:
+-                message, = row
++        message = helper_db.get_message(msgid)
+ 
+         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
+         filename = QtGui.QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
+@@ -3316,21 +3257,11 @@ class MyForm(settingsmixin.SMainWindow):
+             )
+ 
+     def on_action_AddressBookSubscribe(self):
+-        listOfSelectedRows = {}
+         for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
+-            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+-        for currentRow in listOfSelectedRows:
+-            addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
+-            # Then subscribe to it... provided it's not already in the address book
+-            if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
+-                self.updateStatusBar(_translate(
+-                    "MainWindow",
+-                    "Error: You cannot add the same address to your"
+-                    " subscriptions twice. Perhaps rename the existing"
+-                    " one if you want."))
+-                continue
+-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
+-            self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
++            row = self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()
++            address = str(self.ui.tableWidgetAddressBook.item(row, 1).text())
++            label = self.ui.tableWidgetAddressBook.item(row, 0).text().toUtf8()
++            self.addSubscription(address, label)
+             self.ui.tabWidget.setCurrentIndex(
+                 self.ui.tabWidget.indexOf(self.ui.subscriptions)
+             )
+diff --git a/src/bitmessageqt/account.py b/src/bitmessageqt/account.py
+index 92d497f..c38cbc3 100644
+--- a/src/bitmessageqt/account.py
++++ b/src/bitmessageqt/account.py
+@@ -1,17 +1,16 @@
+-from PyQt4 import QtCore, QtGui
+-
+ import queues
+ import re
+ import sys
+ import inspect
+-from helper_sql import *
++import helper_db
++from helper_sql import sqlQuery
+ from helper_ackPayload import genAckPayload
+ from addresses import decodeAddress
+ from bmconfigparser import BMConfigParser
+ from foldertree import AccountMixin
+-from pyelliptic.openssl import OpenSSL
+ from utils import str_broadcast_subscribers
+-import time
++from tr import _translate
++
+ 
+ def getSortedAccounts():
+     configSections = BMConfigParser().addresses()
+@@ -70,29 +69,30 @@ def accountClass(address):
+         pass
+     # no gateway
+     return BMAccount(address)
+-    
++
++
+ class AccountColor(AccountMixin):
+-    def __init__(self, address, type = None):
++    def __init__(self, address, type=None):
+         self.isEnabled = True
+         self.address = address
+-        if type is None:
+-            if address is None:
+-                self.type = AccountMixin.ALL
+-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+-                self.type = AccountMixin.MAILINGLIST
+-            elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+-                self.type = AccountMixin.CHAN
+-            elif sqlQuery(
+-                '''select label from subscriptions where address=?''', self.address):
+-                self.type = AccountMixin.SUBSCRIPTION
+-            else:
+-                self.type = AccountMixin.NORMAL
+-        else:
++        if type:
+             self.type = type
++            return
++        # AccountMixin.setType()
++        if self.address is None:
++            self.type = self.ALL
++        elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
++            self.type = self.CHAN
++        elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
++            self.type = self.MAILINGLIST
++        elif helper_db.get_label(self.address, "subscriptions"):
++            self.type = AccountMixin.SUBSCRIPTION
++        else:
++            self.type = self.NORMAL
++
+ 
+-    
+ class BMAccount(object):
+-    def __init__(self, address = None):
++    def __init__(self, address=None):
+         self.address = address
+         self.type = AccountMixin.NORMAL
+         if BMConfigParser().has_section(address):
+@@ -102,31 +102,20 @@ class BMAccount(object):
+                 self.type = AccountMixin.MAILINGLIST
+         elif self.address == str_broadcast_subscribers:
+             self.type = AccountMixin.BROADCAST
+-        else:
+-            queryreturn = sqlQuery(
+-                '''select label from subscriptions where address=?''', self.address)
+-            if queryreturn:
+-                self.type = AccountMixin.SUBSCRIPTION
++        elif helper_db.get_label(self.address, "subscriptions"):
++            self.type = AccountMixin.SUBSCRIPTION
+ 
+-    def getLabel(self, address = None):
++    def getLabel(self, address=None):
+         if address is None:
+             address = self.address
+-        label = address
+         if BMConfigParser().has_section(address):
+-            label = BMConfigParser().get(address, 'label')
+-        queryreturn = sqlQuery(
+-            '''select label from addressbook where address=?''', address)
+-        if queryreturn != []:
+-            for row in queryreturn:
+-                label, = row
+-        else:
+-            queryreturn = sqlQuery(
+-                '''select label from subscriptions where address=?''', address)
+-            if queryreturn != []:
+-                for row in queryreturn:
+-                    label, = row
+-        return label
+-        
++            return BMConfigParser().get(address, 'label')
++        return (
++            helper_db.get_label(address)
++            or helper_db.get_label(address, "subscriptions")
++            or address
++        )
++
+     def parseMessage(self, toAddress, fromAddress, subject, message):
+         self.toAddress = toAddress
+         self.fromAddress = fromAddress
+@@ -140,59 +129,49 @@ class BMAccount(object):
+ 
+ 
+ class NoAccount(BMAccount):
+-    def __init__(self, address = None):
++    def __init__(self, address=None):
+         self.address = address
+         self.type = AccountMixin.NORMAL
+ 
+-    def getLabel(self, address = None):
+-        if address is None:
+-            address = self.address
+-        return address
++    def getLabel(self, address=None):
++        return address or self.address
++
+ 
+-        
+ class SubscriptionAccount(BMAccount):
+     pass
+-    
++
+ 
+ class BroadcastAccount(BMAccount):
+     pass
+-        
+-        
++
++
+ class GatewayAccount(BMAccount):
+     gatewayName = None
+     ALL_OK = 0
+     REGISTRATION_DENIED = 1
++
+     def __init__(self, address):
+         super(GatewayAccount, self).__init__(address)
+-        
++
+     def send(self):
+-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
+-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
++        status, addressVersionNumber, streamNumber, ripe = \
++            decodeAddress(self.toAddress)
++        stealthLevel = BMConfigParser().safeGetInt(
++            'bitmessagesettings', 'ackstealthlevel')
+         ackdata = genAckPayload(streamNumber, stealthLevel)
+-        t = ()
+-        sqlExecute(
+-            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+-            '',
+-            self.toAddress,
+-            ripe,
+-            self.fromAddress,
+-            self.subject,
+-            self.message,
+-            ackdata,
+-            int(time.time()), # sentTime (this will never change)
+-            int(time.time()), # lastActionTime
+-            0, # sleepTill time. This will get set when the POW gets done.
+-            'msgqueued',
+-            0, # retryNumber
+-            'sent', # folder
+-            2, # encodingtype
+-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
++        helper_db.put_sent(
++            self.toAddress, self.fromAddress, self.subject, self.message,
++            ackdata, 'msgqueued', 2, ripe,
++            min(
++                BMConfigParser().getint('bitmessagesettings', 'ttl'),
++                86400 * 2)  # not necessary to have a TTL higher than 2 days
+         )
+-
+         queues.workerQueue.put(('sendmessage', self.toAddress))
+-    
+-    def parseMessage(self, toAddress, fromAddress, subject, message):
+-        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
++
++    # def parseMessage(self, toAddress, fromAddress, subject, message):
++    #     super(GatewayAccount, self).parseMessage(
++    #         toAddress, fromAddress, subject, message)
++
+ 
+ class MailchuckAccount(GatewayAccount):
+     # set "gateway" in keys.dat to this
+@@ -202,23 +181,24 @@ class MailchuckAccount(GatewayAccount):
+     relayAddress = "BM-2cWim8aZwUNqxzjMxstnUMtVEUQJeezstf"
+     regExpIncoming = re.compile("(.*)MAILCHUCK-FROM::(\S+) \| (.*)")
+     regExpOutgoing = re.compile("(\S+) (.*)")
++
+     def __init__(self, address):
+         super(MailchuckAccount, self).__init__(address)
+         self.feedback = self.ALL_OK
+-        
++
+     def createMessage(self, toAddress, fromAddress, subject, message):
+         self.subject = toAddress + " " + subject
+         self.toAddress = self.relayAddress
+         self.fromAddress = fromAddress
+         self.message = message
+-        
++
+     def register(self, email):
+         self.toAddress = self.registrationAddress
+         self.subject = email
+         self.message = ""
+         self.fromAddress = self.address
+         self.send()
+-        
++
+     def unregister(self):
+         self.toAddress = self.unregistrationAddress
+         self.subject = ""
+@@ -236,7 +216,7 @@ class MailchuckAccount(GatewayAccount):
+     def settings(self):
+         self.toAddress = self.registrationAddress
+         self.subject = "config"
+-        self.message = QtGui.QApplication.translate("Mailchuck", """# You can use this to configure your email gateway account
++        self.message = _translate("Mailchuck", """# You can use this to configure your email gateway account
+ # Uncomment the setting you want to use
+ # Here are the options:
+ # 
+diff --git a/src/bitmessageqt/foldertree.py b/src/bitmessageqt/foldertree.py
+index 11227fc..061f5c8 100644
+--- a/src/bitmessageqt/foldertree.py
++++ b/src/bitmessageqt/foldertree.py
+@@ -1,10 +1,10 @@
+ from PyQt4 import QtCore, QtGui
+-from string import find, rfind, rstrip, lstrip
++from string import find, rfind
+ 
+ from tr import _translate
+ from bmconfigparser import BMConfigParser
+-from helper_sql import *
+-from utils import *
++import helper_db
++from utils import avatarize
+ from settingsmixin import SettingsMixin
+ 
+ # for pylupdate
+@@ -22,7 +22,11 @@ class AccountMixin(object):
+     SUBSCRIPTION = 4
+     BROADCAST = 5
+ 
+-    def accountColor (self):
++    def _getAddressBracket(self):
++        return " (" + str(self.unreadCount) + ")" \
++            if self.unreadCount > 0 else ""
++
++    def accountColor(self):
+         if not self.isEnabled:
+             return QtGui.QColor(128, 128, 128)
+         elif self.type == self.CHAN:
+@@ -31,18 +35,18 @@ class AccountMixin(object):
+             return QtGui.QColor(137, 04, 177)
+         else:
+             return QtGui.QApplication.palette().text().color()
+-            
+-    def folderColor (self):
++
++    def folderColor(self):
+         if not self.parent().isEnabled:
+             return QtGui.QColor(128, 128, 128)
+         else:
+             return QtGui.QApplication.palette().text().color()
+-            
++
+     def accountBrush(self):
+         brush = QtGui.QBrush(self.accountColor())
+         brush.setStyle(QtCore.Qt.NoBrush)
+         return brush
+-        
++
+     def folderBrush(self):
+         brush = QtGui.QBrush(self.folderColor())
+         brush.setStyle(QtCore.Qt.NoBrush)
+@@ -53,7 +57,7 @@ class AccountMixin(object):
+             self.address = None
+         else:
+             self.address = str(address)
+-    
++
+     def setUnreadCount(self, cnt):
+         if hasattr(self, "unreadCount") and self.unreadCount == int(cnt):
+             return
+@@ -81,41 +85,35 @@ class AccountMixin(object):
+             self.type = self.CHAN
+         elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+             self.type = self.MAILINGLIST
+-        elif sqlQuery(
+-            '''select label from subscriptions where address=?''', self.address):
+-            self.type = AccountMixin.SUBSCRIPTION
++        elif helper_db.get_label(self.address, "subscriptions"):
++            self.type = self.SUBSCRIPTION
+         else:
+             self.type = self.NORMAL
+-            
++
+     def defaultLabel(self):
+-        queryreturn = None
+-        retval = None
+-        if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
++        if self.type in (
++            AccountMixin.NORMAL, AccountMixin.CHAN,
++            AccountMixin.MAILINGLIST
++        ):
+             try:
+-                retval = unicode(BMConfigParser().get(self.address, 'label'), 'utf-8')
+-            except Exception as e:
+-                queryreturn = sqlQuery(
+-                    '''select label from addressbook where address=?''', self.address)
++                retval = unicode(
++                    BMConfigParser().get(self.address, 'label'), 'utf-8')
++            except Exception:
++                retval = helper_db.get_label(self.address)
+         elif self.type == AccountMixin.SUBSCRIPTION:
+-            queryreturn = sqlQuery(
+-                '''select label from subscriptions where address=?''', self.address)
+-        if queryreturn is not None:
+-            if queryreturn != []:
+-                for row in queryreturn:
+-                    retval, = row
+-                    retval = unicode(retval, 'utf-8')
++            retval = helper_db.get_label(self.address, "subscriptions")
+         elif self.address is None or self.type == AccountMixin.ALL:
+             return unicode(
+                 str(_translate("MainWindow", "All accounts")), 'utf-8')
+-        if retval is None:
+-            return unicode(self.address, 'utf-8')
+-        else:
+-            return retval
++
++        return retval or unicode(self.address, 'utf-8')
+ 
+ 
+ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
+     folderWeight = {"inbox": 1, "new": 2, "sent": 3, "trash": 4}
+-    def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
++
++    def __init__(
++            self, parent, pos=0, address="", folderName="", unreadCount=0):
+         super(QtGui.QTreeWidgetItem, self).__init__()
+         self.setAddress(address)
+         self.setFolderName(folderName)
+@@ -128,10 +126,8 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
+     def data(self, column, role):
+         if column == 0:
+             if role == QtCore.Qt.DisplayRole:
+-                return _translate("MainWindow", self.folderName) + (
+-                    " (" + str(self.unreadCount) + ")"
+-                    if self.unreadCount > 0 else ""
+-                )
++                return _translate("MainWindow", self.folderName) + \
++                    self._getAddressBracket()
+             elif role in (QtCore.Qt.EditRole, QtCore.Qt.ToolTipRole):
+                 return _translate("MainWindow", self.folderName)
+             elif role == QtCore.Qt.FontRole:
+@@ -153,19 +149,21 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
+                 y = self.folderWeight[other.folderName]
+             else:
+                 y = 99
+-            reverse = False
+-            if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+-                reverse = True
++            reverse = (
++                self.treeWidget().header().sortIndicatorOrder()
++                == QtCore.Qt.DescendingOrder
++            )
+             if x == y:
+                 return self.folderName < other.folderName
+             else:
+                 return (x >= y if reverse else x < y)
+ 
+         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+-    
++
+ 
+ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
+-    def __init__(self, parent, pos = 0, address = None, unreadCount = 0, enabled = True):
++    def __init__(
++            self, parent, pos=0, address=None, unreadCount=0, enabled=True):
+         super(QtGui.QTreeWidgetItem, self).__init__()
+         parent.insertTopLevelItem(pos, self)
+         # only set default when creating
+@@ -187,25 +185,19 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
+             except:
+                 return unicode(self.address, 'utf-8')
+ 
+-    def _getAddressBracket(self, unreadCount = False):
+-        ret = ""
+-        if unreadCount:
+-            ret += " (" + str(self.unreadCount) + ")"
++    def _getAddressBracket(self):
++        ret = super(Ui_AddressWidget, self)._getAddressBracket() \
++            if not self.isExpanded() else ""
+         if self.address is not None:
+             ret += " (" + self.address + ")"
+         return ret
+-        
++
+     def data(self, column, role):
+         if column == 0:
+-            if role == QtCore.Qt.DisplayRole:
+-                if self.unreadCount > 0 and not self.isExpanded():
+-                    return self._getLabel() + self._getAddressBracket(True)
+-                else:
+-                    return self._getLabel() + self._getAddressBracket(False)
++            if role in (QtCore.Qt.DisplayRole, QtCore.Qt.ToolTipRole):
++                return self._getLabel() + self._getAddressBracket()
+             elif role == QtCore.Qt.EditRole:
+                 return self._getLabel()
+-            elif role == QtCore.Qt.ToolTipRole:    
+-                return self._getLabel() + self._getAddressBracket(False)
+             elif role == QtCore.Qt.DecorationRole:
+                 if self.address is None:
+                     return avatarize(self._getLabel().encode('utf8'))
+@@ -218,23 +210,25 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
+             elif role == QtCore.Qt.ForegroundRole:
+                 return self.accountBrush()
+         return super(Ui_AddressWidget, self).data(column, role)
+-        
++
+     def setData(self, column, role, value):
+-        if role == QtCore.Qt.EditRole and self.type != AccountMixin.SUBSCRIPTION:
+-            if isinstance(value, QtCore.QVariant):
+-                BMConfigParser().set(str(self.address), 'label', str(value.toString().toUtf8()))
+-            else:
+-                BMConfigParser().set(str(self.address), 'label', str(value))
++        if role == QtCore.Qt.EditRole \
++                and self.type != AccountMixin.SUBSCRIPTION:
++            BMConfigParser().set(
++                str(self.address), 'label',
++                str(value).toString().toUtf8()
++                if isinstance(value, QtCore.QVariant) else str(value)
++            )
+             BMConfigParser().save()
+         return super(Ui_AddressWidget, self).setData(column, role, value)
+-        
++
+     def setAddress(self, address):
+         super(Ui_AddressWidget, self).setAddress(address)
+         self.setData(0, QtCore.Qt.UserRole, self.address)
+-    
++
+     def setExpanded(self, expand):
+         super(Ui_AddressWidget, self).setExpanded(expand)
+-    
++
+     def _getSortRank(self):
+         ret = self.type
+         if not self.isEnabled:
+@@ -244,20 +238,26 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
+     # label (or address) alphabetically, disabled at the end
+     def __lt__(self, other):
+         if (isinstance(other, Ui_AddressWidget)):
+-            reverse = False
+-            if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+-                reverse = True
++            reverse = (
++                self.treeWidget().header().sortIndicatorOrder()
++                == QtCore.Qt.DescendingOrder
++            )
+             if self._getSortRank() == other._getSortRank():
+                 x = self._getLabel().lower()
+                 y = other._getLabel().lower()
+                 return x < y
+-            return (not reverse if self._getSortRank() < other._getSortRank() else reverse)
++            return (
++                not reverse if self._getSortRank() < other._getSortRank()
++                else reverse
++            )
+ 
+         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+ 
+-        
++
+ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
+-    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, label = "", enabled = True):
++    def __init__(
++            self, parent, pos=0, address="", unreadCount=0, label="",
++            enabled=True):
+         super(QtGui.QTreeWidgetItem, self).__init__()
+         parent.insertTopLevelItem(pos, self)
+         # only set default when creating
+@@ -266,35 +266,28 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
+         self.setEnabled(enabled)
+         self.setType()
+         self.setUnreadCount(unreadCount)
+-    
++
+     def _getLabel(self):
+-        queryreturn = sqlQuery(
+-            '''select label from subscriptions where address=?''', self.address)
+-        if queryreturn != []:
+-            for row in queryreturn:
+-                retval, = row
+-            return unicode(retval, 'utf-8', 'ignore')
+-        return unicode(self.address, 'utf-8')
+-        
++        return helper_db.get_label(self.address, "subscriptions") \
++            or self.address
++
+     def setType(self):
+-        super(Ui_SubscriptionWidget, self).setType() # sets it editable
+-        self.type = AccountMixin.SUBSCRIPTION # overrides type
+-        
++        super(Ui_SubscriptionWidget, self).setType()  # sets it editable
++        self.type = AccountMixin.SUBSCRIPTION  # overrides type
++
+     def setData(self, column, role, value):
+         if role == QtCore.Qt.EditRole:
+-            from debug import logger
+             if isinstance(value, QtCore.QVariant):
+                 label = str(value.toString().toUtf8()).decode('utf-8', 'ignore')
+             else:
+                 label = unicode(value, 'utf-8', 'ignore')
+-            sqlExecute(
+-                '''UPDATE subscriptions SET label=? WHERE address=?''',
+-                label, self.address)
++            helper_db.set_label(self.address, label, "subscriptions")
+         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
+ 
+ 
+-class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
+-    def __init__(self, parent, address = None, label = None, unread = False):
++class MessageList_AddressWidget(
++        QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
++    def __init__(self, parent, address=None, label=None, unread=False):
+         super(QtGui.QTableWidgetItem, self).__init__()
+         #parent.insertTopLevelItem(pos, self)
+         # only set default when creating
+@@ -307,23 +300,21 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
+         self.setType()
+         parent.append(self)
+ 
+-    def setLabel(self, label = None):
++    def setLabel(self, label=None):
+         newLabel = self.address
+         if label is None:
+-            queryreturn = None
+-            if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
++            if self.type in (
++                AccountMixin.NORMAL, AccountMixin.CHAN,
++                AccountMixin.MAILINGLIST
++            ):
+                 try:
+-                    newLabel = unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
++                    newLabel = unicode(
++                        BMConfigParser().get(self.address, 'label'),
++                        'utf-8', 'ignore')
+                 except:
+-                    queryreturn = sqlQuery(
+-                    '''select label from addressbook where address=?''', self.address)
++                    newLabel = helper_db.get_label(self.address)
+             elif self.type == AccountMixin.SUBSCRIPTION:
+-                queryreturn = sqlQuery(
+-                    '''select label from subscriptions where address=?''', self.address)
+-            if queryreturn is not None:
+-                if queryreturn != []:
+-                    for row in queryreturn:
+-                        newLabel = unicode(row[0], 'utf-8', 'ignore')
++                newLabel = helper_db.get_label(self.address, "subscriptions")
+         else:
+             newLabel = label
+         if hasattr(self, 'label') and newLabel == self.label:
+@@ -334,18 +325,14 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
+         self.unread = unread
+ 
+     def data(self, role):
+-        if role == QtCore.Qt.DisplayRole:
+-            return self.label
+-        elif role == QtCore.Qt.EditRole:
++        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+             return self.label
+         elif role == QtCore.Qt.ToolTipRole:
+             return self.label + " (" + self.address + ")"
+         elif role == QtCore.Qt.DecorationRole:
+-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'):
+-                if self.address is None:
+-                    return avatarize(self.label)
+-                else:
+-                    return avatarize(self.address)
++            if BMConfigParser().safeGetBoolean(
++                    'bitmessagesettings', 'useidenticons'):
++                return avatarize(self.address or self.label)
+         elif role == QtCore.Qt.FontRole:
+             font = QtGui.QFont()
+             font.setBold(self.unread)
+@@ -355,7 +342,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
+         elif role == QtCore.Qt.UserRole:
+             return self.address
+         return super(MessageList_AddressWidget, self).data(role)
+-        
++
+     def setData(self, role, value):
+         if role == QtCore.Qt.EditRole:
+             self.setLabel()
+@@ -369,7 +356,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
+ 
+ 
+ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
+-    def __init__(self, parent, subject = None, label = None, unread = False):
++    def __init__(self, parent, subject=None, label=None, unread=False):
+         super(QtGui.QTableWidgetItem, self).__init__()
+         #parent.insertTopLevelItem(pos, self)
+         # only set default when creating
+@@ -382,7 +369,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
+ 
+     def setLabel(self, label):
+         self.label = label
+-        
++
+     def setSubject(self, subject):
+         self.subject = subject
+ 
+@@ -403,7 +390,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
+         elif role == QtCore.Qt.UserRole:
+             return self.subject
+         return super(MessageList_SubjectWidget, self).data(role)
+-        
++
+     def setData(self, role, value):
+         return super(MessageList_SubjectWidget, self).setData(role, value)
+ 
+@@ -415,25 +402,21 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
+ 
+ 
+ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
+-    def __init__ (self, text, type = AccountMixin.NORMAL):
++    def __init__(self, text, type=AccountMixin.NORMAL):
+         super(QtGui.QTableWidgetItem, self).__init__(text)
+         self.label = text
+         self.type = type
+         self.setEnabled(True)
+ 
+     def data(self, role):
+-        if role == QtCore.Qt.DisplayRole:
+-            return self.label
+-        elif role == QtCore.Qt.EditRole:
++        if role == (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+             return self.label
+         elif role == QtCore.Qt.ToolTipRole:
+             return self.label + " (" + self.address + ")"
+         elif role == QtCore.Qt.DecorationRole:
+-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'):
+-                if self.address is None:
+-                    return avatarize(self.label)
+-                else:
+-                    return avatarize(self.address)
++            if BMConfigParser().safeGetBoolean(
++                    'bitmessagesettings', 'useidenticons'):
++                return avatarize(self.address or self.label)
+         elif role == QtCore.Qt.FontRole:
+             font = QtGui.QFont()
+             return font
+@@ -449,25 +432,28 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
+                 self.label = str(value.toString().toUtf8())
+             else:
+                 self.label = str(value)
+-            if self.type in (AccountMixin.NORMAL, AccountMixin.MAILINGLIST, AccountMixin.CHAN):
++            if self.type in (
++                AccountMixin.NORMAL, AccountMixin.CHAN,
++                AccountMixin.MAILINGLIST
++            ):
+                 try:
+-                    a = BMConfigParser().get(self.address, 'label')
++                    BMConfigParser().get(self.address, 'label')
+                     BMConfigParser().set(self.address, 'label', self.label)
+                     BMConfigParser().save()
+                 except:
+-                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
++                    helper_db.set_label(self.address, self.label)
+             elif self.type == AccountMixin.SUBSCRIPTION:
+-                from debug import logger
+-                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
++                helper_db.set_label(self.address, self.label, "subscriptions")
+             else:
+                 pass
+-        return super(Ui_AddressBookWidgetItem, self).setData(role, value)    
++        return super(Ui_AddressBookWidgetItem, self).setData(role, value)
+ 
+-    def __lt__ (self, other):
++    def __lt__(self, other):
+         if (isinstance(other, Ui_AddressBookWidgetItem)):
+-            reverse = False
+-            if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+-                reverse = True
++            reverse = (
++                self.tableWidget().horizontalHeader().sortIndicatorOrder()
++                == QtCore.Qt.DescendingOrder
++            )
+             if self.type == other.type:
+                 return self.label.lower() < other.label.lower()
+             else:
+@@ -476,7 +462,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
+ 
+ 
+ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
+-    def __init__ (self, address, label, type):
++    def __init__(self, address, label, type):
+         Ui_AddressBookWidgetItem.__init__(self, label, type)
+         self.address = address
+         self.label = label
+@@ -487,33 +473,30 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
+ 
+ 
+ class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
+-    def __init__ (self, address, label, type):
++    def __init__(self, address, label, type):
+         Ui_AddressBookWidgetItem.__init__(self, address, type)
+         self.address = address
+         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+-        
++
++
+ class AddressBookCompleter(QtGui.QCompleter):
+     def __init__(self):
+         super(QtGui.QCompleter, self).__init__()
+         self.cursorPos = -1
+-    
++
+     def onCursorPositionChanged(self, oldPos, newPos):
+         if oldPos != self.cursorPos:
+             self.cursorPos = -1
+-        
++
+     def splitPath(self, path):
+-        stringList = []
+-        text = unicode(path.toUtf8(), encoding="UTF-8")
+-        splitIndex = rfind(text[0:self.widget().cursorPosition()], ";") + 1
+-        str = text[splitIndex:self.widget().cursorPosition()]
+-        str = rstrip(lstrip(str))
+-        stringList.append(str)
+-        return stringList
+-        
++        text = unicode(path.toUtf8(), 'utf-8')
++        return [text[:self.widget().cursorPosition()].split(';')[-1].strip()]
++
+     def pathFromIndex(self, index):
+-        autoString = unicode(index.data(QtCore.Qt.EditRole).toString().toUtf8(), encoding="UTF-8")
+-        text = unicode(self.widget().text().toUtf8(), encoding="UTF-8")
+-        
++        autoString = unicode(
++            index.data(QtCore.Qt.EditRole).toString().toUtf8(), 'utf-8')
++        text = unicode(self.widget().text().toUtf8(), 'utf-8')
++
+         # If cursor position was saved, restore it, else save it
+         if self.cursorPos != -1:
+             self.widget().setCursorPosition(self.cursorPos)
+@@ -522,14 +505,16 @@ class AddressBookCompleter(QtGui.QCompleter):
+ 
+         # Get current prosition
+         curIndex = self.widget().cursorPosition()
+-        
+-        # prev_delimiter_index should actually point at final white space AFTER the delimiter
++
++        # prev_delimiter_index should actually point at final white space
++        # AFTER the delimiter
+         # Get index of last delimiter before current position
+         prevDelimiterIndex = rfind(text[0:curIndex], ";")
+         while text[prevDelimiterIndex + 1] == " ":
+             prevDelimiterIndex += 1
+-            
+-        # Get index of first delimiter after current position (or EOL if no delimiter after cursor)
++
++        # Get index of first delimiter after current position
++        # (or EOL if no delimiter after cursor)
+         nextDelimiterIndex = find(text, ";", curIndex)
+         if nextDelimiterIndex == -1:
+             nextDelimiterIndex = len(text)
+@@ -538,9 +523,9 @@ class AddressBookCompleter(QtGui.QCompleter):
+         part1 = text[0:prevDelimiterIndex + 1]
+ 
+         # Get string value from before auto finished string is selected
+-        pre = text[prevDelimiterIndex + 1:curIndex - 1];
++        # pre = text[prevDelimiterIndex + 1:curIndex - 1]
+ 
+         # Get part of string that occurs AFTER cursor
+         part2 = text[nextDelimiterIndex:]
+ 
+-        return part1 + autoString + part2;
++        return part1 + autoString + part2
+diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
+index 181ce30..45aefc3 100644
+--- a/src/class_objectProcessor.py
++++ b/src/class_objectProcessor.py
+@@ -17,9 +17,8 @@ from bmconfigparser import BMConfigParser
+ import helper_generic
+ from helper_generic import addDataPadding
+ import helper_bitcoin
+-import helper_inbox
+ import helper_msgcoding
+-import helper_sent
++import helper_db
+ from helper_sql import *
+ from helper_ackPayload import genAckPayload
+ import protocol
+@@ -241,18 +240,8 @@ class objectProcessor(threading.Thread):
+                                                            )
+                         )
+ 
+-            
+             address = encodeAddress(addressVersion, streamNumber, ripe)
+-            
+-            queryreturn = sqlQuery(
+-                '''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
+-            if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
+-                logger.info('We HAVE used this pubkey personally. Updating time.')
+-                t = (address, addressVersion, dataToStore, int(time.time()), 'yes')
+-            else:
+-                logger.info('We have NOT used this pubkey personally. Inserting in database.')
+-                t = (address, addressVersion, dataToStore, int(time.time()), 'no')
+-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
++            helper_db.put_pubkey(address, addressVersion, dataToStore)
+             self.possibleNewPubkey(address)
+         if addressVersion == 3:
+             if len(data) < 170:  # sanity check.
+@@ -301,14 +290,7 @@ class objectProcessor(threading.Thread):
+                         )
+ 
+             address = encodeAddress(addressVersion, streamNumber, ripe)
+-            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
+-            if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
+-                logger.info('We HAVE used this pubkey personally. Updating time.')
+-                t = (address, addressVersion, dataToStore, int(time.time()), 'yes')
+-            else:
+-                logger.info('We have NOT used this pubkey personally. Inserting in database.')
+-                t = (address, addressVersion, dataToStore, int(time.time()), 'no')
+-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
++            helper_db.put_pubkey(address, addressVersion, dataToStore)
+             self.possibleNewPubkey(address)
+ 
+         if addressVersion == 4:
+@@ -458,17 +440,14 @@ class objectProcessor(threading.Thread):
+         ripe.update(sha.digest())
+         fromAddress = encodeAddress(
+             sendersAddressVersionNumber, sendersStreamNumber, ripe.digest())
+-        
++
+         # Let's store the public key in case we want to reply to this
+         # person.
+-        sqlExecute(
+-            '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
+-            fromAddress,
+-            sendersAddressVersionNumber,
+-            decryptedData[:endOfThePublicKeyPosition],
+-            int(time.time()),
+-            'yes')
+-        
++        helper_db.put_pubkey(
++            fromAddress, sendersAddressVersionNumber,
++            decryptedData[:endOfThePublicKeyPosition], True
++        )
++
+         # Check to see whether we happen to be awaiting this
+         # pubkey in order to send a message. If we are, it will do the POW
+         # and send it.
+@@ -516,84 +495,72 @@ class objectProcessor(threading.Thread):
+         subject = decodedMessage.subject
+         body = decodedMessage.body
+ 
+-        # Let us make sure that we haven't already received this message
+-        if helper_inbox.isMessageAlreadyInInbox(sigHash):
+-            logger.info('This msg is already in our inbox. Ignoring it.')
+-            blockMessage = True
+-        if not blockMessage:
+-            if messageEncodingType != 0:
+-                t = (inventoryHash, toAddress, fromAddress, subject, int(
+-                    time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
+-                helper_inbox.insert(t)
+-
+-                queues.UISignalQueue.put(('displayNewInboxMessage', (
+-                    inventoryHash, toAddress, fromAddress, subject, body)))
+-
+-            # If we are behaving as an API then we might need to run an
+-            # outside command to let some program know that a new message
+-            # has arrived.
+-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+-                try:
+-                    apiNotifyPath = BMConfigParser().get(
+-                        'bitmessagesettings', 'apinotifypath')
+-                except:
+-                    apiNotifyPath = ''
+-                if apiNotifyPath != '':
+-                    call([apiNotifyPath, "newMessage"])
+-
+-            # Let us now check and see whether our receiving address is
+-            # behaving as a mailing list
+-            if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
+-                try:
+-                    mailingListName = BMConfigParser().get(
+-                        toAddress, 'mailinglistname')
+-                except:
+-                    mailingListName = ''
+-                # Let us send out this message as a broadcast
+-                subject = self.addMailingListNameToSubject(
+-                    subject, mailingListName)
+-                # Let us now send this message out as a broadcast
+-                message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
+-                )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+-                fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
+-                # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+-                streamNumber = decodeAddress(fromAddress)[2]
+-
+-                ackdata = genAckPayload(streamNumber, 0)
+-                toAddress = '[Broadcast subscribers]'
+-                ripe = ''
+-
+-                # We really should have a discussion about how to
+-                # set the TTL for mailing list broadcasts. This is obviously
+-                # hard-coded. 
+-                TTL = 2*7*24*60*60 # 2 weeks
+-                t = ('', 
+-                     toAddress, 
+-                     ripe, 
+-                     fromAddress, 
+-                     subject, 
+-                     message, 
+-                     ackdata, 
+-                     int(time.time()), # sentTime (this doesn't change)
+-                     int(time.time()), # lastActionTime
+-                     0, 
+-                     'broadcastqueued', 
+-                     0, 
+-                     'sent', 
+-                     messageEncodingType, 
+-                     TTL)
+-                helper_sent.insert(t)
+-
+-                queues.UISignalQueue.put(('displayNewSentMessage', (
+-                    toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdata)))
+-                queues.workerQueue.put(('sendbroadcast', ''))
+-
+-        # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
+-        if self.ackDataHasAValidHeader(ackData) and \
+-            not blockMessage and \
+-            messageEncodingType != 0 and \
+-            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and \
+-            not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
++        if helper_db.put_inbox(
++            toAddress, fromAddress, subject, body, inventoryHash, sigHash,
++            encoding=messageEncodingType
++        ) is False:
++            # logger.info('This msg is already in our inbox. Ignoring it.')
++            return
++
++        queues.UISignalQueue.put((
++            'displayNewInboxMessage',
++            (inventoryHash, toAddress, fromAddress, subject, body)
++        ))
++
++        # If we are behaving as an API then we might need to run an
++        # outside command to let some program know that a new message
++        # has arrived.
++        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
++            try:
++                apiNotifyPath = BMConfigParser().get(
++                    'bitmessagesettings', 'apinotifypath')
++            except:
++                apiNotifyPath = ''
++            if apiNotifyPath != '':
++                call([apiNotifyPath, "newMessage"])
++
++        # Let us now check and see whether our receiving address is
++        # behaving as a mailing list
++        if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
++            try:
++                mailingListName = BMConfigParser().get(
++                    toAddress, 'mailinglistname')
++            except:
++                mailingListName = ''
++            # Let us send out this message as a broadcast
++            subject = self.addMailingListNameToSubject(
++                subject, mailingListName)
++            # Let us now send this message out as a broadcast
++            message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
++            )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
++            fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
++            # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
++            streamNumber = decodeAddress(fromAddress)[2]
++
++            ackdata = genAckPayload(streamNumber, 0)
++            toAddress = toLabel = '[Broadcast subscribers]'
++
++            # We really should have a discussion about how to
++            # set the TTL for mailing list broadcasts. This is obviously
++            # hard-coded.
++            TTL = 2*7*24*60*60  # 2 weeks
++            helper_db.put_sent(
++                toAddress, fromAddress, subject, message, ackdata,
++                'broadcastqueued', messageEncodingType, ttl=TTL
++            )
++
++            queues.UISignalQueue.put((
++                'displayNewSentMessage',
++                (toAddress, toLabel, fromAddress, subject, message, ackdata)
++            ))
++            queues.workerQueue.put(('sendbroadcast', ''))
++
++        # Don't send ACK if invalid, blacklisted senders, invisible messages,
++        # disabled or chan
++        if self.ackDataHasAValidHeader(ackData) \
++            and not blockMessage \
++            and not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') \
++                and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
+             shared.checkAndShareObjectWithPeers(ackData[24:])
+ 
+         # Display timing data
+@@ -748,12 +715,11 @@ class objectProcessor(threading.Thread):
+         logger.info('fromAddress: %s' % fromAddress)
+ 
+         # Let's store the public key in case we want to reply to this person.
+-        sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
+-                   fromAddress,
+-                   sendersAddressVersion,
+-                   decryptedData[:endOfPubkeyPosition],
+-                   int(time.time()),
+-                   'yes')
++        helper_db.put_pubkey(
++            fromAddress, sendersAddressVersion,
++            decryptedData[:endOfPubkeyPosition],
++            True
++        )
+ 
+         # Check to see whether we happen to be awaiting this
+         # pubkey in order to send a message. If we are, it will do the POW
+@@ -772,12 +738,12 @@ class objectProcessor(threading.Thread):
+         body = decodedMessage.body
+ 
+         toAddress = '[Broadcast subscribers]'
+-        if helper_inbox.isMessageAlreadyInInbox(sigHash):
+-            logger.info('This broadcast is already in our inbox. Ignoring it.')
++        if helper_db.put_inbox(
++            toAddress, fromAddress, subject, body, inventoryHash, sigHash,
++            encoding=messageEncodingType
++        ) is False:
++            # logger.info('This broadcast is already in inbox. Ignoring it.')
+             return
+-        t = (inventoryHash, toAddress, fromAddress, subject, int(
+-            time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
+-        helper_inbox.insert(t)
+ 
+         queues.UISignalQueue.put(('displayNewInboxMessage', (
+             inventoryHash, toAddress, fromAddress, subject, body)))
+diff --git a/src/helper_db.py b/src/helper_db.py
+new file mode 100644
+index 0000000..13f3549
+--- /dev/null
++++ b/src/helper_db.py
+@@ -0,0 +1,139 @@
++from helper_sql import sqlExecute, sqlQuery
++from helper_search import search_sql, check_match
++from bmconfigparser import BMConfigParser
++
++import time
++
++
++__all__ = ["search_sql", "check_match"]
++
++
++# + genAckPayload
++def put_sent(
++        to_address, from_address, subject, message, ackdata,
++        status, encoding,
++        ripe='', ttl=0, msgid='', sent_time=None, last_action_time=None,
++        sleep_till_time=0, retrynumber=0):
++    # We don't know msgid until the POW is done.
++    # sleep_till_time will get set when the POW gets done
++    if not sent_time:
++        sent_time = time.time()
++    if not last_action_time:
++        last_action_time = sent_time
++    if not ttl:
++        ttl = BMConfigParser().getint('bitmessagesettings', 'ttl')
++    sqlExecute(
++        "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
++        msgid, to_address, ripe, from_address, subject, message, ackdata,
++        sent_time, last_action_time, sleep_till_time, status, retrynumber,
++        'sent', encoding, ttl
++    )
++
++
++def _in_inbox_already(sighash):
++    return sqlQuery(
++        "SELECT COUNT(*) FROM inbox WHERE sighash=?", sighash
++    )[0][0] != 0
++
++
++def put_inbox(
++        to_address, from_address, subject, message, msgid, sighash,
++        encoding=0, received_time=None):
++    if not received_time:
++        received_time = time.time()
++    if encoding == 0 or _in_inbox_already:
++        return False
++
++    sqlExecute(
++        "INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)",
++        msgid, to_address, from_address, subject, received_time, message,
++        'inbox', encoding, 0, sighash
++    )
++
++
++def put_pubkey(address, address_version, data, used_personally=None):
++    if used_personally is None:
++        if sqlQuery(
++            "SELECT * FROM pubkeys WHERE address=? AND usedpersonally='yes'",
++            address
++        ) == []:
++            used_personally = False
++        else:
++            sqlExecute(
++                "UPDATE pubkeys SET time=? WHERE address=?",
++                time.time(), address
++            )
++            return
++    sqlExecute(
++        "INSERT INTO pubkeys VALUES (?,?,?,?,?)",
++        address, address_version, data, time.time(),
++        'yes' if used_personally else 'no'
++    )
++
++
++def _in_group_already(address, group="addressbook"):
++    return sqlQuery(
++        "SELECT enabled FROM %s WHERE address=?" % group, address)
++
++
++def put_blacklist(label, address, enabled=True):
++    if _in_group_already(address, "blacklist"):
++        return False
++    sqlExecute("INSERT INTO blacklist VALUES (?,?,?)", label, address, enabled)
++    return True
++
++
++def put_subscriptions(label, address, enabled=True):
++    # We must check to see if the address is already in the
++    # subscriptions list. The user cannot add it again or else it
++    # will cause problems when updating and deleting the entry.
++    # FIXME: address should be primary key in this case
++    if _in_group_already(address, "subscriptions"):
++        return False
++    sqlExecute(
++        "INSERT INTO subscriptions VALUES (?,?,?)", label, address, enabled)
++    return True
++
++
++def put_addressbook(label, address):
++    # First we must check to see if the address is already in the
++    # address book. The user cannot add it again or else it will
++    # cause problems when updating and deleting the entry.
++    if _in_group_already(address):
++        return False
++    sqlExecute("INSERT INTO addressbook VALUES (?,?)", label, address)
++    return True
++
++
++def get_subscriptions():
++    queryreturn = sqlQuery(
++        "SELECT label, address FROM subscriptions WHERE enabled=1")
++    for row in queryreturn:
++        yield row
++
++
++def get_addressbook():
++    queryreturn = sqlQuery("SELECT * FROM addressbook")
++    for row in queryreturn:
++        yield row
++
++
++def get_label(address, group="addressbook"):
++    queryreturn = sqlQuery(
++        "SELECT label FROM %s WHERE address=?" % group, address)
++    try:
++        return unicode(queryreturn[-1][0], 'utf-8')
++    except IndexError:
++        pass
++
++
++def set_label(address, label, group="addressbook"):
++    sqlExecute("UPDATE %s set label=? WHERE address=?" % group, label, address)
++
++
++def get_message(msgid):
++    queryreturn = sqlQuery("SELECT message FROM inbox WHERE msgid=?", msgid)
++    try:
++        return queryreturn[-1][0]
++    except IndexError:
++        return ''
+diff --git a/src/helper_search.py b/src/helper_search.py
+index 2217974..30f3191 100644
+--- a/src/helper_search.py
++++ b/src/helper_search.py
+@@ -1,29 +1,19 @@
+-#!/usr/bin/python2.7
++from helper_sql import sqlQuery
++from tr import _translate
+ 
+-from helper_sql import *
+ 
+-try:
+-    from PyQt4 import QtCore, QtGui
+-    haveQt = True
+-except:
+-    haveQt = False
+-
+-def search_translate (context, text):
+-    if haveQt:
+-        return QtGui.QApplication.translate(context, text)
+-    else:
+-        return text.lower()
+-
+-def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
++def search_sql(
++        xAddress="toaddress", account=None, folder="inbox",
++        where=None, what=None, unreadOnly=False):
+     if what is not None and what != "":
+         what = "%" + what + "%"
+-        if where == search_translate("MainWindow", "To"):
++        if where == _translate("MainWindow", "To"):
+             where = "toaddress"
+-        elif where == search_translate("MainWindow", "From"):
++        elif where == _translate("MainWindow", "From"):
+             where = "fromaddress"
+-        elif where == search_translate("MainWindow", "Subject"):
++        elif where == _translate("MainWindow", "Subject"):
+             where = "subject"
+-        elif where == search_translate("MainWindow", "Message"):
++        elif where == _translate("MainWindow", "Message"):
+             where = "message"
+         else:
+             where = "toaddress || fromaddress || subject || message"
+@@ -68,18 +58,30 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
+         sqlStatementBase += " ORDER BY lastactiontime"
+     return sqlQuery(sqlStatementBase, sqlArguments)
+ 
+-def check_match(toAddress, fromAddress, subject, message, where = None, what = None):
++
++def check_match(
++        toAddress, fromAddress, subject, message, where=None, what=None):
+     if what is not None and what != "":
+-        if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
++        if where in (
++            _translate("MainWindow", "To"), _translate("MainWindow", "All")
++        ):
+             if what.lower() not in toAddress.lower():
+                 return False
+-        elif where in (search_translate("MainWindow", "From"), search_translate("MainWindow", "All")):
++        elif where in (
++            _translate("MainWindow", "From"), _translate("MainWindow", "All")
++        ):
+             if what.lower() not in fromAddress.lower():
+                 return False
+-        elif where in (search_translate("MainWindow", "Subject"), search_translate("MainWindow", "All")):
++        elif where in (
++            _translate("MainWindow", "Subject"),
++            _translate("MainWindow", "All")
++        ):
+             if what.lower() not in subject.lower():
+                 return False
+-        elif where in (search_translate("MainWindow", "Message"), search_translate("MainWindow", "All")):
++        elif where in (
++            _translate("MainWindow", "Message"),
++            _translate("MainWindow", "All")
++        ):
+             if what.lower() not in message.lower():
+                 return False
+     return True

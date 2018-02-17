@@ -6,12 +6,12 @@ EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE="sqlite"
 
-inherit distutils-r1 gnome2-utils systemd
+inherit distutils-r1 gnome2-utils versionator systemd
 
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="3a8016d31f517775d226aa8b902480f4a3a148a9"
+COMMIT="a3436fef9c8b2dcb709991fb1cdecb89fed3ee2d"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -52,10 +52,12 @@ RDEPEND="${DEPEND}
 
 S="${WORKDIR}"/${MY_PN}-${COMMIT}
 
+PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
-	"${FILESDIR}"/0.6.3-ipv6.patch
-	"${FILESDIR}"/0.6.3-keystore.patch
+	"${FILESDIR}"/${PVM}-ipv6.patch
+	"${FILESDIR}"/${PVM}-keystore.patch
+	"${FILESDIR}"/${PVM}-ui-refactoring-sql.patch
 )
 
 src_prepare() {
@@ -79,10 +81,6 @@ src_install () {
 		newinitd "${FILESDIR}"/${DN}.initd ${DN}
 		systemd_dounit packages/systemd/bitmessage.service
 	fi
-}
-
-pkg_preinst() {
-	gnome2_icon_savelist
 }
 
 pkg_postinst() {

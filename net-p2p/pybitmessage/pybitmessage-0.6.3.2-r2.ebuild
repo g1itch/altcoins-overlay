@@ -35,7 +35,7 @@ RDEPEND="${DEPEND}
 		dev-python/numpy[${PYTHON_USEDEP}]
 		dev-python/pyopencl[${PYTHON_USEDEP}]
 	)
-	qt4? ( dev-python/QtPy[${PYTHON_USEDEP}]
+	qt4? ( <=dev-python/QtPy-1.2.1[gui,${PYTHON_USEDEP}]
 		   || ( dev-python/PyQt4[${PYTHON_USEDEP}]
 				dev-python/pyside[${PYTHON_USEDEP}] ) )
 	qt5? ( dev-python/QtPy[gui,${PYTHON_USEDEP}]

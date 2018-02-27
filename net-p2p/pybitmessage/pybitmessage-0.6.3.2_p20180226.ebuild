@@ -57,7 +57,7 @@ PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/${PVM}-ipv6.patch
 	"${FILESDIR}"/${PVM}-keystore.patch
-	"${FILESDIR}"/${PVM}-ui-refactoring-sql.patch
+	# "${FILESDIR}"/${PVM}-ui-refactoring-sql.patch
 )
 
 src_prepare() {

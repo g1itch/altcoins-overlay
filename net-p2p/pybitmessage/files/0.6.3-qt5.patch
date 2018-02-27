@@ -339,7 +339,7 @@ index accd574..6300fb7 100755
      main()
  
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 7bbd7dd..220dc77 100644
+index 7bbd7dd..8c2f06d 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -1,13 +1,7 @@
@@ -739,17 +739,26 @@ index 7bbd7dd..220dc77 100644
                  treeWidget.takeTopLevelItem(i)
                  # no increment
                  continue
-@@ -532,7 +516,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -532,8 +516,9 @@ class MyForm(settingsmixin.SMainWindow):
              while j < widget.childCount():
                  subwidget = widget.child(j)
                  try:
 -                    subwidget.setUnreadCount(db[toAddress][subwidget.folderName])
+-                    if subwidget.folderName not in ["new", "trash", "sent"]:
 +                    subwidget.setUnreadCount(
 +                        db[toAddress][subwidget.folderName])
-                     if subwidget.folderName not in ["new", "trash", "sent"]:
++                    if subwidget.folderName not in ("new", "trash", "sent"):
                          unread += db[toAddress][subwidget.folderName]
                      db[toAddress].pop(subwidget.folderName, None)
-@@ -555,7 +540,7 @@ class MyForm(settingsmixin.SMainWindow):
+                 except:
+@@ -549,13 +534,13 @@ class MyForm(settingsmixin.SMainWindow):
+                     if toAddress is not None and tab == 'messages' and folder == "new":
+                         continue
+                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
+-                    if subwidget.folderName not in ["new", "trash", "sent"]:
++                    if subwidget.folderName not in ("new", "trash", "sent"):
+                         unread += c
+                     j += 1
              widget.setUnreadCount(unread)
              db.pop(toAddress, None)
              i += 1
@@ -758,7 +767,13 @@ index 7bbd7dd..220dc77 100644
          i = 0
          for toAddress in db:
              widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"], enabled[toAddress])
-@@ -570,11 +555,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -565,16 +550,16 @@ class MyForm(settingsmixin.SMainWindow):
+                 if toAddress is not None and tab == 'messages' and folder == "new":
+                     continue
+                 subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
+-                if subwidget.folderName not in ["new", "trash", "sent"]:
++                if subwidget.folderName not in ("new", "trash", "sent"):
+                     unread += db[toAddress][folder]
                  j += 1
              widget.setUnreadCount(unread)
              i += 1
@@ -1064,6 +1079,15 @@ index 7bbd7dd..220dc77 100644
                      break
              else:
                  rrow = None
+@@ -961,7 +941,7 @@ class MyForm(settingsmixin.SMainWindow):
+         normalUnread = {}
+         for row in queryReturn:
+             normalUnread[row[0]] = {}
+-            if row[1] in ["trash"]:
++            if row[1] in ("trash"):
+                 continue
+             normalUnread[row[0]][row[1]] = row[2]
+             if row[1] in totalUnread:
 @@ -1017,16 +997,19 @@ class MyForm(settingsmixin.SMainWindow):
          if sortingEnabled:
              tableWidget.setSortingEnabled(True)
@@ -1791,7 +1815,7 @@ index 7bbd7dd..220dc77 100644
          """
          The whole network message must fit in 2^18 bytes.
          Let's assume 500 bytes of overhead. If someone wants to get that
-@@ -1893,23 +1969,27 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1893,23 +1969,26 @@ class MyForm(settingsmixin.SMainWindow):
          users can send messages of any length.
          """
          if len(message) > (2 ** 18 - 500):
@@ -1817,17 +1841,16 @@ index 7bbd7dd..220dc77 100644
 -                toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
 +        # To send a message to specific people (rather than broadcast)
 +        if sendMessageToPeople:
-+            toAddressesList = [
++            toAddressesList = set([
 +                s.strip() for s in toAddresses.replace(',', ';').split(';')
-+            ]
++            ])
 +            # remove duplicate addresses. If the user has one address
 +            # with a BM- and the same address without the BM-, this will
 +            # not catch it. They'll send the message to the person twice.
-+            toAddressesList = list(set(toAddressesList))
              for toAddress in toAddressesList:
                  if toAddress != '':
                      # label plus address
-@@ -1918,18 +1998,32 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1918,18 +1997,32 @@ class MyForm(settingsmixin.SMainWindow):
                      # email address
                      if toAddress.find("@") >= 0:
                          if isinstance(acct, GatewayAccount):
@@ -1866,7 +1889,7 @@ index 7bbd7dd..220dc77 100644
                              acct = MailchuckAccount(fromAddress)
                              acct.register(email)
                              BMConfigParser().set(fromAddress, 'label', email)
-@@ -1939,76 +2033,80 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1939,76 +2032,80 @@ class MyForm(settingsmixin.SMainWindow):
                                  "MainWindow",
                                  "Error: Your account wasn't registered at"
                                  " an email gateway. Sending registration"
@@ -1969,7 +1992,7 @@ index 7bbd7dd..220dc77 100644
                      elif fromAddress == '':
                          self.updateStatusBar(_translate(
                              "MainWindow",
-@@ -2020,12 +2118,31 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2020,12 +2117,31 @@ class MyForm(settingsmixin.SMainWindow):
                          toAddress = addBMIfNotPresent(toAddress)
  
                          if addressVersionNumber > 4 or addressVersionNumber <= 1:
@@ -2005,7 +2028,16 @@ index 7bbd7dd..220dc77 100644
                              continue
                          self.statusbar.clearMessage()
                          if shared.statusIconColor == 'red':
-@@ -2149,11 +2266,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2119,7 +2235,7 @@ class MyForm(settingsmixin.SMainWindow):
+                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+ 
+                 toLabel = str_broadcast_subscribers
+-                
++
+                 self.displayNewSentMessage(
+                     toAddress, toLabel, fromAddress, subject, message, ackdata)
+ 
+@@ -2149,11 +2265,11 @@ class MyForm(settingsmixin.SMainWindow):
  
      def click_pushButtonFetchNamecoinID(self):
          nc = namecoinConnection()
@@ -2019,7 +2051,7 @@ index 7bbd7dd..220dc77 100644
          else:
              identities[-1] = addr
              self.ui.lineEditTo.setText("; ".join(identities))
-@@ -2184,7 +2301,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2184,7 +2300,7 @@ class MyForm(settingsmixin.SMainWindow):
  #        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
          for i in range(self.ui.comboBoxSendFrom.count()):
              address = str(self.ui.comboBoxSendFrom.itemData(
@@ -2028,7 +2060,7 @@ index 7bbd7dd..220dc77 100644
              self.ui.comboBoxSendFrom.setItemData(
                  i, AccountColor(address).accountColor(),
                  QtCore.Qt.ForegroundRole)
-@@ -2207,7 +2324,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2207,7 +2323,7 @@ class MyForm(settingsmixin.SMainWindow):
                  self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
          for i in range(self.ui.comboBoxSendFromBroadcast.count()):
              address = str(self.ui.comboBoxSendFromBroadcast.itemData(
@@ -2037,14 +2069,53 @@ index 7bbd7dd..220dc77 100644
              self.ui.comboBoxSendFromBroadcast.setItemData(
                  i, AccountColor(address).accountColor(),
                  QtCore.Qt.ForegroundRole)
-@@ -2238,12 +2355,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2221,29 +2337,46 @@ class MyForm(settingsmixin.SMainWindow):
+     # receives a message to an address that is acting as a
+     # pseudo-mailing-list. The message will be broadcast out. This function
+     # puts the message on the 'Sent' tab.
+-    def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
++    def displayNewSentMessage(
++            self, toAddress, toLabel, fromAddress, subject,
++            message, ackdata):
+         acct = accountClass(fromAddress)
+         acct.parseMessage(toAddress, fromAddress, subject, message)
+         tab = -1
+-        for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
++        for sent in (
++            self.ui.tableWidgetInbox,
++            self.ui.tableWidgetInboxSubscriptions,
++            self.ui.tableWidgetInboxChans
++        ):
+             tab += 1
+             if tab == 1:
+                 tab = 2
+             treeWidget = self.widgetConvert(sent)
+             if self.getCurrentFolder(treeWidget) != "sent":
                  continue
-             elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
+-            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) != fromAddress:
++            if treeWidget == self.ui.treeWidgetYourIdentities \
++                    and self.getCurrentAccount(treeWidget) != fromAddress:
+                 continue
+-            elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
++            elif treeWidget in (
++                self.ui.treeWidgetSubscriptions,
++                self.ui.treeWidgetChans
++            ) and self.getCurrentAccount(treeWidget) != toAddress:
+                 continue
+-            elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
++            elif not helper_search.check_match(
++                toAddress, fromAddress, subject, message,
++                self.getCurrentSearchOption(tab),
++                self.getCurrentSearchLine(tab)
++            ):
                  continue
 -            
-+
-             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
+-            self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
 -            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
++
++            self.addMessageListItemSent(
++                sent, toAddress, fromAddress, subject, "msgqueued",
++                ackdata, time.time())
 +            self.getAccountTextedit(acct).setPlainText(message)
              sent.setCurrentCell(0, 0)
  
@@ -2054,16 +2125,16 @@ index 7bbd7dd..220dc77 100644
          if toAddress == str_broadcast_subscribers:
              acct = accountClass(fromAddress)
          else:
-@@ -2251,17 +2369,38 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2251,17 +2384,38 @@ class MyForm(settingsmixin.SMainWindow):
          inbox = self.getAccountMessagelist(acct)
          ret = None
          tab = -1
 -        for treeWidget in [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]:
-+        for treeWidget in [
++        for treeWidget in (
 +            self.ui.treeWidgetYourIdentities,
 +            self.ui.treeWidgetSubscriptions,
 +            self.ui.treeWidgetChans
-+        ]:
++        ):
              tab += 1
              if tab == 1:
                  tab = 2
@@ -2083,7 +2154,7 @@ index 7bbd7dd..220dc77 100644
 +            if tableWidget == inbox \
 +                and self.getCurrentAccount(treeWidget) == acct.address \
 +                and self.getCurrentFolder(treeWidget) \
-+                    in ["inbox", None]:
++                    in ("inbox", None):
 +                ret = self.addMessageListItemInbox(
 +                    inbox, "inbox", inventoryHash, toAddress, fromAddress,
 +                    subject, time.time(), 0
@@ -2091,7 +2162,7 @@ index 7bbd7dd..220dc77 100644
 +            elif treeWidget == self.ui.treeWidgetYourIdentities \
 +                and self.getCurrentAccount(treeWidget) is None \
 +                and self.getCurrentFolder(treeWidget) \
-+                    in ["inbox", "new", None]:
++                    in ("inbox", "new", None):
 +                ret = self.addMessageListItemInbox(
 +                    tableWidget, "inbox", inventoryHash, toAddress,
 +                    fromAddress, subject, time.time(), 0
@@ -2099,7 +2170,7 @@ index 7bbd7dd..220dc77 100644
          if ret is None:
              acct.parseMessage(toAddress, fromAddress, subject, "")
          else:
-@@ -2271,11 +2410,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2271,11 +2425,13 @@ class MyForm(settingsmixin.SMainWindow):
                  'bitmessagesettings', 'showtraynotifications'):
              self.notifierShow(
                  _translate("MainWindow", "New Message"),
@@ -2116,7 +2187,7 @@ index 7bbd7dd..220dc77 100644
              # Ubuntu should notify of new message irespective of
              # whether it's in current message list or not
              self.indicatorUpdate(True, to_label=acct.toLabel)
-@@ -2400,14 +2541,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2400,14 +2556,14 @@ class MyForm(settingsmixin.SMainWindow):
                  self.settingsDialogInstance.ui.checkBoxUseIdenticons.isChecked()))
              BMConfigParser().set('bitmessagesettings', 'replybelow', str(
                  self.settingsDialogInstance.ui.checkBoxReplyBelow.isChecked()))
@@ -2135,7 +2206,7 @@ index 7bbd7dd..220dc77 100644
                          "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                  BMConfigParser().set('bitmessagesettings', 'port', str(
                      self.settingsDialogInstance.ui.lineEditTCPPort.text()))
-@@ -2421,7 +2562,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2421,7 +2577,7 @@ class MyForm(settingsmixin.SMainWindow):
              #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
              if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
                  if shared.statusIconColor != 'red':
@@ -2144,7 +2215,7 @@ index 7bbd7dd..220dc77 100644
                          "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
              if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS':
                  self.statusbar.clearMessage()
-@@ -2450,7 +2591,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2450,7 +2606,7 @@ class MyForm(settingsmixin.SMainWindow):
                  BMConfigParser().set('bitmessagesettings', 'maxuploadrate', str(
                      int(float(self.settingsDialogInstance.ui.lineEditMaxUploadRate.text()))))
              except ValueError:
@@ -2153,7 +2224,7 @@ index 7bbd7dd..220dc77 100644
                      "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
              else:
                  set_rates(BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
-@@ -2478,7 +2619,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2478,7 +2634,7 @@ class MyForm(settingsmixin.SMainWindow):
                  BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                      self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
  
@@ -2162,7 +2233,7 @@ index 7bbd7dd..220dc77 100644
                  BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
                  queues.workerQueue.put(('resetPoW', ''))
  
-@@ -2530,7 +2671,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2530,7 +2686,7 @@ class MyForm(settingsmixin.SMainWindow):
                  if (float(self.settingsDialogInstance.ui.lineEditDays.text()) >=0 and float(self.settingsDialogInstance.ui.lineEditMonths.text()) >=0):
                      shared.maximumLengthOfTimeToBotherResendingMessages = (float(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60) + (float(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12)
                      if shared.maximumLengthOfTimeToBotherResendingMessages < 432000: # If the time period is less than 5 hours, we give zero values to all fields. No message will be sent again.
@@ -2171,7 +2242,7 @@ index 7bbd7dd..220dc77 100644
                              "MainWindow", "Note that the time limit you entered is less than the amount of time Bitmessage waits for the first resend attempt therefore your messages will never be resent."))
                          BMConfigParser().set('bitmessagesettings', 'stopresendingafterxdays', '0')
                          BMConfigParser().set('bitmessagesettings', 'stopresendingafterxmonths', '0')
-@@ -2609,7 +2750,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2609,7 +2765,7 @@ class MyForm(settingsmixin.SMainWindow):
          # Only settings remain here
          acct.settings()
          for i in range(self.ui.comboBoxSendFrom.count()):
@@ -2180,7 +2251,7 @@ index 7bbd7dd..220dc77 100644
                      == acct.fromAddress:
                  self.ui.comboBoxSendFrom.setCurrentIndex(i)
                  break
-@@ -2628,13 +2769,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2628,13 +2784,13 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.textEditMessage.setFocus()
  
      def on_action_MarkAllRead(self):
@@ -2197,7 +2268,7 @@ index 7bbd7dd..220dc77 100644
              return
          # addressAtCurrentRow = self.getCurrentAccount()
          tableWidget = self.getCurrentMessagelist()
-@@ -2649,7 +2790,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2649,7 +2805,7 @@ class MyForm(settingsmixin.SMainWindow):
          msgids = []
          for i in range(0, idCount):
              msgids.append(str(tableWidget.item(
@@ -2206,7 +2277,7 @@ index 7bbd7dd..220dc77 100644
              tableWidget.item(i, 0).setUnread(False)
              tableWidget.item(i, 1).setUnread(False)
              tableWidget.item(i, 2).setUnread(False)
-@@ -2679,13 +2820,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2679,13 +2835,6 @@ class MyForm(settingsmixin.SMainWindow):
  
      # Quit selected from menu or application indicator
      def quit(self):
@@ -2220,7 +2291,7 @@ index 7bbd7dd..220dc77 100644
  
          if self.quitAccepted:
              return
-@@ -2699,43 +2833,69 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2699,43 +2848,69 @@ class MyForm(settingsmixin.SMainWindow):
          waitForSync = False
  
          # C PoW currently doesn't support interrupting and OpenCL is untested
@@ -2310,7 +2381,7 @@ index 7bbd7dd..220dc77 100644
  
          if waitForConnection:
              self.updateStatusBar(_translate(
-@@ -2746,7 +2906,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2746,7 +2921,9 @@ class MyForm(settingsmixin.SMainWindow):
                      QtCore.QEventLoop.AllEvents, 1000
                  )
  
@@ -2321,7 +2392,7 @@ index 7bbd7dd..220dc77 100644
          if waitForSync:
              self.updateStatusBar(_translate(
                  "MainWindow", "Waiting for finishing synchronisation..."))
-@@ -2767,17 +2929,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2767,17 +2944,18 @@ class MyForm(settingsmixin.SMainWindow):
                      maxWorkerQueue = curWorkerQueue
                  if curWorkerQueue > 0:
                      self.updateStatusBar(_translate(
@@ -2345,7 +2416,7 @@ index 7bbd7dd..220dc77 100644
  
              QtCore.QCoreApplication.processEvents(
                  QtCore.QEventLoop.AllEvents, 1000
-@@ -2791,14 +2954,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2791,14 +2969,14 @@ class MyForm(settingsmixin.SMainWindow):
  
              # check if upload (of objects created locally) pending
              self.updateStatusBar(_translate(
@@ -2364,7 +2435,7 @@ index 7bbd7dd..220dc77 100644
                      time.sleep(0.5)
                      QtCore.QCoreApplication.processEvents(
                          QtCore.QEventLoop.AllEvents, 1000
-@@ -2815,7 +2978,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2815,7 +2993,7 @@ class MyForm(settingsmixin.SMainWindow):
  
          # save state and geometry self and all widgets
          self.updateStatusBar(_translate(
@@ -2373,7 +2444,7 @@ index 7bbd7dd..220dc77 100644
          QtCore.QCoreApplication.processEvents(
              QtCore.QEventLoop.AllEvents, 1000
          )
-@@ -2828,17 +2991,17 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2828,17 +3006,17 @@ class MyForm(settingsmixin.SMainWindow):
                      obj.saveSettings()
  
          self.updateStatusBar(_translate(
@@ -2394,7 +2465,7 @@ index 7bbd7dd..220dc77 100644
          shared.thisapp.cleanup()
          logger.info("Shutdown complete")
          super(MyForm, myapp).close()
-@@ -2888,10 +3051,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2888,10 +3066,10 @@ class MyForm(settingsmixin.SMainWindow):
              elif lines[i] == '' and (i+1) < totalLines and \
                   lines[i+1] != '------------------------------------------------------':
                  lines[i] = '<br><br>'
@@ -2408,7 +2479,7 @@ index 7bbd7dd..220dc77 100644
  
      def on_action_InboxMarkUnread(self):
          tableWidget = self.getCurrentMessagelist()
-@@ -2903,7 +3066,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2903,7 +3081,7 @@ class MyForm(settingsmixin.SMainWindow):
          for row in tableWidget.selectedIndexes():
              currentRow = row.row()
              msgid = str(tableWidget.item(
@@ -2417,7 +2488,7 @@ index 7bbd7dd..220dc77 100644
              msgids.add(msgid)
              # if not tableWidget.item(currentRow, 0).unread:
              #     modified += 1
-@@ -2918,26 +3081,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2918,26 +3096,18 @@ class MyForm(settingsmixin.SMainWindow):
          )
  
          self.propagateUnreadCount()
@@ -2450,16 +2521,29 @@ index 7bbd7dd..220dc77 100644
          def quote_line(line):
              # Do quote empty lines.
              if line == '' or line.isspace():
-@@ -2958,7 +3113,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2950,15 +3120,18 @@ class MyForm(settingsmixin.SMainWindow):
+                 return quoteWrapper.fill(line)
+         return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
+ 
+-    def setSendFromComboBox(self, address = None):
++    def setSendFromComboBox(self, address=None):
+         if address is None:
+             messagelist = self.getCurrentMessagelist()
+             if messagelist:
+                 currentInboxRow = messagelist.currentRow()
                  address = messagelist.item(
                      currentInboxRow, 0).address
-         for box in [self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast]:
+-        for box in [self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast]:
 -            listOfAddressesInComboBoxSendFrom = [str(box.itemData(i).toPyObject()) for i in range(box.count())]
-+            listOfAddressesInComboBoxSendFrom = [str(box.itemData(i)) for i in range(box.count())]
++        for box in (
++            self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast
++        ):
++            listOfAddressesInComboBoxSendFrom = [
++                str(box.itemData(i)) for i in range(box.count())]
              if address in listOfAddressesInComboBoxSendFrom:
                  currentIndex = listOfAddressesInComboBoxSendFrom.index(address)
                  box.setCurrentIndex(currentIndex)
-@@ -2967,18 +3122,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2967,18 +3140,18 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_action_InboxReplyChan(self):
          self.on_action_InboxReply(self.REPLY_TYPE_CHAN)
@@ -2483,7 +2567,7 @@ index 7bbd7dd..220dc77 100644
          currentInboxRow = tableWidget.currentRow()
          toAddressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 0).address
-@@ -2986,13 +3141,17 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2986,13 +3159,17 @@ class MyForm(settingsmixin.SMainWindow):
          fromAddressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 1).address
          msgid = str(tableWidget.item(
@@ -2503,7 +2587,7 @@ index 7bbd7dd..220dc77 100644
          widget = {
              'subject': self.ui.lineEditSubject,
              'from': self.ui.comboBoxSendFrom,
-@@ -3004,11 +3163,26 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3004,11 +3181,26 @@ class MyForm(settingsmixin.SMainWindow):
              )
  #            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
          elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
@@ -2535,7 +2619,7 @@ index 7bbd7dd..220dc77 100644
          else:
              self.setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(toAddressAtCurrentInboxRow)
              broadcast_tab_index = self.ui.tabWidgetSend.indexOf(
-@@ -3026,24 +3200,35 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3026,24 +3218,35 @@ class MyForm(settingsmixin.SMainWindow):
              isinstance(acct, GatewayAccount) and fromAddressAtCurrentInboxRow == acct.relayAddress):
              self.ui.lineEditTo.setText(str(acct.fromAddress))
          else:
@@ -2569,8 +2653,9 @@ index 7bbd7dd..220dc77 100644
 +        quotedText = self.quoted_text(
 +            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
          widget['message'].setPlainText(quotedText)
-         if acct.subject[0:3] in ['Re:', 'RE:']:
+-        if acct.subject[0:3] in ['Re:', 'RE:']:
 -            widget['subject'].setText(tableWidget.item(currentInboxRow, 2).label)
++        if acct.subject[0:3] in ('Re:', 'RE:'):
 +            widget['subject'].setText(
 +                tableWidget.item(currentInboxRow, 2).label)
          else:
@@ -2580,7 +2665,7 @@ index 7bbd7dd..220dc77 100644
          self.ui.tabWidget.setCurrentIndex(
              self.ui.tabWidget.indexOf(self.ui.send)
          )
-@@ -3054,7 +3239,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3054,7 +3257,7 @@ class MyForm(settingsmixin.SMainWindow):
          if not tableWidget:
              return
          currentInboxRow = tableWidget.currentRow()
@@ -2589,7 +2674,7 @@ index 7bbd7dd..220dc77 100644
          addressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 1).data(QtCore.Qt.UserRole)
          self.ui.tabWidget.setCurrentIndex(
-@@ -3068,7 +3253,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3068,7 +3271,7 @@ class MyForm(settingsmixin.SMainWindow):
          if not tableWidget:
              return
          currentInboxRow = tableWidget.currentRow()
@@ -2598,7 +2683,7 @@ index 7bbd7dd..220dc77 100644
          addressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 1).data(QtCore.Qt.UserRole)
          recipientAddress = tableWidget.item(
-@@ -3092,23 +3277,28 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3092,23 +3295,28 @@ class MyForm(settingsmixin.SMainWindow):
                  "Error: You cannot add the same address to your blacklist"
                  " twice. Try renaming the existing one if you want."))
  
@@ -2633,7 +2718,7 @@ index 7bbd7dd..220dc77 100644
                          messageList.removeRow(i)
  
      # Send item on the Inbox tab to trash
-@@ -3118,20 +3308,23 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3118,20 +3326,23 @@ class MyForm(settingsmixin.SMainWindow):
              return
          currentRow = 0
          folder = self.getCurrentFolder()
@@ -2662,7 +2747,7 @@ index 7bbd7dd..220dc77 100644
          idCount = len(inventoryHashesToTrash)
          if folder == "trash" or shifted:
              sqlExecuteChunked('''DELETE FROM inbox WHERE msgid IN ({0})''',
-@@ -3153,16 +3346,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3153,16 +3364,19 @@ class MyForm(settingsmixin.SMainWindow):
          tableWidget.setUpdatesEnabled(False)
          inventoryHashesToTrash = []
          # ranges in reversed order
@@ -2686,7 +2771,7 @@ index 7bbd7dd..220dc77 100644
          if currentRow == 0:
              tableWidget.selectRow(currentRow)
          else:
-@@ -3188,16 +3384,20 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3188,16 +3402,20 @@ class MyForm(settingsmixin.SMainWindow):
  
          # Retrieve the message data out of the SQL database
          msgid = str(tableWidget.item(
@@ -2711,7 +2796,7 @@ index 7bbd7dd..220dc77 100644
              return
          try:
              f = open(filename, 'w')
-@@ -3210,16 +3410,15 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3210,16 +3428,15 @@ class MyForm(settingsmixin.SMainWindow):
      # Send item on the Sent tab to trash
      def on_action_SentTrash(self):
          currentRow = 0
@@ -2730,7 +2815,7 @@ index 7bbd7dd..220dc77 100644
              if folder == "trash" or shifted:
                  sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
              else:
-@@ -3245,15 +3444,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3245,15 +3462,18 @@ class MyForm(settingsmixin.SMainWindow):
          queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
          for row in queryreturn:
              ackdata, = row
@@ -2752,7 +2837,7 @@ index 7bbd7dd..220dc77 100644
          clipboard.setText(str(addressAtCurrentRow))
  
      # Group of functions for the Address Book dialog box
-@@ -3265,11 +3467,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3265,11 +3485,11 @@ class MyForm(settingsmixin.SMainWindow):
              currentRow = self.ui.tableWidgetAddressBook.selectedIndexes()[
                  0].row()
              labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
@@ -2766,7 +2851,7 @@ index 7bbd7dd..220dc77 100644
              self.ui.tableWidgetAddressBook.removeRow(currentRow)
              self.rerenderMessagelistFromLabels()
              self.rerenderMessagelistToLabels()
-@@ -3287,7 +3489,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3287,7 +3507,7 @@ class MyForm(settingsmixin.SMainWindow):
                  fullStringOfAddresses = addressAtCurrentRow
              else:
                  fullStringOfAddresses += ', ' + str(addressAtCurrentRow)
@@ -2775,7 +2860,7 @@ index 7bbd7dd..220dc77 100644
          clipboard.setText(fullStringOfAddresses)
  
      def on_action_AddressBookSend(self):
-@@ -3304,8 +3506,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3304,8 +3524,8 @@ class MyForm(settingsmixin.SMainWindow):
              if self.ui.lineEditTo.text() == '':
                  self.ui.lineEditTo.setText(stringToAdd)
              else:
@@ -2786,7 +2871,7 @@ index 7bbd7dd..220dc77 100644
          if listOfSelectedRows == {}:
              self.updateStatusBar(_translate(
                  "MainWindow", "No addresses selected."))
-@@ -3329,14 +3531,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3329,14 +3549,14 @@ class MyForm(settingsmixin.SMainWindow):
                      " subscriptions twice. Perhaps rename the existing"
                      " one if you want."))
                  continue
@@ -2803,7 +2888,7 @@ index 7bbd7dd..220dc77 100644
          self.popMenuAddressBook.addAction(self.actionAddressBookSend)
          self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
          self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-@@ -3362,7 +3564,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3362,7 +3582,7 @@ class MyForm(settingsmixin.SMainWindow):
          self.click_pushButtonAddSubscription()
  
      def on_action_SubscriptionsDelete(self):
@@ -2812,7 +2897,7 @@ index 7bbd7dd..220dc77 100644
                  self, "Delete subscription?",
                  _translate(
                      "MainWindow",
-@@ -3373,8 +3575,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3373,8 +3593,8 @@ class MyForm(settingsmixin.SMainWindow):
                      " messages, but you can still view messages you"
                      " already received.\n\nAre you sure you want to"
                      " delete the subscription?"
@@ -2823,7 +2908,7 @@ index 7bbd7dd..220dc77 100644
              return
          address = self.getCurrentAccount()
          sqlExecute('''DELETE FROM subscriptions WHERE address=?''',
-@@ -3386,7 +3588,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3386,7 +3606,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_action_SubscriptionsClipboard(self):
          address = self.getCurrentAccount()
@@ -2832,7 +2917,7 @@ index 7bbd7dd..220dc77 100644
          clipboard.setText(str(address))
  
      def on_action_SubscriptionsEnable(self):
-@@ -3411,7 +3613,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3411,7 +3631,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_context_menuSubscriptions(self, point):
          currentItem = self.getCurrentItem()
@@ -2841,7 +2926,7 @@ index 7bbd7dd..220dc77 100644
          if isinstance(currentItem, Ui_AddressWidget):
              self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
              self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-@@ -3445,7 +3647,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3445,7 +3665,7 @@ class MyForm(settingsmixin.SMainWindow):
              return None
  
      def getCurrentTreeWidget(self):
@@ -2850,7 +2935,7 @@ index 7bbd7dd..220dc77 100644
          treeWidgetList = [
              self.ui.treeWidgetYourIdentities,
              False,
-@@ -3469,7 +3671,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3469,7 +3689,7 @@ class MyForm(settingsmixin.SMainWindow):
              return self.ui.treeWidgetYourIdentities
  
      def getCurrentMessagelist(self):
@@ -2859,7 +2944,7 @@ index 7bbd7dd..220dc77 100644
          messagelistList = [
              self.ui.tableWidgetInbox,
              False,
-@@ -3480,7 +3682,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3480,7 +3700,7 @@ class MyForm(settingsmixin.SMainWindow):
              return messagelistList[currentIndex]
          else:
              return False
@@ -2868,7 +2953,7 @@ index 7bbd7dd..220dc77 100644
      def getAccountMessagelist(self, account):
          try:
              if account.type == AccountMixin.CHAN:
-@@ -3497,8 +3699,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3497,20 +3717,20 @@ class MyForm(settingsmixin.SMainWindow):
          if messagelist:
              currentRow = messagelist.currentRow()
              if currentRow >= 0:
@@ -2879,7 +2964,33 @@ index 7bbd7dd..220dc77 100644
                  # data is saved at the 4. column of the table...
                  return msgid
          return False
-@@ -3540,7 +3742,7 @@ class MyForm(settingsmixin.SMainWindow):
+ 
+     def getCurrentMessageTextedit(self):
+         currentIndex = self.ui.tabWidget.currentIndex()
+-        messagelistList = [
++        messagelistList = (
+             self.ui.textEditInboxMessage,
+             False,
+             self.ui.textEditInboxMessageSubscriptions,
+             self.ui.textEditInboxMessageChans,
+-        ]
++        )
+         if currentIndex >= 0 and currentIndex < len(messagelistList):
+             return messagelistList[currentIndex]
+         else:
+@@ -3530,33 +3750,31 @@ class MyForm(settingsmixin.SMainWindow):
+     def getCurrentSearchLine(self, currentIndex=None, retObj=False):
+         if currentIndex is None:
+             currentIndex = self.ui.tabWidget.currentIndex()
+-        messagelistList = [
++        messagelistList = (
+             self.ui.inboxSearchLineEdit,
+             False,
+             self.ui.inboxSearchLineEditSubscriptions,
+             self.ui.inboxSearchLineEditChans,
+-        ]
++        )
+         if currentIndex >= 0 and currentIndex < len(messagelistList):
              if retObj:
                  return messagelistList[currentIndex]
              else:
@@ -2888,9 +2999,17 @@ index 7bbd7dd..220dc77 100644
          else:
              return None
  
-@@ -3554,9 +3756,7 @@ class MyForm(settingsmixin.SMainWindow):
+     def getCurrentSearchOption(self, currentIndex=None):
+         if currentIndex is None:
+             currentIndex = self.ui.tabWidget.currentIndex()
+-        messagelistList = [
++        messagelistList = (
+             self.ui.inboxSearchOption,
+             False,
+             self.ui.inboxSearchOptionSubscriptions,
              self.ui.inboxSearchOptionChans,
-         ]
+-        ]
++        )
          if currentIndex >= 0 and currentIndex < len(messagelistList):
 -            return messagelistList[currentIndex].currentText().toUtf8().data()
 -        else:
@@ -2899,7 +3018,7 @@ index 7bbd7dd..220dc77 100644
  
      # Group of functions for the Your Identities dialog box
      def getCurrentItem(self, treeWidget=None):
-@@ -3567,7 +3767,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3567,7 +3785,7 @@ class MyForm(settingsmixin.SMainWindow):
              if currentItem:
                  return currentItem
          return False
@@ -2908,7 +3027,7 @@ index 7bbd7dd..220dc77 100644
      def getCurrentAccount(self, treeWidget=None):
          currentItem = self.getCurrentItem(treeWidget)
          if currentItem:
-@@ -3580,13 +3780,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3580,13 +3798,11 @@ class MyForm(settingsmixin.SMainWindow):
      def getCurrentFolder(self, treeWidget=None):
          if treeWidget is None:
              treeWidget = self.getCurrentTreeWidget()
@@ -2923,7 +3042,7 @@ index 7bbd7dd..220dc77 100644
  
      def setCurrentItemColor(self, color):
          treeWidget = self.getCurrentTreeWidget()
-@@ -3605,7 +3803,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3605,7 +3821,7 @@ class MyForm(settingsmixin.SMainWindow):
          if account.type == AccountMixin.NORMAL:
              return  # maybe in the future
          elif account.type == AccountMixin.CHAN:
@@ -2932,7 +3051,7 @@ index 7bbd7dd..220dc77 100644
                      self, "Delete channel?",
                      _translate(
                          "MainWindow",
-@@ -3616,8 +3814,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3616,8 +3832,8 @@ class MyForm(settingsmixin.SMainWindow):
                          " messages, but you can still view messages you"
                          " already received.\n\nAre you sure you want to"
                          " delete the channel?"
@@ -2943,7 +3062,7 @@ index 7bbd7dd..220dc77 100644
                  BMConfigParser().remove_section(str(account.address))
              else:
                  return
-@@ -3658,14 +3856,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3658,43 +3874,43 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_action_Clipboard(self):
          address = self.getCurrentAccount()
@@ -2956,17 +3075,35 @@ index 7bbd7dd..220dc77 100644
          currentColumn = tableWidget.currentColumn()
          currentRow = tableWidget.currentRow()
 -        if currentColumn not in [0, 1, 2]: # to, from, subject
-+        if currentColumn not in [0, 1, 2]:  # to, from, subject
-             if self.getCurrentFolder() == "sent":
-                 currentColumn = 0
-             else:
-@@ -3683,18 +3881,18 @@ class MyForm(settingsmixin.SMainWindow):
+-            if self.getCurrentFolder() == "sent":
+-                currentColumn = 0
+-            else:
+-                currentColumn = 1
+-        if self.getCurrentFolder() == "sent":
++        currentFolder = self.getCurrentFolder()
++        if currentColumn not in (0, 1, 2):  # to, from, subject
++            currentColumn = 0 if currentFolder == "sent" else 1
++
++        if currentFolder == "sent":
+             myAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
+             otherAddress = tableWidget.item(currentRow, 0).data(QtCore.Qt.UserRole)
+         else:
+             myAddress = tableWidget.item(currentRow, 0).data(QtCore.Qt.UserRole)
+             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
+         account = accountClass(myAddress)
+-        if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
+-            (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
+-            (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
++        if isinstance(account, GatewayAccount) \
++            and otherAddress == account.relayAddress and (
++                (currentColumn in (0, 2) and currentFolder == "sent")
++                or (currentColumn in (1, 2) and currentFolder != "sent")):
              text = str(tableWidget.item(currentRow, currentColumn).label)
          else:
              text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
 -        text = unicode(str(text), 'utf-8', 'ignore')
 -        clipboard = QtGui.QApplication.clipboard()
-+        # text = unicode(str(text), 'utf-8', 'ignore')
++
 +        clipboard = QtWidgets.QApplication.clipboard()
          clipboard.setText(text)
  
@@ -2983,7 +3120,7 @@ index 7bbd7dd..220dc77 100644
      def on_action_SetAvatar(self, thisTableWidget):
          currentRow = thisTableWidget.currentRow()
          addressAtCurrentRow = thisTableWidget.item(
-@@ -3708,15 +3906,33 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3708,15 +3924,33 @@ class MyForm(settingsmixin.SMainWindow):
          if not os.path.exists(state.appdata + 'avatars/'):
              os.makedirs(state.appdata + 'avatars/')
          hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
@@ -3021,7 +3158,7 @@ index 7bbd7dd..220dc77 100644
              upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
              lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
              if os.path.isfile(lower):
-@@ -3725,33 +3941,43 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3725,33 +3959,43 @@ class MyForm(settingsmixin.SMainWindow):
                  current_files += [upper]
          filters[0:0] = ['Image files (' + ' '.join(all_images_filter) + ')']
          filters[1:1] = ['All files (*.*)']
@@ -3080,7 +3217,7 @@ index 7bbd7dd..220dc77 100644
                  for file in current_files:
                      QtCore.QFile.remove(file)
                  QtCore.QFile.remove(destination)
-@@ -3783,10 +4009,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3783,10 +4027,10 @@ class MyForm(settingsmixin.SMainWindow):
              "MainWindow", "Sound files (%s)" %
              ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
          ))]
@@ -3093,7 +3230,7 @@ index 7bbd7dd..220dc77 100644
  
          if not sourcefile:
              return
-@@ -3801,15 +4027,15 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3801,15 +4045,15 @@ class MyForm(settingsmixin.SMainWindow):
          pattern = destfile.lower()
          for item in os.listdir(destdir):
              if item.lower() == pattern:
@@ -3112,7 +3249,7 @@ index 7bbd7dd..220dc77 100644
                  if overwrite:
                      QtCore.QFile.remove(os.path.join(destdir, item))
                  break
-@@ -3820,18 +4046,23 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3820,18 +4064,23 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_context_menuYourIdentities(self, point):
          currentItem = self.getCurrentItem()
@@ -3142,7 +3279,7 @@ index 7bbd7dd..220dc77 100644
              self.popMenuYourIdentities.addAction(self.actionEmailGateway)
              self.popMenuYourIdentities.addSeparator()
          self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
-@@ -3847,7 +4078,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3847,7 +4096,7 @@ class MyForm(settingsmixin.SMainWindow):
      # TODO make one popMenu
      def on_context_menuChan(self, point):
          currentItem = self.getCurrentItem()
@@ -3151,7 +3288,7 @@ index 7bbd7dd..220dc77 100644
          if isinstance(currentItem, Ui_AddressWidget):
              self.popMenu.addAction(self.actionNew)
              self.popMenu.addAction(self.actionDelete)
-@@ -3873,7 +4104,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3873,7 +4122,7 @@ class MyForm(settingsmixin.SMainWindow):
              if currentFolder == 'sent':
                  self.on_context_menuSent(point)
              else:
@@ -3160,7 +3297,7 @@ index 7bbd7dd..220dc77 100644
                  self.popMenuInbox.addAction(self.actionForceHtml)
                  self.popMenuInbox.addAction(self.actionMarkUnread)
                  self.popMenuInbox.addSeparator()
-@@ -3895,13 +4126,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3895,13 +4144,14 @@ class MyForm(settingsmixin.SMainWindow):
                  self.popMenuInbox.addSeparator()
                  self.popMenuInbox.addAction(self.actionSaveMessageAs)
                  if currentFolder == "trash":
@@ -3177,7 +3314,7 @@ index 7bbd7dd..220dc77 100644
          self.popMenuSent.addAction(self.actionSentClipboard)
          self.popMenuSent.addAction(self.actionTrashSentMessage)
  
-@@ -3910,7 +4142,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3910,7 +4160,7 @@ class MyForm(settingsmixin.SMainWindow):
          currentRow = self.ui.tableWidgetInbox.currentRow()
          if currentRow >= 0:
              ackData = str(self.ui.tableWidgetInbox.item(
@@ -3186,7 +3323,7 @@ index 7bbd7dd..220dc77 100644
              queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
              for row in queryreturn:
                  status, = row
-@@ -3928,7 +4160,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3928,7 +4178,8 @@ class MyForm(settingsmixin.SMainWindow):
          if messagelist:
              account = self.getCurrentAccount()
              folder = self.getCurrentFolder()
@@ -3196,7 +3333,7 @@ index 7bbd7dd..220dc77 100644
  
      def inboxSearchLineEditReturnPressed(self):
          logger.debug("Search return pressed")
-@@ -3938,7 +4171,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3938,7 +4189,8 @@ class MyForm(settingsmixin.SMainWindow):
              searchOption = self.getCurrentSearchOption()
              account = self.getCurrentAccount()
              folder = self.getCurrentFolder()
@@ -3206,7 +3343,7 @@ index 7bbd7dd..220dc77 100644
          if messagelist:
              messagelist.setFocus()
  
-@@ -3947,15 +4181,16 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3947,15 +4199,16 @@ class MyForm(settingsmixin.SMainWindow):
          searchOption = self.getCurrentSearchOption()
          messageTextedit = self.getCurrentMessageTextedit()
          if messageTextedit:
@@ -3227,7 +3364,7 @@ index 7bbd7dd..220dc77 100644
  
      def treeWidgetItemChanged(self, item, column):
          # only for manual edits. automatic edits (setText) are ignored
-@@ -3973,8 +4208,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3973,8 +4226,8 @@ class MyForm(settingsmixin.SMainWindow):
          # "All accounts" can't be renamed
          if item.type == AccountMixin.ALL:
              return
@@ -3238,7 +3375,7 @@ index 7bbd7dd..220dc77 100644
          oldLabel = item.defaultLabel()
  
          # unchanged, do not do anything either
-@@ -3993,7 +4228,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3993,7 +4246,9 @@ class MyForm(settingsmixin.SMainWindow):
          self.rerenderMessagelistFromLabels()
          if item.type != AccountMixin.SUBSCRIPTION:
              self.rerenderMessagelistToLabels()
@@ -3249,7 +3386,7 @@ index 7bbd7dd..220dc77 100644
              self.rerenderAddressBook()
          self.recurDepth -= 1
  
-@@ -4013,9 +4250,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -4013,9 +4268,9 @@ class MyForm(settingsmixin.SMainWindow):
              )
  
          try:
@@ -3261,7 +3398,7 @@ index 7bbd7dd..220dc77 100644
          except IndexError:
              message = _translate(
                  "MainWindow",
-@@ -4091,10 +4328,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -4091,10 +4346,10 @@ class MyForm(settingsmixin.SMainWindow):
                      obj.loadSettings()
  
  
@@ -3274,7 +3411,7 @@ index 7bbd7dd..220dc77 100644
          self.ui = Ui_settingsDialog()
          self.ui.setupUi(self)
          self.parent = parent
-@@ -4116,7 +4353,7 @@ class settingsDialog(QtGui.QDialog):
+@@ -4116,7 +4371,7 @@ class settingsDialog(QtGui.QDialog):
              BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'))
          self.ui.checkBoxReplyBelow.setChecked(
              BMConfigParser().safeGetBoolean('bitmessagesettings', 'replybelow'))
@@ -3283,7 +3420,7 @@ index 7bbd7dd..220dc77 100644
          if state.appdata == paths.lookupExeFolder():
              self.ui.checkBoxPortableMode.setChecked(True)
          else:
-@@ -4172,8 +4409,8 @@ class settingsDialog(QtGui.QDialog):
+@@ -4172,8 +4427,8 @@ class settingsDialog(QtGui.QDialog):
              BMConfigParser().get('bitmessagesettings', 'socksusername')))
          self.ui.lineEditSocksPassword.setText(str(
              BMConfigParser().get('bitmessagesettings', 'sockspassword')))
@@ -3294,7 +3431,7 @@ index 7bbd7dd..220dc77 100644
          self.ui.lineEditMaxDownloadRate.setText(str(
              BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
          self.ui.lineEditMaxUploadRate.setText(str(
-@@ -4229,39 +4466,39 @@ class settingsDialog(QtGui.QDialog):
+@@ -4229,39 +4484,39 @@ class settingsDialog(QtGui.QDialog):
          else:
              assert False
  
@@ -3361,7 +3498,7 @@ index 7bbd7dd..220dc77 100644
  
      def comboBoxProxyTypeChanged(self, comboBoxIndex):
          if comboBoxIndex == 0:
-@@ -4293,7 +4530,7 @@ class settingsDialog(QtGui.QDialog):
+@@ -4293,7 +4548,7 @@ class settingsDialog(QtGui.QDialog):
      def namecoinTypeChanged(self, checked):
          nmctype = self.getNamecoinType()
          assert nmctype == "namecoind" or nmctype == "nmcontrol"
@@ -3370,7 +3507,7 @@ index 7bbd7dd..220dc77 100644
          isNamecoind = (nmctype == "namecoind")
          self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
          self.ui.labelNamecoinUser.setEnabled(isNamecoind)
-@@ -4311,33 +4548,43 @@ class settingsDialog(QtGui.QDialog):
+@@ -4311,33 +4566,43 @@ class settingsDialog(QtGui.QDialog):
                  "MainWindow", "Testing..."))
          options = {}
          options["type"] = self.getNamecoinType()
@@ -3422,7 +3559,7 @@ index 7bbd7dd..220dc77 100644
      """
      Listener to allow our Qt form to get focus when another instance of the
      application is open.
-@@ -4356,15 +4603,15 @@ class MySingleApplication(QtGui.QApplication):
+@@ -4356,15 +4621,15 @@ class MySingleApplication(QtGui.QApplication):
          self.server = None
          self.is_running = False
  
@@ -3441,7 +3578,7 @@ index 7bbd7dd..220dc77 100644
  
          socket.abort()
  
-@@ -4375,7 +4622,7 @@ class MySingleApplication(QtGui.QApplication):
+@@ -4375,7 +4640,7 @@ class MySingleApplication(QtGui.QApplication):
          else:
              # Nope, create a local server with this id and assign on_new_connection
              # for whenever a second instance tries to run focus the application.
@@ -3451,7 +3588,7 @@ index 7bbd7dd..220dc77 100644
              self.server.newConnection.connect(self.on_new_connection)
  
 diff --git a/src/bitmessageqt/account.py b/src/bitmessageqt/account.py
-index 92d497f..bf70844 100644
+index 92d497f..fd5adc5 100644
 --- a/src/bitmessageqt/account.py
 +++ b/src/bitmessageqt/account.py
 @@ -1,4 +1,4 @@
@@ -3559,7 +3696,7 @@ index 92d497f..bf70844 100644
 +        try:
 +            return unicode(label, 'utf-8')
 +        except TypeError:
-+            print("WARNING: label is unicode: %s" % label)
++            print("WARNING: label is of type unicode:  %s" % label)
 +            return label
 +
      def parseMessage(self, toAddress, fromAddress, subject, message):
@@ -5873,10 +6010,10 @@ index 11227fc..56931bf 100644
 -        return part1 + autoString + part2;
 +        return part1 + autoString + part2
 diff --git a/src/bitmessageqt/languagebox.py b/src/bitmessageqt/languagebox.py
-index 552e035..6ce432b 100644
+index 552e035..1b8d494 100644
 --- a/src/bitmessageqt/languagebox.py
 +++ b/src/bitmessageqt/languagebox.py
-@@ -1,33 +1,48 @@
+@@ -1,37 +1,50 @@
  import glob
  import os
 -from PyQt4 import QtCore, QtGui
@@ -5906,15 +6043,16 @@ index 552e035..6ce432b 100644
          self.languages = []
          self.clear()
 -        localesPath = os.path.join (paths.codePath(), 'translations')
+-        configuredLocale = "system"
 +        localesPath = os.path.join(paths.codePath(), 'translations')
-         configuredLocale = "system"
          try:
 -            configuredLocale = BMConfigParser().get('bitmessagesettings', 'userlocale', "system")
 +            configuredLocale = BMConfigParser().get(
 +                'bitmessagesettings', 'userlocale', "system")
          except:
-             pass
+-            pass
 -        self.addItem(QtGui.QApplication.translate("settingsDialog", "System Settings", "system"), "system")
++            configuredLocale = "system"
 +        self.addItem(
 +            _translate("settingsDialog", "System Settings", "system"),
 +            "system"
@@ -5930,14 +6068,20 @@ index 552e035..6ce432b 100644
 +        ):
 +            localeShort = \
 +                os.path.split(translationFile)[1].split("_", 1)[1][:-3]
-+            locale = QtCore.QLocale(localeShort)
              if localeShort in LanguageBox.languageName:
 -                self.addItem(LanguageBox.languageName[localeShort], localeShort)
+-            elif locale.nativeLanguageName() == "":
+-                self.addItem(localeShort, localeShort)
 +                self.addItem(
 +                    LanguageBox.languageName[localeShort], localeShort)
-             elif locale.nativeLanguageName() == "":
-                 self.addItem(localeShort, localeShort)
              else:
+-                self.addItem(locale.nativeLanguageName(), localeShort)
++                locale = QtCore.QLocale(localeShort)
++                self.addItem(
++                    locale.nativeLanguageName() or localeShort, localeShort)
+         for i in range(self.count()):
+             if self.itemData(i) == configuredLocale:
+                 self.setCurrentIndex(i)
 diff --git a/src/bitmessageqt/messagecompose.py b/src/bitmessageqt/messagecompose.py
 index f7d5dac..a47f411 100644
 --- a/src/bitmessageqt/messagecompose.py
@@ -7794,7 +7938,7 @@ index 25c6113..c4ab0c5 100644
      # single msg tab
      myapp.ui.tabWidgetSend.setCurrentIndex(
 diff --git a/src/bitmessageqt/uisignaler.py b/src/bitmessageqt/uisignaler.py
-index 055f909..2a5b565 100644
+index 055f909..e4a2311 100644
 --- a/src/bitmessageqt/uisignaler.py
 +++ b/src/bitmessageqt/uisignaler.py
 @@ -1,15 +1,34 @@
@@ -7837,7 +7981,7 @@ index 055f909..2a5b565 100644
  
      @classmethod
      def get(cls):
-@@ -22,58 +41,58 @@ class UISignaler(QThread):
+@@ -22,58 +41,59 @@ class UISignaler(QThread):
              command, data = queues.UISignalQueue.get()
              if command == 'writeNewAddressToTable':
                  label, address, streamNumber = data
@@ -7863,9 +8007,10 @@ index 055f909..2a5b565 100644
 -                self.emit(SIGNAL(
 -                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
 -                    inventoryHash, toAddress, fromAddress, subject, body)
++
 +                self.displayNewInboxMessage.emit(
 +                    inventoryHash, toAddress, fromAddress,
-+                    unicode(subject, 'utf-8'), body)
++                    subject, body)
              elif command == 'displayNewSentMessage':
                  toAddress, fromLabel, fromAddress, subject, message, ackdata = data
 -                self.emit(SIGNAL(
@@ -7925,7 +8070,7 @@ index 055f909..2a5b565 100644
 +                    % command
 +                )
 diff --git a/src/bitmessageqt/utils.py b/src/bitmessageqt/utils.py
-index 369d05e..92ce171 100644
+index 369d05e..f29ec8b 100644
 --- a/src/bitmessageqt/utils.py
 +++ b/src/bitmessageqt/utils.py
 @@ -1,4 +1,4 @@
@@ -7978,7 +8123,15 @@ index 369d05e..92ce171 100644
  def avatarize(address):
      """
          loads a supported image for the given address' hash form 'avatars' folder
-@@ -97,11 +100,11 @@ def avatarize(address):
+@@ -72,7 +75,6 @@ def avatarize(address):
+     """
+     idcon = QtGui.QIcon()
+     hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+-    str_broadcast_subscribers = '[Broadcast subscribers]'
+     if address == str_broadcast_subscribers:
+         # don't hash [Broadcast subscribers]
+         hash = address
+@@ -97,11 +99,11 @@ def avatarize(address):
          lower_default = state.appdata + 'avatars/' + 'default.' + ext.lower()
          upper_default = state.appdata + 'avatars/' + 'default.' + ext.upper()
          if os.path.isfile(lower_default):
@@ -9152,6 +9305,23 @@ index d66663b..14cd0d0 100755
  
  def check_msgpack():
      try:
+diff --git a/src/helper_msgcoding.py b/src/helper_msgcoding.py
+index f8bc95a..fbaf3a8 100644
+--- a/src/helper_msgcoding.py
++++ b/src/helper_msgcoding.py
+@@ -135,8 +135,10 @@ class MsgDecode(object):
+         # Throw away any extra lines (headers) after the subject.
+         if subject:
+             subject = subject.splitlines()[0]
+-        self.subject = subject
+-        self.body = body
++        # Field types should be the same for all message types
++        self.subject = unicode(subject, 'utf-8', 'replace')
++        self.body = unicode(body, 'utf-8', 'replace')
++
+ 
+ if __name__ == '__main__':
+     import random
 diff --git a/src/helper_search.py b/src/helper_search.py
 index 2217974..7de9f1e 100644
 --- a/src/helper_search.py
@@ -9348,6 +9518,55 @@ index 9b3c3c3..17c1f7d 100644
  
              elif self.nmctype == "nmcontrol":
                  res = self.callRPC ("data", ["status"])
+diff --git a/src/network/tcp.py b/src/network/tcp.py
+index 33c4b6c..03eaf08 100644
+--- a/src/network/tcp.py
++++ b/src/network/tcp.py
+@@ -1,39 +1,30 @@
+-import base64
+-from binascii import hexlify
+-import hashlib
+ import math
+ import time
+-from pprint import pprint
+ import socket
+-import struct
+ import random
+-import traceback
+ 
+-from addresses import calculateInventoryHash
+ from debug import logger
+ from helper_random import randomBytes
+ from inventory import Inventory
+ import knownnodes
+ from network.advanceddispatcher import AdvancedDispatcher
+-from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProtoExcessiveDataError, BMProto
+-from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
++from network.bmproto import BMProto
+ import network.connectionpool
+ from network.dandelion import Dandelion
+-from network.node import Node
+ import network.asyncore_pollchoose as asyncore
+-from network.proxy import Proxy, ProxyError, GeneralProxyError
+ from network.objectracker import ObjectTracker
+-from network.socks5 import Socks5Connection, Socks5Resolver, Socks5AuthError, Socks5Error
+-from network.socks4a import Socks4aConnection, Socks4aResolver, Socks4aError
++from network.socks5 import Socks5Connection
++from network.socks4a import Socks4aConnection
+ from network.tls import TLSDispatcher
+ 
+ import addresses
+ from bmconfigparser import BMConfigParser
+-from queues import invQueue, objectProcessorQueue, portCheckerQueue, UISignalQueue, receiveDataQueue
++from queues import invQueue, UISignalQueue, receiveDataQueue
+ import shared
+ import state
+ import protocol
+ 
++
+ class TCPConnection(BMProto, TLSDispatcher):
+     def __init__(self, address=None, sock=None):
+         BMProto.__init__(self, address=address, sock=sock)
 diff --git a/src/plugins/plugin.py b/src/plugins/plugin.py
 index 6601ada..0e49c31 100644
 --- a/src/plugins/plugin.py

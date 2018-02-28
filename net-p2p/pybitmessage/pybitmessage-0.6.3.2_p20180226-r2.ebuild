@@ -81,6 +81,9 @@ src_install () {
 		newinitd "${FILESDIR}"/${DN}.initd ${DN}
 		systemd_dounit packages/systemd/bitmessage.service
 	fi
+
+	insinto /etc/firejail
+	doins "${FILESDIR}"/${PN}.profile
 }
 
 pkg_postinst() {

@@ -59,6 +59,7 @@ PATCHES=(
 	"${FILESDIR}"/${PVM}.2-ipv6.patch
 	"${FILESDIR}"/${PVM}-keystore.patch
 	"${FILESDIR}"/${PVM}-ui-refactoring.patch
+	"${FILESDIR}"/${PVM}-dontconnect-namecoin.patch
 )
 
 src_prepare() {

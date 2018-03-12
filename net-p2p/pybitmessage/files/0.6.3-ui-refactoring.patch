@@ -1,5 +1,5 @@
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 6806c43..85e9e73 100644
+index 6806c43..975224e 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -29,7 +29,6 @@ import locale
@@ -234,7 +234,7 @@ index 6806c43..85e9e73 100644
 -        # address book. The user cannot add it again or else it will
 -        # cause problems when updating and deleting the entry.
 -        if shared.isAddressInMyAddressBook(address):
-+        if not helper_db.put_addressbook(address, label):
++        if not helper_db.put_addressbook(label, address):
              self.updateStatusBar(_translate(
                  "MainWindow",
                  "Error: You cannot add the same address to your"
@@ -1693,10 +1693,10 @@ index 181ce30..45aefc3 100644
              inventoryHash, toAddress, fromAddress, subject, body)))
 diff --git a/src/helper_db.py b/src/helper_db.py
 new file mode 100644
-index 0000000..93bbf06
+index 0000000..13e9c4e
 --- /dev/null
 +++ b/src/helper_db.py
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,165 @@
 +from helper_sql import sqlExecute, sqlQuery
 +from helper_search import search_sql, check_match
 +from bmconfigparser import BMConfigParser
@@ -1705,6 +1705,9 @@ index 0000000..93bbf06
 +
 +
 +__all__ = ["search_sql", "check_match"]
++
++_groups = ("blacklist", "whitelist", "subscriptions", "addressbook")
++_groups_enable = ("blacklist", "whitelist", "subscriptions")
 +
 +
 +# + genAckPayload
@@ -1771,11 +1774,25 @@ index 0000000..93bbf06
 +
 +
 +def _in_group_already(address, group="addressbook"):
-+    return sqlQuery(
-+        "SELECT enabled FROM %s WHERE address=?" % group, address)
++    if group not in _groups:
++        return True
++    # elif group in _groups_enable:
++    #     try:
++    #         return sqlQuery(
++    #             "SELECT enabled FROM %s WHERE address=?" % group, address
++    #         )[-1][0]
++    #     except IndexError:
++    #         return
++    else:
++        return sqlQuery(
++            "SELECT * FROM %s WHERE address=?" % group, address)
 +
 +
 +def put_addresslist(label, address, group="blacklist", enabled=True):
++    # We must check to see if the address is already in the
++    # subscriptions list. The user cannot add it again or else it
++    # will cause problems when updating and deleting the entry.
++    # FIXME: address should be primary key in this case
 +    if _in_group_already(address, group):
 +        return False
 +    sqlExecute(
@@ -1784,19 +1801,11 @@ index 0000000..93bbf06
 +
 +
 +def put_blacklist(label, address):
-+    put_addresslist(label, address)
++    return put_addresslist(label, address, "blacklist")
 +
 +
 +def put_subscriptions(label, address, enabled=True):
-+    # We must check to see if the address is already in the
-+    # subscriptions list. The user cannot add it again or else it
-+    # will cause problems when updating and deleting the entry.
-+    # FIXME: address should be primary key in this case
-+    if _in_group_already(address, "subscriptions"):
-+        return False
-+    sqlExecute(
-+        "INSERT INTO subscriptions VALUES (?,?,?)", label, address, enabled)
-+    return True
++    return put_addresslist(label, address, "subscriptions", enabled)
 +
 +
 +def put_addressbook(label, address):
@@ -1823,12 +1832,16 @@ index 0000000..93bbf06
 +
 +
 +def get_addresslist(group="blacklist"):
++    if group not in _groups:
++        return
 +    queryreturn = sqlQuery("SELECT * FROM %s" % group)
 +    for row in queryreturn:
 +        yield row
 +
 +
 +def get_label(address, group="addressbook"):
++    if group not in _groups:
++        return
 +    queryreturn = sqlQuery(
 +        "SELECT label FROM %s WHERE address=?" % group, address)
 +    try:
@@ -1838,6 +1851,8 @@ index 0000000..93bbf06
 +
 +
 +def set_label(address, label, group="addressbook"):
++    if group not in _groups:
++        return
 +    sqlExecute("UPDATE %s set label=? WHERE address=?" % group, label, address)
 +
 +

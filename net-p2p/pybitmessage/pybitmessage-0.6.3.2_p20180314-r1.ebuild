@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils versionator systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="7938eab454bbd61e463d41cc3806fa66acfe9068"
+COMMIT="1e037024c35d8ea5443a536d122005d9b9fe60a3"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -21,7 +21,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="daemon debug libressl +msgpack systemd libnotify libcanberra ncurses opencl qt4 qt5 sound ${LINGUAS[@]/#/l10n_}"
+IUSE="daemon debug libressl +msgpack systemd libnotify libcanberra ncurses opencl qrcode qt4 qt5 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -47,6 +47,7 @@ RDEPEND="${DEPEND}
 				  media-libs/gst-plugins-base:1.0
 				  media-sound/mpg123
 				  media-sound/alsa-utils ) )
+	qrcode? ( dev-python/qrcode[${PYTHON_USEDEP}] )
 	libnotify? ( dev-python/pygobject[${PYTHON_USEDEP}]
 				 dev-python/notify2[${PYTHON_USEDEP}]
 				 x11-themes/hicolor-icon-theme )
@@ -55,7 +56,7 @@ RDEPEND="${DEPEND}
 
 S="${WORKDIR}"/${MY_PN}-${COMMIT}
 
-PVM=$(get_version_component_range 1-4)
+PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/${PVM}-ipv6.patch

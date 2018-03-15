@@ -6,7 +6,7 @@ EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE="sqlite"
 
-inherit distutils-r1 gnome2-utils versionator systemd
+inherit distutils-r1 gnome2-utils systemd
 
 MY_PN="PyBitmessage"
 
@@ -54,11 +54,10 @@ RDEPEND="${DEPEND}
 
 S="${WORKDIR}"/${MY_PN}-${PV}
 
-PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/${PV}-ipv6.patch
-	"${FILESDIR}"/${PVM}-qt5.patch
+	"${FILESDIR}"/${PV}-qt5.patch
 )
 
 src_prepare() {

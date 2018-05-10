@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="KRB"
@@ -15,7 +14,8 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="+wallet"
 
-DEPEND+="dev-lang/python
+DEPEND+="dev-libs/boost[static-libs,context]
+	dev-lang/python
 	net-libs/miniupnpc"
 
 S="${WORKDIR}"/${COIN_NAME}-v.${PV}
@@ -27,6 +27,7 @@ src_prepare() {
 src_configure() {
 	local mycmakeargs=(
 		-DUPNP_STATIC=OFF
+		-DSTATIC=OFF
 	)
 	cmake-utils_src_configure
 }

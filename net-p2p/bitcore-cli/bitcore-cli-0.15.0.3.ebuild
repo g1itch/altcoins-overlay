@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="BTX"
@@ -15,7 +14,10 @@ KEYWORDS="~x86 ~amd64"
 
 S="${WORKDIR}"/BitCore-${PV}
 
+
 src_configure() {
+	mv doc/man/litecoin-cli.1 doc/man/${PN}.1
+	mv doc/man/litecoin-tx.1 doc/man/bitcore-tx.1
 	econf --disable-tests --disable-bench \
 		  --without-gui \
 		  --without-libs \

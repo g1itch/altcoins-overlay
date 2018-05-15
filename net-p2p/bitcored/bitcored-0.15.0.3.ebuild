@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="BTX"
@@ -25,8 +24,9 @@ S="${WORKDIR}"/BitCore-${PV}
 
 src_prepare() {
 	rm -r src/leveldb
-	epatch "${FILESDIR}"/$(get_version_component_range 1-2)-sys_leveldb.patch
+	epatch "${FILESDIR}"/0.14-sys_leveldb.patch
 	eautoreconf
+	mv doc/man/litecoind.1 doc/man/${PN}.1
 }
 
 src_configure() {

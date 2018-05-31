@@ -8,7 +8,7 @@ MyPN=DNotes2.0
 inherit altcoin
 
 HOMEPAGE="http://dnotescoin.com/"
-SRC_URI="https://github.com/${COIN_NAME}Coin/${MyPN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}Coin/${MyPN}/archive/${PV}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"

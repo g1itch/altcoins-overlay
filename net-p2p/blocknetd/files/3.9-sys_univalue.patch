@@ -1,0 +1,191 @@
+--- configure.ac~	2017-11-28 17:38:31.000000000 +0200
++++ configure.ac	2017-11-28 17:48:20.085357279 +0200
+@@ -167,6 +167,13 @@
+   [use_zmq=$enableval],
+   [use_zmq=yes])
+ 
++AC_ARG_WITH([system-univalue],
++  [AS_HELP_STRING([--with-system-univalue],
++  [Build with system UniValue (default is no; DANGEROUS; NOT SUPPORTED)])],
++  [system_univalue=$withval],
++  [system_univalue=no]
++)
++
+ AC_ARG_WITH([protoc-bindir],[AS_HELP_STRING([--with-protoc-bindir=BIN_DIR],[specify protoc bin path])], [protoc_bin_path=$withval], [])
+ 
+ # Enable debug
+@@ -802,6 +809,58 @@
+ CFLAGS="$CFLAGS_TEMP"
+ LIBS="$LIBS_TEMP"
+ 
++dnl univalue check
++
++need_bundled_univalue=yes
++
++if test 
++x$build_bitcoin_utils$build_bitcoind$bitcoin_enable_qt$use_tests$use_bench 
++= xnonononono; then
++  need_bundled_univalue=no
++else
++
++if test x$system_univalue != xno ; then
++  found_univalue=no
++  if test x$use_pkgconfig = xyes; then
++    : #NOP
++    m4_ifdef(
++      [PKG_CHECK_MODULES],
++      [
++        
++PKG_CHECK_MODULES([UNIVALUE],[libunivalue],[found_univalue=yes],[true])
++      ]
++    )
++  else
++    AC_CHECK_HEADER([univalue.h],[
++      AC_CHECK_LIB([univalue],  [main],[
++        UNIVALUE_LIBS=-lunivalue
++        found_univalue=yes
++      ],[true])
++    ],[true])
++  fi
++
++  if test x$found_univalue = xyes ; then
++    system_univalue=yes
++    need_bundled_univalue=no
++  elif test x$system_univalue = xyes ; then
++    AC_MSG_ERROR([univalue not found])
++  else
++    system_univalue=no
++  fi
++fi
++
++if test x$need_bundled_univalue = xyes ; then
++  UNIVALUE_CFLAGS='-I$(srcdir)/univalue/include'
++  UNIVALUE_LIBS='univalue/libunivalue.la'
++fi
++
++fi
++
++AM_CONDITIONAL([EMBEDDED_UNIVALUE],[test x$need_bundled_univalue = 
++xyes])
++AC_SUBST(UNIVALUE_CFLAGS)
++AC_SUBST(UNIVALUE_LIBS)
++
+ BITCOIN_QT_PATH_PROGS([PROTOC], [protoc],$protoc_bin_path)
+ 
+ AC_MSG_CHECKING([whether to build blocknetdxd])
+--- src/core_write.cpp~	2017-10-17 06:12:12.000000000 +0300
++++ src/core_write.cpp	2017-11-28 17:58:20.674437050 +0200
+@@ -10,7 +10,7 @@
+ #include "script/standard.h"
+ #include "serialize.h"
+ #include "streams.h"
+-#include "univalue/univalue.h"
++#include <univalue.h>
+ #include "util.h"
+ #include "utilmoneystr.h"
+ #include "utilstrencodings.h"
+--- src/blocknetdx-tx.cpp~	2017-10-17 06:12:12.000000000 +0300
++++ src/blocknetdx-tx.cpp	2017-11-28 17:59:21.494944262 +0200
+@@ -12,7 +12,7 @@
+ #include "script/script.h"
+ #include "script/sign.h"
+ #include "ui_interface.h" // for _(...)
+-#include "univalue/univalue.h"
++#include <univalue.h>
+ #include "util.h"
+ #include "utilmoneystr.h"
+ #include "utilstrencodings.h"
+--- src/test/univalue_tests.cpp~	2017-10-17 06:12:12.000000000 +0300
++++ src/test/univalue_tests.cpp	2017-11-28 17:59:46.541741279 +0200
+@@ -6,7 +6,7 @@
+ #include <vector>
+ #include <string>
+ #include <map>
+-#include "univalue/univalue.h"
++#include <univalue.h>
+ 
+ #include <boost/test/unit_test.hpp>
+ 
+--- src/core_read.cpp~	2017-10-17 06:12:12.000000000 +0300
++++ src/core_read.cpp	2017-11-28 18:04:33.388414740 +0200
+@@ -9,7 +9,7 @@
+ #include "script/script.h"
+ #include "serialize.h"
+ #include "streams.h"
+-#include "univalue/univalue.h"
++#include <univalue.h>
+ #include "util.h"
+ #include "utilstrencodings.h"
+ #include "version.h"
+--- configure.ac~	2018-04-27 14:46:22.000000000 +0300
++++ configure.ac	2018-04-27 14:47:26.989402982 +0300
+@@ -1065,9 +1065,6 @@
+ unset PKG_CONFIG_LIBDIR
+ PKG_CONFIG_LIBDIR="$PKGCONFIG_LIBDIR_TEMP"
+ 
+-if test x$need_bundled_univalue = xyes; then
+-  AC_CONFIG_SUBDIRS([src/univalue])
+-fi
+ 
+ ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery --disable-jni"
+ AC_CONFIG_SUBDIRS([src/secp256k1])
+--- src/Makefile.am~	2018-03-22 02:37:30.000000000 +0200
++++ src/Makefile.am	2018-04-27 15:53:26.706508081 +0300
+@@ -3,6 +3,15 @@
+ CXXFLAGS += -fpermissive
+ 
+ 
++if EMBEDDED_UNIVALUE
++LIBUNIVALUE = univalue/libunivalue.la
++
++$(LIBUNIVALUE): $(wildcard univalue/lib/*) $(wildcard univalue/include/*)
++        $(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
++else
++LIBUNIVALUE = $(UNIVALUE_LIBS)
++endif
++
+ if EMBEDDED_LEVELDB
+ LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/include
+ LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/helpers/memenv
+@@ -22,6 +31,7 @@
+ BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
+ 
+ BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
++BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
+ 
+ LIBBITCOIN_SERVER=libbitcoin_server.a
+ LIBBITCOIN_WALLET=libbitcoin_wallet.a
+@@ -29,7 +39,6 @@
+ LIBBITCOIN_CLI=libbitcoin_cli.a
+ LIBBITCOIN_UTIL=libbitcoin_util.a
+ LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
+-LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
+ LIBBITCOINQT=qt/libbitcoinqt.a
+ LIBSECP256K1=secp256k1/libsecp256k1.la
+ LIBXBRIDGE_XBRIDGE=libxbridge_xbridge.a
+@@ -43,7 +52,6 @@
+   crypto/libbitcoin_crypto.a \
+   libbitcoin_util.a \
+   libbitcoin_common.a \
+-  univalue/libbitcoin_univalue.a \
+   libxbridge_xbridge.a \
+   libbitcoin_server.a \
+   libbitcoin_cli.a
+@@ -442,7 +450,7 @@
+ blocknetdxd_LDADD = \
+   $(LIBBITCOIN_SERVER) \
+   $(LIBBITCOIN_COMMON) \
+-  $(LIBBITCOIN_UNIVALUE) \
++  $(UNIVALUE) \
+   $(LIBBITCOIN_UTIL) \
+   $(LIBBITCOIN_CRYPTO) \
+   $(LIBLEVELDB) \
+@@ -488,7 +496,7 @@
+ 
+ # blocknetdx-tx binary #
+ blocknetdx_tx_LDADD = \
+-  $(LIBBITCOIN_UNIVALUE) \
++  $(UNIVALUE) \
+   $(LIBBITCOIN_COMMON) \
+   $(LIBBITCOIN_UTIL) \
+   $(LIBBITCOIN_CRYPTO) \

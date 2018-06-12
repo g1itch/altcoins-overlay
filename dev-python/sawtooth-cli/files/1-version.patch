@@ -1,0 +1,12 @@
+--- setup.py~	2018-04-30 18:23:53.000000000 +0300
++++ setup.py	2018-06-11 12:37:15.333054603 +0300
+@@ -21,8 +21,7 @@
+ 
+ setup(
+     name='sawtooth-cli',
+-    version=subprocess.check_output(
+-        ['../bin/get_version']).decode('utf-8').strip(),
++    version='%VER%',
+     description='Sawtooth CLI',
+     author='Hyperledger Sawtooth',
+     url='https://github.com/hyperledger/sawtooth-core',

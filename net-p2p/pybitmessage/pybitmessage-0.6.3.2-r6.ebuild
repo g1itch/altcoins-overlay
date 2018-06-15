@@ -58,6 +58,7 @@ PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/${PV}-ipv6.patch
 	"${FILESDIR}"/${PV}-qt5.patch
+	"${FILESDIR}"/${PVM}-maxobjectcount.patch
 )
 
 src_prepare() {

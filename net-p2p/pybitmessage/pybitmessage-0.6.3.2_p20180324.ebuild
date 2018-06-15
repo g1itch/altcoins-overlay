@@ -57,6 +57,7 @@ PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
 	"${FILESDIR}"/${PVM}-keystore.patch
+	"${FILESDIR}"/${PVM}-maxobjectcount.patch
 )
 
 src_prepare() {

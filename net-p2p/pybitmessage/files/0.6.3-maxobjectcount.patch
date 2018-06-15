@@ -1,0 +1,30 @@
+diff --git a/src/network/bmproto.py b/src/network/bmproto.py
+index aff6cd0c..1f1c67bd 100644
+--- a/src/network/bmproto.py
++++ b/src/network/bmproto.py
+@@ -300,7 +300,7 @@ def bm_command_getdata(self):
+     def _command_inv(self, dandelion=False):
+         items = self.decode_payload_content("l32s")
+ 
+-        if len(items) >= BMProto.maxObjectCount:
++        if len(items) > BMProto.maxObjectCount:
+             logger.error("Too many items in %sinv message!", "d" if dandelion else "")
+             raise BMProtoExcessiveDataError()
+         else:
+diff --git a/src/network/tcp.py b/src/network/tcp.py
+index 163cbd85..6cba566f 100644
+--- a/src/network/tcp.py
++++ b/src/network/tcp.py
+@@ -180,7 +180,11 @@ def sendChunk():
+         for hash, storedValue in bigInvList.items():
+             payload += hash
+             objectCount += 1
+-            if objectCount >= BMProto.maxObjectCount:
++
++            # Remove -1 below when sufficient time has passed for users to
++            # upgrade to versions of PyBitmessage that accept inv with 50,000
++            # items
++            if objectCount >= BMProto.maxObjectCount - 1:
+                 sendChunk()
+                 payload = b''
+                 objectCount = 0

@@ -3,7 +3,7 @@
 
 EAPI=6
 
-PYTHON_COMPAT=( python2_7 python3_{4,5,6} )
+PYTHON_COMPAT=( python3_{4,5,6} )
 
 inherit distutils-r1
 
@@ -16,7 +16,7 @@ SRC_URI="https://github.com/Remmeauth/${PN}/archive/v${MY_PV}.tar.gz
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE="test"
 
 DEPEND="dev-python/setuptools[${PYTHON_USEDEP}]"

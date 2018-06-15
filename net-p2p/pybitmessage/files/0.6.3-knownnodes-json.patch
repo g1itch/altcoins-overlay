@@ -1,0 +1,381 @@
+diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
+index a9cb798..1172691 100755
+--- a/src/bitmessagemain.py
++++ b/src/bitmessagemain.py
+@@ -263,7 +263,7 @@ class Main:
+                 'bitmessagesettings', 'sendoutgoingconnections'):
+             state.dandelion = 0
+ 
+-        helper_bootstrap.knownNodes()
++        knownnodes.readKnownNodes()
+ 
+         # Not needed if objproc is disabled
+         if state.enableObjProc:
+diff --git a/src/defaultKnownNodes.py b/src/defaultKnownNodes.py
+deleted file mode 100644
+index 05b6501..0000000
+--- a/src/defaultKnownNodes.py
++++ /dev/null
+@@ -1,82 +0,0 @@
+-import pickle
+-import socket
+-from struct import *
+-import time
+-import random
+-import sys
+-from time import strftime, localtime
+-import state
+-
+-def createDefaultKnownNodes(appdata):
+-    ############## Stream 1 ################
+-    stream1 = {}
+-
+-    #stream1[state.Peer('2604:2000:1380:9f:82e:148b:2746:d0c7', 8080)] = int(time.time())
+-    stream1[state.Peer('5.45.99.75', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('75.167.159.54', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('95.165.168.168', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('85.180.139.241', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('158.222.217.190', 8080)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('178.62.12.187', 8448)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('24.188.198.204', 8111)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('109.147.204.113', 1195)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    stream1[state.Peer('178.11.46.221', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
+-    
+-    ############# Stream 2 #################
+-    stream2 = {}
+-    # None yet
+-
+-    ############# Stream 3 #################
+-    stream3 = {}
+-    # None yet
+-
+-    allKnownNodes = {}
+-    allKnownNodes[1] = stream1
+-    allKnownNodes[2] = stream2
+-    allKnownNodes[3] = stream3
+-
+-    #print stream1
+-    #print allKnownNodes
+-
+-    with open(appdata + 'knownnodes.dat', 'wb') as output:
+-        # Pickle dictionary using protocol 0.
+-        pickle.dump(allKnownNodes, output)
+-
+-    return allKnownNodes
+-
+-def readDefaultKnownNodes(appdata):
+-    pickleFile = open(appdata + 'knownnodes.dat', 'rb')
+-    knownNodes = pickle.load(pickleFile)
+-    pickleFile.close()
+-    for stream, storedValue in knownNodes.items():
+-        for host,value in storedValue.items():
+-            try:
+-                # Old knownNodes format.
+-                port, storedtime = value
+-            except:
+-                # New knownNodes format.
+-                host, port = host
+-                storedtime = value
+-            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
+-
+-if __name__ == "__main__":
+-
+-    APPNAME = "PyBitmessage"
+-    from os import path, environ
+-    if sys.platform == 'darwin':
+-        from AppKit import NSSearchPathForDirectoriesInDomains  # @UnresolvedImport
+-        # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
+-        # NSApplicationSupportDirectory = 14
+-        # NSUserDomainMask = 1
+-        # True for expanding the tilde into a fully qualified path
+-        appdata = path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME) + '/'
+-    elif 'win' in sys.platform:
+-        appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
+-    else:
+-        appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
+-
+-
+-    print 'New list of all known nodes:', createDefaultKnownNodes(appdata)
+-    readDefaultKnownNodes(appdata)
+-
+-
+diff --git a/src/helper_bootstrap.py b/src/helper_bootstrap.py
+index cc185e2..0d20792 100644
+--- a/src/helper_bootstrap.py
++++ b/src/helper_bootstrap.py
+@@ -1,52 +1,21 @@
+ import socket
+-import defaultKnownNodes
+-import pickle  # nosec
+-import time
+ 
+-from bmconfigparser import BMConfigParser
+-from debug import logger
+ import knownnodes
+ import socks
+ import state
+-
+-
+-def addKnownNode(stream, peer, lastseen=None, self=False):
+-    if lastseen is None:
+-        lastseen = time.time()
+-    knownnodes.knownNodes[stream][peer] = {
+-        "lastseen": lastseen,
+-        "rating": 0,
+-        "self": self,
+-    }
+-
+-
+-def knownNodes():
+-    try:
+-        with open(state.appdata + 'knownnodes.dat', 'rb') as pickleFile:
+-            with knownnodes.knownNodesLock:
+-                knownnodes.knownNodes = pickle.load(pickleFile)  # nosec
+-            # the old format was {Peer:lastseen, ...}
+-            # the new format is {Peer:{"lastseen":i, "rating":f}}
+-            for stream in knownnodes.knownNodes.keys():
+-                for node, params in knownnodes.knownNodes[stream].items():
+-                    if isinstance(params, (float, int)):
+-                        addKnownNode(stream, node, params)
+-    except:
+-        knownnodes.knownNodes = defaultKnownNodes.createDefaultKnownNodes(state.appdata)
+-    # your own onion address, if setup
+-    if BMConfigParser().has_option('bitmessagesettings', 'onionhostname') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
+-        addKnownNode(1, state.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport')), self=True)
+-    if BMConfigParser().getint('bitmessagesettings', 'settingsversion') > 10:
+-        logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
+-        raise SystemExit
++from bmconfigparser import BMConfigParser
++from debug import logger
+ 
+ 
+ def dns():
+-    # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
+-    # DNS lookup some day but for now we will just rely on the entries in
+-    # defaultKnownNodes.py. Hopefully either they are up to date or the user
+-    # has run Bitmessage recently without SOCKS turned on and received good
+-    # bootstrap nodes using that method.
++    """
++    DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
++    DNS lookup some day but for now we will just rely on the entries in
++    defaultKnownNodes.py. Hopefully either they are up to date or the user
++    has run Bitmessage recently without SOCKS turned on and received good
++    bootstrap nodes using that method.
++    """
++
+     def try_add_known_node(stream, addr, port, method=''):
+         try:
+             socket.inet_aton(addr)
+@@ -55,7 +24,7 @@ def dns():
+         logger.info(
+             'Adding %s to knownNodes based on %s DNS bootstrap method',
+             addr, method)
+-        addKnownNode(stream, state.Peer(addr, port))
++        knownnodes.addKnownNode(stream, state.Peer(addr, port))
+ 
+     proxy_type = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+ 
+@@ -71,7 +40,7 @@ def dns():
+                     port, exc_info=True
+                 )
+     elif proxy_type == 'SOCKS5':
+-        addKnownNode(1, state.Peer('quzwelsuziwqgpt2.onion', 8444))
++        knownnodes.addKnownNode(1, state.Peer('quzwelsuziwqgpt2.onion', 8444))
+         logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
+         for port in [8080, 8444]:
+             logger.debug("Resolving %i through SOCKS...", port)
+@@ -84,14 +53,19 @@ def dns():
+                 'bitmessagesettings', 'sockshostname')
+             socksport = BMConfigParser().getint(
+                 'bitmessagesettings', 'socksport')
+-            rdns = True  # Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
+-            if BMConfigParser().getboolean('bitmessagesettings', 'socksauthentication'):
++            # Do domain name lookups through the proxy;
++            # though this setting doesn't really matter since we won't
++            # be doing any domain name lookups anyway.
++            rdns = True
++            if BMConfigParser().getboolean(
++                    'bitmessagesettings', 'socksauthentication'):
+                 socksusername = BMConfigParser().get(
+                     'bitmessagesettings', 'socksusername')
+                 sockspassword = BMConfigParser().get(
+                     'bitmessagesettings', 'sockspassword')
+                 sock.setproxy(
+-                    proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
++                    proxytype, sockshostname, socksport, rdns,
++                    socksusername, sockspassword)
+             else:
+                 sock.setproxy(
+                     proxytype, sockshostname, socksport, rdns)
+diff --git a/src/knownnodes.py b/src/knownnodes.py
+index aa08012..5755efc 100644
+--- a/src/knownnodes.py
++++ b/src/knownnodes.py
+@@ -1,24 +1,120 @@
+-import pickle
++import json
+ import os
++import pickle
++# import sys
+ import threading
++import time
+ 
+-from bmconfigparser import BMConfigParser
+ import state
++from bmconfigparser import BMConfigParser
++from debug import logger
+ 
+ knownNodesLock = threading.Lock()
+-knownNodes = {}
++knownNodes = {stream: {} for stream in range(1, 4)}
+ 
+ knownNodesTrimAmount = 2000
+ 
+ # forget a node after rating is this low
+ knownNodesForgetRating = -0.5
+ 
+-def saveKnownNodes(dirName = None):
++DEFAULT_NODES = (
++    state.Peer('5.45.99.75', 8444),
++    state.Peer('75.167.159.54', 8444),
++    state.Peer('95.165.168.168', 8444),
++    state.Peer('85.180.139.241', 8444),
++    state.Peer('158.222.217.190', 8080),
++    state.Peer('178.62.12.187', 8448),
++    state.Peer('24.188.198.204', 8111),
++    state.Peer('109.147.204.113', 1195),
++    state.Peer('178.11.46.221', 8444)
++)
++
++
++def json_serialize_knownnodes(output):
++    """
++    Reorganize knownnodes dict and write it as JSON to output
++    """
++    _serialized = []
++    for stream, peers in knownNodes.iteritems():
++        for peer, info in peers.iteritems():
++            _serialized.append({
++                'stream': stream, 'peer': peer._asdict(), 'info': info
++            })
++    json.dump(_serialized, output, indent=4)
++
++
++def json_deserialize_knownnodes(source):
++    """
++    Read JSON from source and make knownnodes dict
++    """
++    for node in json.load(source):
++        peer = node['peer']
++        peer['host'] = str(peer['host'])
++        knownNodes[node['stream']][state.Peer(**peer)] = node['info']
++
++
++def pickle_deserialize_old_knownnodes(source):
++    """
++    Unpickle source and reorganize knownnodes dict if it's in old format
++    the old format was {Peer:lastseen, ...}
++    the new format is {Peer:{"lastseen":i, "rating":f}}
++    """
++    knownNodes = pickle.load(source)
++    for stream in knownNodes.keys():
++        for node, params in knownNodes[stream].items():
++            if isinstance(params, (float, int)):
++                addKnownNode(stream, node, params)
++
++
++def saveKnownNodes(dirName=None):
+     if dirName is None:
+         dirName = state.appdata
+     with knownNodesLock:
+         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
+-            pickle.dump(knownNodes, output)
++            json_serialize_knownnodes(output)
++
++
++def addKnownNode(stream, peer, lastseen=None, is_self=False):
++    knownNodes[stream][peer] = {
++        "lastseen": lastseen or time.time(),
++        "rating": 0,
++        "self": is_self,
++    }
++
++
++def createDefaultKnownNodes():
++    for peer in DEFAULT_NODES:
++        addKnownNode(1, peer)
++    saveKnownNodes()
++
++
++def readKnownNodes():
++    try:
++        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
++            with knownNodesLock:
++                try:
++                    json_deserialize_knownnodes(source)
++                except ValueError:
++                    source.seek(0)
++                    pickle_deserialize_old_knownnodes(source)
++    except (IOError, OSError, KeyError):
++        logger.debug(
++            'Failed to read nodes from knownnodes.dat', exc_info=True)
++        createDefaultKnownNodes()
++
++    config = BMConfigParser()
++    # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
++    #     sys.exit(
++    #         'Bitmessage cannot read future versions of the keys file'
++    #         ' (keys.dat). Run the newer version of Bitmessage.')
++
++    # your own onion address, if setup
++    onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
++    if onionhostname and ".onion" in onionhostname:
++        onionport = config.safeGetInt('bitmessagesettings', 'onionport')
++        if onionport:
++            addKnownNode(1, state.Peer(onionhostname, onionport), is_self=True)
++
+ 
+ def increaseRating(peer):
+     increaseAmount = 0.1
+@@ -26,24 +122,36 @@ def increaseRating(peer):
+     with knownNodesLock:
+         for stream in knownNodes.keys():
+             try:
+-                knownNodes[stream][peer]["rating"] = min(knownNodes[stream][peer]["rating"] + increaseAmount, maxRating)
++                knownNodes[stream][peer]["rating"] = min(
++                    knownNodes[stream][peer]["rating"] + increaseAmount,
++                    maxRating
++                )
+             except KeyError:
+                 pass
+ 
++
+ def decreaseRating(peer):
+     decreaseAmount = 0.1
+     minRating = -1
+     with knownNodesLock:
+         for stream in knownNodes.keys():
+             try:
+-                knownNodes[stream][peer]["rating"] = max(knownNodes[stream][peer]["rating"] - decreaseAmount, minRating)
++                knownNodes[stream][peer]["rating"] = max(
++                    knownNodes[stream][peer]["rating"] - decreaseAmount,
++                    minRating
++                )
+             except KeyError:
+                 pass
+ 
+-def trimKnownNodes(recAddrStream = 1):
+-    if len(knownNodes[recAddrStream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
++
++def trimKnownNodes(recAddrStream=1):
++    if len(knownNodes[recAddrStream]) < \
++            BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
+         return
+     with knownNodesLock:
+-        oldestList = sorted(knownNodes[recAddrStream], key=lambda x: x['lastseen'])[:knownNodesTrimAmount]
++        oldestList = sorted(
++            knownNodes[recAddrStream],
++            key=lambda x: x['lastseen']
++        )[:knownNodesTrimAmount]
+         for oldest in oldestList:
+             del knownNodes[recAddrStream][oldest]

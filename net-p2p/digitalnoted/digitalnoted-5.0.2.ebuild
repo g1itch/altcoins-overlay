@@ -12,18 +12,13 @@ HOMEPAGE="http://digitalnote.biz/"
 SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE="+wallet"
 
 DEPEND+="dev-lang/python
 	net-libs/miniupnpc"
 
 PVM=$(get_version_component_range 1-2)
-
-# PATCHES=(
-# 	"${FILESDIR}"/${PVM}-miniupnpc-dynamic.patch
-# 	"${FILESDIR}"/${PVM}-iostream.patch
-# )
 
 src_prepare() {
 	cmake-utils_src_prepare

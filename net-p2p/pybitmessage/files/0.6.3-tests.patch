@@ -1,0 +1,759 @@
+diff --git a/.travis.yml b/.travis.yml
+index 5dbda892..1edba418 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -7,7 +7,10 @@ addons:
+       - build-essential
+       - libcap-dev
+ install:
++  - pip install -r requirements.txt
++  - ln -s src pybitmessage  # tests environment
+   - python setup.py install
+ script:
+   - python checkdeps.py
+-  - pybitmessage -t
++  - src/bitmessagemain.py -t
++  - python setup.py test
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+index 00000000..e20650d5
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,2 @@
++python_prctl
++psutil
+diff --git a/setup.py b/setup.py
+index 1081b5aa..422524bd 100644
+--- a/setup.py
++++ b/setup.py
+@@ -12,7 +12,7 @@ from src.version import softwareVersion
+ EXTRAS_REQUIRE = {
+     'gir': ['pygobject'],
+     'notify2': ['notify2'],
+-    'pyopencl': ['pyopencl'],
++    'opencl': ['pyopencl', 'numpy'],
+     'prctl': ['python_prctl'],  # Named threads
+     'qrcode': ['qrcode'],
+     'sound;platform_system=="Windows"': ['winsound'],
+@@ -22,7 +22,7 @@ EXTRAS_REQUIRE = {
+         'curses',  # src/depends.py
+         'python2-pythondialog',  # src/depends.py
+         'm2r',  # fab build_docs
+-    ],
++    ]
+ }
+ 
+ 
+@@ -50,6 +50,9 @@ if __name__ == "__main__":
+     with open(os.path.join(here, 'README.md')) as f:
+         README = f.read()
+ 
++    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
++        requirements = list(f.readlines())
++
+     bitmsghash = Extension(
+         'pybitmessage.bitmsghash.bitmsghash',
+         sources=['src/bitmsghash/bitmsghash.cpp'],
+@@ -80,7 +83,8 @@ if __name__ == "__main__":
+             import umsgpack
+             installRequires.append("umsgpack")
+         except ImportError:
+-            packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
++            packages += [
++                'pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
+ 
+     dist = setup(
+         name='pybitmessage',
+@@ -96,6 +100,7 @@ if __name__ == "__main__":
+         # TODO: add keywords
+         #keywords='',
+         install_requires=installRequires,
++        tests_require=requirements,
+         extras_require=EXTRAS_REQUIRE,
+         classifiers=[
+             "License :: OSI Approved :: MIT License"
+diff --git a/src/api.py b/src/api.py
+index a32519e4..59dcbfd6 100644
+--- a/src/api.py
++++ b/src/api.py
+@@ -12,6 +12,7 @@ import hashlib
+ import json
+ import time
+ from binascii import hexlify, unhexlify
++from datetime import datetime
+ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
+ from struct import pack
+ 
+@@ -1278,6 +1279,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+             raise APIError(20, 'Invalid method: %s' % method)
+         return self.handlers[method](self, params)
+ 
++        result = self.handlers[method](self, params)
++        state.last_api_response = datetime.now()
++        return result
++
+     def _dispatch(self, method, params):
+         self.cookies = []
+ 
+diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
+index 0848b0e4..f147e885 100755
+--- a/src/bitmessagemain.py
++++ b/src/bitmessagemain.py
+@@ -27,6 +27,7 @@ from singleinstance import singleinstance
+ import errno
+ import socket
+ import ctypes
++from datetime import datetime
+ from struct import pack
+ from subprocess import call
+ from time import sleep
+@@ -199,6 +200,22 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
+                     BMConfigParser().save()
+                 break
+         se.register_introspection_functions()
++
++        apiNotifyPath = BMConfigParser().safeGet(
++            'bitmessagesettings', 'apinotifypath')
++
++        if apiNotifyPath:
++            with shared.printLock:
++                print('Trying to call %s' % apiNotifyPath)
++                try:
++                    call([apiNotifyPath, "startingUp"])
++                except OSError:
++                    print(
++                        'Failed to call %s, removing apinotifypath setting'
++                        % apiNotifyPath)
++                    BMConfigParser().remove_option(
++                        'bitmessagesettings', 'apinotifypath')
++
+         se.serve_forever()
+ 
+ 
+@@ -238,8 +255,25 @@ class Main:
+             elif opt in ("-c", "--curses"):
+                 state.curses = True
+             elif opt in ("-t", "--test"):
+-                state.testmode = daemon = True
++                state.testmode = True
++                if os.path.isfile(os.path.join(
++                        state.appdata, 'unittest.lock')):
++                    daemon = True
+                 state.enableGUI = False  # run without a UI
++                # Fallback: in case when no api command was issued
++                state.last_api_response = datetime.now()
++                # Apply special settings
++                config = BMConfigParser()
++                config.set(
++                    'bitmessagesettings', 'apienabled', 'true')
++                config.set(
++                    'bitmessagesettings', 'apiusername', 'username')
++                config.set(
++                    'bitmessagesettings', 'apipassword', 'password')
++                config.set(
++                    'bitmessagesettings', 'apinotifypath',
++                    os.path.join(app_dir, 'tests', 'apinotify_handler.py')
++                )
+ 
+         # is the application already running?  If yes then exit.
+         if state.enableGUI and not state.curses and not depends.check_pyqt():
+@@ -257,7 +291,7 @@ class Main:
+             )
+         shared.thisapp = singleinstance("", daemon)
+ 
+-        if daemon and not state.testmode:
++        if daemon:
+             with shared.printLock:
+                 print('Running as a daemon. Send TERM signal to end.')
+             self.daemonize()
+@@ -338,18 +372,7 @@ class Main:
+             shared.reloadBroadcastSendersForWhichImWatching()
+ 
+             # API is also objproc dependent
+-            if BMConfigParser().safeGetBoolean(
+-                    'bitmessagesettings', 'apienabled'):
+-                try:
+-                    apiNotifyPath = BMConfigParser().get(
+-                        'bitmessagesettings', 'apinotifypath')
+-                except:
+-                    apiNotifyPath = ''
+-                if apiNotifyPath != '':
+-                    with shared.printLock:
+-                        print('Trying to call', apiNotifyPath)
+-
+-                    call([apiNotifyPath, "startingUp"])
++            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+                 singleAPIThread = singleAPI()
+                 # close the main program even if there are threads left
+                 singleAPIThread.daemon = True
+@@ -407,12 +430,21 @@ class Main:
+             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+ 
+         if daemon:
+-            if state.testmode:
+-                sleep(30)
+-                # make testing
+-                self.stop()
+             while state.shutdown == 0:
+                 sleep(1)
++                if state.testmode and 30 <= \
++                        (datetime.now() - state.last_api_response).seconds:
++                    self.stop()
++        elif not state.enableGUI:
++            from tests import core
++            test_core_result = core.run()
++            state.enableGUI = True
++            self.stop()
++            sys.exit(
++                'Core tests failed!'
++                if test_core_result.errors or test_core_result.failures
++                else 0
++            )
+ 
+     def daemonize(self):
+         grandfatherPid = os.getpid()
+diff --git a/src/helper_msgcoding.py b/src/helper_msgcoding.py
+index ab228834..3c29ef76 100644
+--- a/src/helper_msgcoding.py
++++ b/src/helper_msgcoding.py
+@@ -1,4 +1,9 @@
+-#!/usr/bin/python2.7
++"""
++Message encoding end decoding functions
++"""
++
++import string
++import zlib
+ 
+ try:
+     import msgpack
+@@ -7,14 +12,11 @@ except ImportError:
+         import umsgpack as msgpack
+     except ImportError:
+         import fallback.umsgpack.umsgpack as msgpack
+-import string
+-import zlib
+ 
+ from bmconfigparser import BMConfigParser
+ from debug import logger
+ import messagetypes
+ from tr import _translate
+-import helper_random
+ 
+ BITMESSAGE_ENCODING_IGNORE = 0
+ BITMESSAGE_ENCODING_TRIVIAL = 1
+@@ -62,7 +64,7 @@ class MsgEncode(object):
+         self.length = len(self.data)
+ 
+     def encodeSimple(self, message):
+-        self.data = 'Subject:' + message['subject'] + '\n' + 'Body:' + message['body']
++        self.data = 'Subject:%(subject)s\nBody:%(body)s' % message
+         self.length = len(self.data)
+ 
+     def encodeTrivial(self, message):
+@@ -75,10 +77,14 @@ class MsgDecode(object):
+         self.encoding = encoding
+         if self.encoding == BITMESSAGE_ENCODING_EXTENDED:
+             self.decodeExtended(data)
+-        elif self.encoding in [BITMESSAGE_ENCODING_SIMPLE, BITMESSAGE_ENCODING_TRIVIAL]:
++        elif self.encoding in (
++                BITMESSAGE_ENCODING_SIMPLE, BITMESSAGE_ENCODING_TRIVIAL):
+             self.decodeSimple(data)
+         else:
+-            self.body = _translate("MsgDecode", "The message has an unknown encoding.\nPerhaps you should upgrade Bitmessage.")
++            self.body = _translate(
++                "MsgDecode",
++                "The message has an unknown encoding.\n"
++                "Perhaps you should upgrade Bitmessage.")
+             self.subject = _translate("MsgDecode", "Unknown encoding")
+ 
+     def decodeExtended(self, data):
+@@ -86,7 +92,10 @@ class MsgDecode(object):
+         tmp = ""
+         while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
+             try:
+-                got = dc.decompress(data, BMConfigParser().safeGetInt("zlib", "maxsize") + 1 - len(tmp))
++                got = dc.decompress(
++                    data, BMConfigParser().safeGetInt("zlib", "maxsize")
++                    + 1 - len(tmp)
++                )
+                 # EOF
+                 if got == "":
+                     break
+@@ -138,23 +147,3 @@ class MsgDecode(object):
+             subject = subject.splitlines()[0]
+         self.subject = subject
+         self.body = body
+-
+-if __name__ == '__main__':
+-    messageData = {
+-        "subject": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(40)),
+-        "body": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(10000))
+-    }
+-    obj1 = MsgEncode(messageData, 1)
+-    obj2 = MsgEncode(messageData, 2)
+-    obj3 = MsgEncode(messageData, 3)
+-    print "1:%i 2:%i 3:%i" %(len(obj1.data), len(obj2.data), len(obj3.data))
+-
+-    obj1e = MsgDecode(1, obj1.data)
+-    # no subject in trivial encoding
+-    assert messageData["body"] == obj1e.body
+-    obj2e = MsgDecode(2, obj2.data)
+-    assert messageData["subject"] == obj2e.subject
+-    assert messageData["body"] == obj2e.body
+-    obj3e = MsgDecode(3, obj3.data)
+-    assert messageData["subject"] == obj3e.subject
+-    assert messageData["body"] == obj3e.body
+diff --git a/src/singleinstance.py b/src/singleinstance.py
+index d28a8276..c2def912 100644
+--- a/src/singleinstance.py
++++ b/src/singleinstance.py
+@@ -28,7 +28,7 @@ class singleinstance:
+         self.lockfile = os.path.normpath(
+             os.path.join(state.appdata, 'singleton%s.lock' % flavor_id))
+ 
+-        if not self.daemon and not state.curses:
++        if state.enableGUI and not self.daemon and not state.curses:
+             # Tells the already running (if any) application to get focus.
+             import bitmessageqt
+             bitmessageqt.init()
+diff --git a/src/tests/__init__.py b/src/tests/__init__.py
+new file mode 100644
+index 00000000..e69de29b
+diff --git a/src/tests/apinotify_handler.py b/src/tests/apinotify_handler.py
+new file mode 100755
+index 00000000..4574d46a
+--- /dev/null
++++ b/src/tests/apinotify_handler.py
+@@ -0,0 +1,15 @@
++#!/usr/bin/env python
++"""
++Utility configured as apinotifypath in bitmessagesettings
++when pybitmessage started in test mode.
++"""
++
++import sys
++import tempfile
++
++from test_process import put_signal_file
++
++
++if __name__ == '__main__':
++    if sys.argv[1] == 'startingUp':
++        put_signal_file(tempfile.gettempdir(), '.api_started')
+diff --git a/src/tests/core.py b/src/tests/core.py
+new file mode 100644
+index 00000000..bf2d8731
+--- /dev/null
++++ b/src/tests/core.py
+@@ -0,0 +1,49 @@
++"""
++Tests for core and those that do not work outside
++(because of import error for example)
++"""
++
++import random  # nosec
++import string
++import unittest
++
++from helper_msgcoding import MsgEncode, MsgDecode
++
++
++class TestCore(unittest.TestCase):
++    """Test case, which runs in main pybitmessage thread"""
++
++    def test_msgcoding(self):
++        """test encoding and decoding (originally from helper_msgcoding)"""
++        msg_data = {
++            'subject': ''.join(
++                random.choice(string.ascii_lowercase + string.digits)   # nosec
++                for _ in range(40)),
++            'body': ''.join(
++                random.choice(string.ascii_lowercase + string.digits)   # nosec
++                for _ in range(10000))
++        }
++
++        obj1 = MsgEncode(msg_data, 1)
++        obj2 = MsgEncode(msg_data, 2)
++        obj3 = MsgEncode(msg_data, 3)
++        # print "1: %i 2: %i 3: %i" % (
++        # len(obj1.data), len(obj2.data), len(obj3.data))
++
++        obj1e = MsgDecode(1, obj1.data)
++        # no subject in trivial encoding
++        self.assertEqual(msg_data['body'], obj1e.body)
++
++        obj2e = MsgDecode(2, obj2.data)
++        self.assertEqual(msg_data['subject'], obj2e.subject)
++        self.assertEqual(msg_data['body'], obj2e.body)
++
++        obj3e = MsgDecode(3, obj3.data)
++        self.assertEqual(msg_data['subject'], obj3e.subject)
++        self.assertEqual(msg_data['body'], obj3e.body)
++
++
++def run():
++    """Starts all tests defined in this module"""
++    suite = unittest.TestLoader().loadTestsFromTestCase(TestCore)
++    return unittest.TextTestRunner(verbosity=2).run(suite)
+diff --git a/src/tests/test_api.py b/src/tests/test_api.py
+new file mode 100644
+index 00000000..eb76d382
+--- /dev/null
++++ b/src/tests/test_api.py
+@@ -0,0 +1,170 @@
++"""
++Tests using API.
++"""
++
++import base64
++import json
++import xmlrpclib  # nosec
++from time import sleep
++
++from test_process import TestProcessProto
++
++
++class TestAPI(TestProcessProto):
++    """A test case for API"""
++    _process_cmd = ['pybitmessage', '-t']
++    _seed = base64.encodestring(
++        'TIGER, tiger, burning bright. In the forests of the night'
++    )
++
++    @classmethod
++    def setUpClass(cls):
++        """Setup XMLRPC proxy for pybitmessage API"""
++        super(TestAPI, cls).setUpClass()
++        cls.addresses = []
++        cls.api = xmlrpclib.ServerProxy(
++            "http://username:password@127.0.0.1:8442/")
++        for _ in range(0, 5):
++            if cls._get_readline('.api_started'):
++                print('API start detected!')
++                return
++            sleep(1)
++
++    def _add_random_address(self, label):
++        return self.api.createRandomAddress(base64.encodestring(label))
++
++    def test_user_password(self):
++        """Trying to connect with wrong username/password"""
++        api_wrong = xmlrpclib.ServerProxy("http://test:wrong@127.0.0.1:8442/")
++        self.assertEqual(
++            api_wrong.clientStatus(),
++            'RPC Username or password incorrect or HTTP header lacks'
++            ' authentication at all.'
++        )
++
++    def test_connection(self):
++        """API command 'helloWorld'"""
++        self.assertEqual(
++            self.api.helloWorld('hello', 'world'),
++            'hello-world'
++        )
++
++    def test_arithmetic(self):
++        """API command 'add'"""
++        self.assertEqual(self.api.add(69, 42), 111)
++
++    def test_invalid_method(self):
++        """Issuing nonexistent command 'test'"""
++        self.assertEqual(
++            self.api.test(),
++            'API Error 0020: Invalid method: test'
++        )
++
++    def test_list_addresses(self):
++        """Checking the return of API command 'listAddresses'"""
++        self.assertEqual(
++            json.loads(self.api.listAddresses()).get('addresses'),
++            self.addresses
++        )
++
++    def test_decode_address(self):
++        """Checking the return of API command 'decodeAddress'"""
++        result = json.loads(
++            self.api.decodeAddress('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'))
++        self.assertEqual(result.get('status'), 'success')
++        self.assertEqual(result['addressVersion'], 4)
++        self.assertEqual(result['streamNumber'], 1)
++
++    def test_create_deterministic_addresses(self):
++        """API command 'getDeterministicAddress': with various params"""
++        self.assertEqual(
++            self.api.getDeterministicAddress(self._seed, 4, 1),
++            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
++        )
++        self.assertEqual(
++            self.api.getDeterministicAddress(self._seed, 3, 1),
++            'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
++        )
++        self.assertRegexpMatches(
++            self.api.getDeterministicAddress(self._seed, 2, 1),
++            r'^API Error 0002:'
++        )
++        # This is here until the streams will be implemented
++        self.assertRegexpMatches(
++            self.api.getDeterministicAddress(self._seed, 3, 2),
++            r'API Error 0003:'
++        )
++
++    def test_create_random_address(self):
++        """API command 'createRandomAddress': basic BM-address validation"""
++        addr = self._add_random_address('random_1')
++        self.assertRegexpMatches(addr, r'^BM-')
++        self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
++        self.assertEqual(self.api.deleteAddress(addr), 'success')
++
++    def test_addressbook(self):
++        """Testing API commands for addressbook manipulations"""
++        # Initially it's empty
++        self.assertEqual(
++            json.loads(self.api.listAddressBookEntries()).get('addresses'),
++            []
++        )
++        # Add known address
++        self.api.addAddressBookEntry(
++            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
++            base64.encodestring('tiger_4')
++        )
++        # Check addressbook entry
++        entries = json.loads(
++            self.api.listAddressBookEntries()).get('addresses')[0]
++        self.assertEqual(
++            entries['address'], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
++        self.assertEqual(
++            base64.decodestring(entries['label']), 'tiger_4')
++        # Remove known address
++        self.api.deleteAddressBookEntry(
++            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
++        # Addressbook should be empty again
++        self.assertEqual(
++            json.loads(self.api.listAddressBookEntries()).get('addresses'),
++            []
++        )
++
++    def test_send_broadcast(self):
++        """API command 'sendBroadcast': ensure it returns ackData"""
++        addr = self._add_random_address('random_2')
++        ack = self.api.sendBroadcast(
++            addr, base64.encodestring('test_subject'),
++            base64.encodestring('test message')
++        )
++        try:
++            int(ack, 16)
++        except ValueError:
++            self.fail('sendBroadcast returned error or ackData is not hex')
++        finally:
++            self.assertEqual(self.api.deleteAddress(addr), 'success')
++
++    def test_chan(self):
++        """Testing chan creation/joining"""
++        # Cheate chan with known address
++        self.assertEqual(
++            self.api.createChan(self._seed),
++            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
++        )
++        # cleanup
++        self.assertEqual(
++            self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
++            'success'
++        )
++        # Join chan with addresses of version 3 or 4
++        for addr in (
++                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
++                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
++        ):
++            self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
++            self.assertEqual(self.api.leaveChan(addr), 'success')
++        # Joining with wrong address should fail
++        self.assertRegexpMatches(
++            self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
++            r'^API Error 0008:'
++        )
+diff --git a/src/tests/test_config.py b/src/tests/test_config.py
+new file mode 100644
+index 00000000..6817b37a
+--- /dev/null
++++ b/src/tests/test_config.py
+@@ -0,0 +1,36 @@
++"""
++Various tests for config
++"""
++
++import unittest
++
++from pybitmessage.bmconfigparser import BMConfigParser
++
++
++class TestConfig(unittest.TestCase):
++    """A test case for bmconfigparser"""
++
++    def test_safeGet(self):
++        """safeGet retuns provided default for nonexistent option or None"""
++        self.assertIs(
++            BMConfigParser().safeGet('nonexistent', 'nonexistent'), None)
++        self.assertEqual(
++            BMConfigParser().safeGet('nonexistent', 'nonexistent', 42), 42)
++
++    def test_safeGetBoolean(self):
++        """safeGetBoolean returns False for nonexistent option, no default"""
++        self.assertIs(
++            BMConfigParser().safeGetBoolean('nonexistent', 'nonexistent'),
++            False
++        )
++        # no arg for default
++        with self.assertRaises(TypeError):
++            BMConfigParser().safeGetBoolean(
++                'nonexistent', 'nonexistent', True)
++
++    def test_safeGetInt(self):
++        """safeGetInt retuns provided default for nonexistent option or 0"""
++        self.assertEqual(
++            BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
++        self.assertEqual(
++            BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
+diff --git a/src/tests/test_process.py b/src/tests/test_process.py
+new file mode 100644
+index 00000000..63904e0e
+--- /dev/null
++++ b/src/tests/test_process.py
+@@ -0,0 +1,111 @@
++"""
++Common reusable code for tests and tests for pybitmessage process.
++"""
++
++import os
++import signal
++import subprocess  # nosec
++import tempfile
++import unittest
++from time import sleep
++from datetime import datetime
++
++import psutil
++
++
++def put_signal_file(path, filename):
++    """Creates file, presence of which is a signal about some event."""
++    with open(os.path.join(path, filename), 'wb') as outfile:
++        outfile.write(datetime.now().isoformat())
++
++
++class TestProcessProto(unittest.TestCase):
++    """Test case implementing common logic for external testing:
++    it starts pybitmessage in setUpClass() and stops it in tearDownClass()
++    """
++    _process_cmd = ['pybitmessage', '-d']
++    _threads_count = 14
++    _files = (
++        'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
++        '.api_started', 'unittest.lock'
++    )
++
++    @classmethod
++    def setUpClass(cls):
++        """Setup environment and start pybitmessage"""
++        cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
++        put_signal_file(cls.home, 'unittest.lock')
++        subprocess.call(cls._process_cmd)  # nosec
++        sleep(5)
++        cls.pid = int(cls._get_readline('singleton.lock'))
++        cls.process = psutil.Process(cls.pid)
++
++    @classmethod
++    def _get_readline(cls, pfile):
++        pfile = os.path.join(cls.home, pfile)
++        try:
++            return open(pfile, 'rb').readline().strip()
++        except (OSError, IOError):
++            pass
++
++    @classmethod
++    def _cleanup_files(cls):
++        for pfile in cls._files:
++            try:
++                os.remove(os.path.join(cls.home, pfile))
++            except OSError:
++                pass
++
++    @classmethod
++    def tearDownClass(cls):
++        """Ensures that pybitmessage stopped and removes files"""
++        cls.process.send_signal(signal.SIGTERM)
++        try:
++            cls.process.wait(5)
++        except psutil.TimeoutExpired:
++            print(open(os.path.join(cls.home, 'debug.log'), 'rb').read())
++            cls.process.kill()
++        finally:
++            cls._cleanup_files()
++
++    def _test_threads(self):
++        # only count for now
++        # because of https://github.com/giampaolo/psutil/issues/613
++        # PyBitmessage
++        #   - addressGenerator
++        #   - singleWorker
++        #   - SQL
++        #   - objectProcessor
++        #   - singleCleaner
++        #   - singleAPI
++        #   - Asyncore
++        #   - ReceiveQueue_0
++        #   - ReceiveQueue_1
++        #   - ReceiveQueue_2
++        #   - Announcer
++        #   - InvBroadcaster
++        #   - AddrBroadcaster
++        #   - Downloader
++        self.assertEqual(
++            len(self.process.threads()), self._threads_count)
++
++
++class TestProcess(TestProcessProto):
++    """A test case for pybitmessage process"""
++    def test_process_name(self):
++        """Check PyBitmessage process name"""
++        self.assertEqual(self.process.name(), 'PyBitmessage')
++
++    def test_files(self):
++        """Check existence of PyBitmessage files"""
++        for pfile in self._files:
++            if pfile.startswith('.'):
++                continue
++            self.assertIsNot(
++                self._get_readline(pfile), None,
++                'Failed to read file %s' % pfile
++            )
++
++    def test_threads(self):
++        """Testing PyBitmessage threads"""
++        self._test_threads()
+diff --git a/src/tr.py b/src/tr.py
+index cf7f16ac..8b41167f 100644
+--- a/src/tr.py
++++ b/src/tr.py
+@@ -1,6 +1,6 @@
+ import os
+ 
+-import shared
++import state
+ 
+ # This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
+ class translateClass:
+@@ -18,10 +18,10 @@ def _translate(context, text, disambiguation = None, encoding = None, n = None):
+ 
+ def translateText(context, text, n = None):
+     try:
+-        is_daemon = shared.thisapp.daemon
++        enableGUI = state.enableGUI
+     except AttributeError:  # inside the plugin
+-        is_daemon = False
+-    if not is_daemon:
++        enableGUI = True
++    if enableGUI:
+         try:
+             from PyQt4 import QtCore, QtGui
+         except Exception as err:

@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 MY_PV="${PV}emc"
@@ -26,5 +25,6 @@ src_configure() {
 src_install() {
 	dobin src/${PN}
 
-	newbashcomp contrib/bitcoind.bash-completion ${PN}
+	newman doc/man/bitcoin-cli.1 ${PN}.1
+	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
 }

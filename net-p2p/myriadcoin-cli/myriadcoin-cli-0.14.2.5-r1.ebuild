@@ -29,9 +29,6 @@ src_configure() {
 
 src_install() {
 	dobin src/${PN}
-	dosym "${EPREFIX}"/usr/bin/${MY_PN}-cli "${EPREFIX}"/usr/bin/${PN}
-
 	newman doc/man/bitcoin-cli.1 ${PN}.1
-
 	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
 }

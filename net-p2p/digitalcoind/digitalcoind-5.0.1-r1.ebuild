@@ -3,6 +3,7 @@
 
 EAPI=5
 COIN_SYMBOL="DGC"
+COIN_FAMILY="DASH"
 
 inherit versionator altcoin
 
@@ -13,7 +14,8 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="examples upnp +wallet zeromq"
 
-RDEPEND+=">=dev-libs/leveldb-1.18-r1"
+RDEPEND+=">=dev-libs/leveldb-1.18-r1
+	zeromq? ( net-libs/zeromq )"
 DEPEND+="dev-lang/yasm"
 
 

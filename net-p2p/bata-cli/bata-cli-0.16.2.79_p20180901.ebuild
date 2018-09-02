@@ -6,9 +6,10 @@ MyPN="Bataoshi"
 
 inherit altcoin
 
+COMMIT="e885e2792baa0a5274c672e2da142a5836712f07"
 DESCRIPTION="Command-line JSON-RPC client for ${COIN_NAME^} crypto-currency"
 HOMEPAGE="http://www.bata.io/"
-SRC_URI="https://github.com/BTA-${COIN_NAME}/${MyPN}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/BTA-${COIN_NAME}/${MyPN}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -16,7 +17,7 @@ IUSE=""
 
 DEPEND+="dev-lang/yasm"
 
-S="${WORKDIR}"/${MyPN}-${PV}
+S="${WORKDIR}"/${MyPN}-${COMMIT}
 
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack
@@ -27,7 +28,7 @@ src_configure() {
 }
 
 src_install() {
-	newbin src/bitcoin-cli ${PN}
+	dobin src/${PN}
 
 	newman doc/man/bitcoin-cli.1 ${PN}.1
 	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}

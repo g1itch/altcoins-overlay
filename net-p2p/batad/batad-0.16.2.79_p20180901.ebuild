@@ -8,8 +8,9 @@ MyPN="Bataoshi"
 
 inherit altcoin
 
+COMMIT="e885e2792baa0a5274c672e2da142a5836712f07"
 HOMEPAGE="http://www.bata.io/"
-SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -19,7 +20,7 @@ IUSE="examples upnp +wallet zeromq"
 RDEPEND+=">=dev-libs/leveldb-1.18-r1
 	zeromq? ( net-libs/zeromq )"
 
-S="${WORKDIR}"/${MyPN}-${PV}
+S="${WORKDIR}"/${MyPN}-${COMMIT}
 
 
 src_prepare() {

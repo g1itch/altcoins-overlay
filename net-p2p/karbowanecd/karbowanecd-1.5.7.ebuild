@@ -11,7 +11,7 @@ HOMEPAGE="http://karbowanec.com/"
 SRC_URI="https://github.com/seredat/${COIN_NAME}/archive/v.${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="+wallet"
 
 DEPEND+="dev-libs/boost[static-libs,context]

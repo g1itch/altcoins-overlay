@@ -1,6 +1,5 @@
-# Copyright 2015-2017 Gentoo Foundation
+# Copyright 2015-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 
@@ -18,7 +17,10 @@ src_configure() {
 	append-ldflags -Wl,-z,noexecstack
 	econf \
 		--disable-ccache \
+		--disable-static \
 		--disable-tests \
+		--disable-bench \
+		--without-gui \
 		--without-daemon \
 		--without-libs \
 		--with-utils

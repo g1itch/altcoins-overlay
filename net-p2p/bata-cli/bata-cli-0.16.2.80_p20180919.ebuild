@@ -6,7 +6,7 @@ MyPN="Bataoshi"
 
 inherit altcoin
 
-COMMIT="e885e2792baa0a5274c672e2da142a5836712f07"
+COMMIT="d86494efb80b3f7cdae07f6d074c4358c88dd380"
 DESCRIPTION="Command-line JSON-RPC client for ${COIN_NAME^} crypto-currency"
 HOMEPAGE="http://www.bata.io/"
 SRC_URI="https://github.com/BTA-${COIN_NAME}/${MyPN}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"

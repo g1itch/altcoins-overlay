@@ -4,7 +4,7 @@
 EAPI=5
 COIN_SYMBOL="DASH"
 
-inherit altcoin
+inherit altcoin versionator
 
 HOMEPAGE="https://www.dash.org/"
 SRC_URI="https://github.com/dashpay/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"

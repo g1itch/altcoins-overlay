@@ -6,7 +6,7 @@ COIN_SYMBOL="BTA"
 COIN_FAMILY="DASH"
 MyPN="Bataoshi"
 
-inherit altcoin
+inherit altcoin versionator
 
 COMMIT="97372000b9dfc5c5311e0fab9d006625f393c2c5"
 HOMEPAGE="http://www.bata.io/"

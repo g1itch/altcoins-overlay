@@ -29,6 +29,6 @@ src_configure() {
 src_install() {
 	dobin src/${PN}
 
-	doman contrib/debian/manpages/${PN}.1
-	newbashcomp contrib/${COIN_NAME}d.bash-completion ${PN}
+	doman doc/man/${PN}.1
+	newbashcomp contrib/${PN}.bash-completion ${PN}
 }

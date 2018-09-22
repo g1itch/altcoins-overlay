@@ -1,6 +1,5 @@
-# Copyright 2016-2017 Gentoo Foundation
+# Copyright 2016-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="BSD"
@@ -8,20 +7,21 @@ COIN_NEEDS_SSL=0
 
 inherit versionator altcoin
 
+COMMIT="6d06b29e711d114e073e290932742afa45d8dd4f"
 HOMEPAGE="http://www.bitsend.info/"
-SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples upnp +wallet zmq"
+IUSE="examples upnp +wallet zeromq"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
 	dev-libs/univalue
-	zmq? ( net-libs/zeromq )
+	zeromq? ( net-libs/zeromq )
 "
 
-S="${WORKDIR}"/BitSend-${PV}
+S="${WORKDIR}"/BitSend-${COMMIT}
 
 
 src_prepare() {
@@ -39,7 +39,7 @@ src_configure() {
 		$(use_with upnp miniupnpc) \
 		$(use_enable upnp upnp-default) \
 		$(use_enable wallet) \
-		$(use_enable zmq) \
+		$(use_enable zeromq zmq) \
 		--disable-ccache \
 		--disable-static \
 		--with-system-leveldb \

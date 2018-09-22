@@ -8,12 +8,13 @@ inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for BitSend crypto-currency"
 HOMEPAGE="http://www.bitsend.info/"
-SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+COMMIT="6d06b29e711d114e073e290932742afa45d8dd4f"
+SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
-S="${WORKDIR}"/BitSend-${PV}
+S="${WORKDIR}"/BitSend-${COMMIT}
 
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack

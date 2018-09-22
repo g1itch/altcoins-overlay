@@ -6,14 +6,15 @@ COIN_SYMBOL="MEC"
 
 inherit altcoin
 
-DESCRIPTION="Command-line JSON-RPC client for BitSend crypto-currency"
+DESCRIPTION="Command-line JSON-RPC client for ${COIN_NAME^} crypto-currency"
 HOMEPAGE="http://www.megacoin.eu/"
-SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+COMMIT="66428979986d547ca506f742741328f11ee03972"
+SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
-S="${WORKDIR}"/${COIN_NAME^}-${PV}
+S="${WORKDIR}"/${COIN_NAME^}-${COMMIT}
 
 
 src_configure() {

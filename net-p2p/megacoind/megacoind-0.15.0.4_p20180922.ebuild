@@ -4,10 +4,11 @@
 EAPI=5
 COIN_SYMBOL="MEC"
 
-inherit altcoin
+inherit altcoin versionator
 
+COMMIT="66428979986d547ca506f742741328f11ee03972"
 HOMEPAGE="http://www.megacoin.eu/"
-SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -19,7 +20,7 @@ RDEPEND+="
 	zeromq? ( net-libs/zeromq )
 "
 
-S="${WORKDIR}"/${COIN_NAME^}-${PV}
+S="${WORKDIR}"/${COIN_NAME^}-${COMMIT}
 
 
 src_prepare() {

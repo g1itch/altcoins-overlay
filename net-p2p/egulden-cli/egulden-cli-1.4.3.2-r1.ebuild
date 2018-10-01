@@ -27,7 +27,7 @@ src_configure() {
 }
 
 src_install() {
-	dobin src/${MY_PN}-cli
+	dobin src/${PN}
 
 	newman contrib/debian/manpages/bitcoin-cli.1 ${PN}.1
 	newbashcomp contrib/bitcoind.bash-completion ${PN}

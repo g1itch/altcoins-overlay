@@ -11,7 +11,7 @@ HOMEPAGE="http://florincoin.org/"
 SRC_URI="https://github.com/${COIN_SYMBOL}blockchain/${COIN_SYMBOL}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE="examples upnp +wallet zmq cpu_flags_x86_sse2"
 
 RDEPEND+="

@@ -10,7 +10,7 @@ HOMEPAGE="http://florincoin.org/"
 SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="examples upnp +wallet libressl"
 
 RDEPEND+=">=dev-libs/leveldb-1.18-r1"

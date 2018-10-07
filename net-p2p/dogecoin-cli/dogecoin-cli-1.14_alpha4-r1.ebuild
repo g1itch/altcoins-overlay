@@ -27,8 +27,8 @@ src_configure() {
 }
 
 src_install() {
-	newbin src/bitcoin-cli ${PN}
+	dobin src/${PN}
 
-	newman doc/man/bitcoin-cli.1 ${PN}.1
-	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
+	doman doc/man/${PN}.1
+	newbashcomp contrib/${PN}.bash-completion ${PN}
 }

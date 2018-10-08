@@ -1,0 +1,211 @@
+diff --git a/src/class_singleCleaner.py b/src/class_singleCleaner.py
+index 1ba342b6..c057e3a5 100644
+--- a/src/class_singleCleaner.py
++++ b/src/class_singleCleaner.py
+@@ -19,7 +19,7 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
+ """
+ 
+ import gc
+-import os
++import sys
+ import shared
+ import threading
+ import time
+@@ -55,7 +55,7 @@ class singleCleaner(threading.Thread, StoppableThread):
+             ) + (
+                 float(BMConfigParser().get(
+                     'bitmessagesettings', 'stopresendingafterxmonths')) *
+-                (60 * 60 * 24 * 365)/12)
++                (60 * 60 * 24 * 365) / 12)
+         except:
+             # Either the user hasn't set stopresendingafterxdays and
+             # stopresendingafterxmonths yet or the options are missing
+@@ -96,9 +96,8 @@ class singleCleaner(threading.Thread, StoppableThread):
+                     "SELECT toaddress, ackdata, status FROM sent"
+                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
+                     " AND folder='sent' AND sleeptill<? AND senttime>?)",
+-                    int(time.time()),
+-                    int(time.time())
+-                    - shared.maximumLengthOfTimeToBotherResendingMessages
++                    int(time.time()), int(time.time()) -
++                    shared.maximumLengthOfTimeToBotherResendingMessages
+                 )
+                 for row in queryreturn:
+                     if len(row) < 2:
+@@ -115,54 +114,28 @@ class singleCleaner(threading.Thread, StoppableThread):
+                     elif status == 'msgsent':
+                         resendMsg(ackData)
+ 
+-            # cleanup old nodes
+-            now = int(time.time())
+-
+-            with knownnodes.knownNodesLock:
+-                for stream in knownnodes.knownNodes:
+-                    keys = knownnodes.knownNodes[stream].keys()
+-                    for node in keys:
+-                        try:
+-                            # scrap old nodes
+-                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
+-                                shared.needToWriteKnownNodesToDisk = True
+-                                del knownnodes.knownNodes[stream][node]
+-                                continue
+-                            # scrap old nodes with low rating
+-                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 10800 and knownnodes.knownNodes[stream][node]["rating"] <= knownnodes.knownNodesForgetRating:
+-                                shared.needToWriteKnownNodesToDisk = True
+-                                del knownnodes.knownNodes[stream][node]
+-                                continue
+-                        except TypeError:
+-                            print "Error in %s" % node
+-                    keys = []
+-
+-            # Let us write out the knowNodes to disk
+-            # if there is anything new to write out.
+-            if shared.needToWriteKnownNodesToDisk:
+-                try:
+-                    knownnodes.saveKnownNodes()
+-                except Exception as err:
+-                    if "Errno 28" in str(err):
+-                        logger.fatal(
+-                            '(while receiveDataThread'
+-                            ' knownnodes.needToWriteKnownNodesToDisk)'
+-                            ' Alert: Your disk or data storage volume'
+-                            ' is full. '
+-                        )
+-                        queues.UISignalQueue.put((
+-                            'alert',
+-                            (tr._translate("MainWindow", "Disk full"),
+-                             tr._translate(
+-                                 "MainWindow",
+-                                 'Alert: Your disk or data storage volume'
+-                                 ' is full. Bitmessage will now exit.'),
+-                                True)
+-                            ))
+-                        # FIXME redundant?
+-                        if shared.daemon or not state.enableGUI:
+-                            os._exit(0)
+-                shared.needToWriteKnownNodesToDisk = False
++            try:
++                # Cleanup knownnodes and handle possible severe exception
++                # while writing it to disk
++                knownnodes.cleanupKnownNodes()
++            except Exception as err:
++                if "Errno 28" in str(err):
++                    logger.fatal(
++                        '(while writing knownnodes to disk)'
++                        ' Alert: Your disk or data storage volume is full.'
++                    )
++                    queues.UISignalQueue.put((
++                        'alert',
++                        (tr._translate("MainWindow", "Disk full"),
++                         tr._translate(
++                             "MainWindow",
++                             'Alert: Your disk or data storage volume'
++                             ' is full. Bitmessage will now exit.'),
++                            True)
++                    ))
++                    # FIXME redundant?
++                    if shared.daemon or not state.enableGUI:
++                        sys.exit(1)
+ 
+ #            # clear download queues
+ #            for thread in threading.enumerate():
+@@ -206,8 +179,9 @@ def resendPubkeyRequest(address):
+         pass
+ 
+     queues.UISignalQueue.put((
+-         'updateStatusBar',
+-         'Doing work necessary to again attempt to request a public key...'))
++        'updateStatusBar',
++        'Doing work necessary to again attempt to request a public key...'
++    ))
+     sqlExecute(
+         '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+         address)
+diff --git a/src/knownnodes.py b/src/knownnodes.py
+index ac2d668c..7ec556da 100644
+--- a/src/knownnodes.py
++++ b/src/knownnodes.py
+@@ -1,13 +1,17 @@
++"""
++Manipulations with knownNodes dictionary.
++"""
++
+ import json
+ import os
+ import pickle
+-# import sys
+ import threading
+ import time
+ 
+ import state
+ from bmconfigparser import BMConfigParser
+ from debug import logger
++from helper_bootstrap import dns
+ 
+ knownNodesLock = threading.Lock()
+ knownNodes = {stream: {} for stream in range(1, 4)}
+@@ -60,9 +64,10 @@ def pickle_deserialize_old_knownnodes(source):
+     the old format was {Peer:lastseen, ...}
+     the new format is {Peer:{"lastseen":i, "rating":f}}
+     """
++    global knownNodes  # pylint: disable=global-statement
+     knownNodes = pickle.load(source)
+     for stream in knownNodes.keys():
+-        for node, params in knownNodes[stream].items():
++        for node, params in knownNodes[stream].iteritems():
+             if isinstance(params, (float, int)):
+                 addKnownNode(stream, node, params)
+ 
+@@ -104,10 +109,6 @@ def readKnownNodes():
+         createDefaultKnownNodes()
+ 
+     config = BMConfigParser()
+-    # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
+-    #     sys.exit(
+-    #         'Bitmessage cannot read future versions of the keys file'
+-    #         ' (keys.dat). Run the newer version of Bitmessage.')
+ 
+     # your own onion address, if setup
+     onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
+@@ -156,3 +157,41 @@ def trimKnownNodes(recAddrStream=1):
+         )[:knownNodesTrimAmount]
+         for oldest in oldestList:
+             del knownNodes[recAddrStream][oldest]
++
++
++def cleanupKnownNodes():
++    """
++    Cleanup knownnodes: remove old nodes and nodes with low rating
++    """
++    now = int(time.time())
++    needToWriteKnownNodesToDisk = False
++
++    with knownNodesLock:
++        for stream in knownNodes:
++            keys = knownNodes[stream].keys()
++            if len(keys) <= 1:  # leave at least one node
++                dns()
++                continue
++            for node in keys:
++                try:
++                    # scrap old nodes
++                    if (now - knownNodes[stream][node]["lastseen"] >
++                            2419200):  # 28 days
++                        needToWriteKnownNodesToDisk = True
++                        del knownNodes[stream][node]
++                        continue
++                    # scrap old nodes with low rating
++                    if (now - knownNodes[stream][node]["lastseen"] > 10800 and
++                        knownNodes[stream][node]["rating"] <=
++                            knownNodesForgetRating):
++                        needToWriteKnownNodesToDisk = True
++                        del knownNodes[stream][node]
++                        continue
++                except TypeError:
++                    logger.warning('Error in %s', node)
++            keys = []
++
++    # Let us write out the knowNodes to disk
++    # if there is anything new to write out.
++    if needToWriteKnownNodesToDisk:
++        saveKnownNodes()

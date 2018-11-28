@@ -1,0 +1,18 @@
+--- src/net.cpp~	2015-10-26 10:44:13.000000000 +0200
++++ src/net.cpp	2018-11-28 14:44:41.665203529 +0200
+@@ -1083,10 +1083,14 @@
+ #ifndef UPNPDISCOVER_SUCCESS
+     /* miniupnpc 1.5 */
+     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
+-#else
++#elif MINIUPNPC_API_VERSION < 14
+     /* miniupnpc 1.6 */
+     int error = 0;
+     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
++#else
++    /* miniupnpc 1.9.20150730 */
++    int error = 0;
++    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 2, &error);
+ #endif
+ 
+     struct UPNPUrls urls;

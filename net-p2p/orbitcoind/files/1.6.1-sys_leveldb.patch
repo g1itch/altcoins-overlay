@@ -1,0 +1,39 @@
+--- src/leveldb.cpp~	2018-12-06 22:52:40.000000000 +0200
++++ src/leveldb.cpp	2018-12-07 12:23:20.281941631 +0200
+@@ -8,7 +8,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include <boost/filesystem.hpp>
+ 
+--- src/makefile.unix~	2018-12-06 22:52:40.000000000 +0200
++++ src/makefile.unix	2018-12-07 12:25:03.114896511 +0200
+@@ -4,6 +4,7 @@
+ 
+ USE_UPNP:=0
+ USE_IPV6:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ CC = gcc
+ CFLAGS = -O2 -fomit-frame-pointer
+@@ -123,6 +124,7 @@
+ 
+ all: orbitcoind
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+@@ -131,6 +133,9 @@
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ 
+ obj/leveldb.o: leveldb/libleveldb.a
++else
++     LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

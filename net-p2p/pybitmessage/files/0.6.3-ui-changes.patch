@@ -5163,10 +5163,10 @@ index 00000000..d3c7037a
 +                logger.error("Failed to set locale to %s", lang, exc_info=True)
 diff --git a/src/bitmessageqt/main.ui b/src/bitmessageqt/main.ui
 new file mode 100644
-index 00000000..9aaa5a50
+index 00000000..01516539
 --- /dev/null
 +++ b/src/bitmessageqt/main.ui
-@@ -0,0 +1,2930 @@
+@@ -0,0 +1,2962 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<ui version="4.0">
 + <class>MainWindow</class>
@@ -7140,6 +7140,38 @@ index 00000000..9aaa5a50
 +   <signal>customContextMenuRequested(QPoint)</signal>
 +   <receiver>MainWindow</receiver>
 +   <slot>on_context_menuYourIdentities()</slot>
++   <hints>
++    <hint type="sourcelabel">
++     <x>20</x>
++     <y>20</y>
++    </hint>
++    <hint type="destinationlabel">
++     <x>20</x>
++     <y>20</y>
++    </hint>
++   </hints>
++  </connection>
++  <connection>
++   <sender>tableWidgetAddressBook</sender>
++   <signal>customContextMenuRequested(QPoint)</signal>
++   <receiver>MainWindow</receiver>
++   <slot>on_context_menuAddressBook()</slot>
++   <hints>
++    <hint type="sourcelabel">
++     <x>20</x>
++     <y>20</y>
++    </hint>
++    <hint type="destinationlabel">
++     <x>20</x>
++     <y>20</y>
++    </hint>
++   </hints>
++  </connection>
++  <connection>
++   <sender>treeWidgetSubscriptions</sender>
++   <signal>customContextMenuRequested(QPoint)</signal>
++   <receiver>MainWindow</receiver>
++   <slot>on_context_menuSubscriptions()</slot>
 +   <hints>
 +    <hint type="sourcelabel">
 +     <x>20</x>

@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -8,9 +8,9 @@ MyPN="Bataoshi"
 
 inherit altcoin versionator
 
-COMMIT="97372000b9dfc5c5311e0fab9d006625f393c2c5"
+MY_PV=${PV}-Linux
 HOMEPAGE="http://www.bata.io/"
-SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_SYMBOL}-${COIN_NAME}/${MyPN}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -20,7 +20,7 @@ IUSE="examples upnp +wallet zeromq"
 RDEPEND+=">=dev-libs/leveldb-1.18-r1
 	zeromq? ( net-libs/zeromq )"
 
-S="${WORKDIR}"/${MyPN}-${COMMIT}
+S="${WORKDIR}"/${MyPN}-${MY_PV}
 
 
 src_prepare() {

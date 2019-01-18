@@ -1,4 +1,4 @@
-# Copyright 2018 Gentoo Foundation
+# Copyright 2018-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -6,11 +6,11 @@ COIN_SYMBOL="XVG"
 
 inherit altcoin versionator
 
-TOR_PV=0.3.2.10
+TOR_PV=0.3.4.9
 TOR_PF=tor-$(replace_version_separator 4 - ${TOR_PV})
 
 MyPN=${COIN_NAME^^}
-HOMEPAGE="https://amsterdamcoin.com/"
+HOMEPAGE="http://vergecurrency.com/"
 SRC_URI="https://github.com/vergecurrency/${MyPN}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz
 https://www.torproject.org/dist/${TOR_PF}.tar.gz"
 
@@ -27,6 +27,7 @@ src_prepare() {
 	local PVM=$(get_major_version)
 	rm -rf tor; mv ../${TOR_PF} tor
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-tor_zstd.patch
 	eautoreconf
 }
 

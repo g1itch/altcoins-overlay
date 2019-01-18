@@ -1,0 +1,11 @@
+--- configure.ac~	2019-01-18 13:39:45.000000000 +0200
++++ configure.ac	2019-01-18 13:46:30.901655848 +0200
+@@ -13,7 +13,7 @@
+ AH_TOP([#ifndef VERGE_CONFIG_H])
+ AH_TOP([#define VERGE_CONFIG_H])
+ AH_BOTTOM([#endif //VERGE_CONFIG_H])
+-AX_SUBDIRS_CONFIGURE([tor], [[--disable-unittests], [--disable-system-torrc], [--disable-systemd], [--disable-lzma], [--disable-asciidoc], [--with-openssl-dir=$($PKG_CONFIG --variable=libdir openssl)], [CFLAGS=$($PKG_CONFIG --cflags openssl) -fPIC -O2]])
++AX_SUBDIRS_CONFIGURE([tor], [[--disable-unittests], [--disable-system-torrc], [--disable-systemd], [--disable-lzma], [--disable-zstd], [--disable-asciidoc], [--with-openssl-dir=$($PKG_CONFIG --variable=libdir openssl)], [CFLAGS=$($PKG_CONFIG --cflags openssl) -fPIC -O2]])
+ 
+ 
+ # This m4 will only be used if a system copy cannot be found. This is helpful

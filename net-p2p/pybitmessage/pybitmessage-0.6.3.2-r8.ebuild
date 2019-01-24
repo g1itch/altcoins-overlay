@@ -1,10 +1,10 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite"
+PYTHON_REQ_USE="sqlite,ssl"
 
 inherit distutils-r1 gnome2-utils systemd
 

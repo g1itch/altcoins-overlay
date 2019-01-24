@@ -4,7 +4,7 @@
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite"
+PYTHON_REQ_USE="sqlite,ssl,ipv6"
 
 inherit distutils-r1 gnome2-utils versionator systemd
 

@@ -13,7 +13,7 @@ index 422524bd..28b494d5 100644
  
  
 diff --git a/src/api.py b/src/api.py
-index 9d32a5bb..70560438 100644
+index 9d32a5bb..d6c2d803 100644
 --- a/src/api.py
 +++ b/src/api.py
 @@ -1,20 +1,18 @@
@@ -960,7 +960,7 @@ index 9d32a5bb..70560438 100644
 +                        "UPDATE inbox set read = ? WHERE msgid=?",
 +                        readStatus, msgid)
 +                    queues.UISignalQueue.put(('changedInboxUnread', None))
-+            except KeyError:
++            except IndexError:
 +                pass
          queryreturn = sqlQuery(
 -            "SELECT msgid, toaddress, fromaddress, subject, received, message,"
@@ -989,7 +989,7 @@ index 9d32a5bb..70560438 100644
 +        try:
 +            return {"inboxMessage": [
 +                self._dump_inbox_message(*queryreturn[0])]}
-+        except KeyError:
++        except IndexError:
 +            pass  # FIXME inconsistent
 +
 +    @command('getAllSentMessages')
@@ -1127,7 +1127,7 @@ index 9d32a5bb..70560438 100644
 +            return {"sentMessage": [
 +                self._dump_sent_message(*queryreturn[0])
 +            ]}
-+        except KeyError:
++        except IndexError:
 +            pass  # FIXME inconsistent
 +
 +    @command('getSentMessagesByAddress', 'getSentMessagesBySender')
@@ -1212,7 +1212,7 @@ index 9d32a5bb..70560438 100644
 +            return {"sentMessage": [
 +                self._dump_sent_message(*queryreturn[0])
 +            ]}
-+        except KeyError:
++        except IndexError:
 +            pass  # FIXME inconsistent
 +
 +    @command('trashMessage')
@@ -1312,7 +1312,7 @@ index 9d32a5bb..70560438 100644
 -                toLabel, = row
 +        try:
 +            toLabel, = queryreturn[0][0]
-+        except KeyError:
++        except IndexError:
 +            pass
 +
          queues.UISignalQueue.put(('displayNewSentMessage', (
@@ -1394,7 +1394,7 @@ index 9d32a5bb..70560438 100644
 -        if queryreturn == []:
 +        try:
 +            return queryreturn[0][0]
-+        except KeyError:
++        except IndexError:
              return 'notfound'
 -        for row in queryreturn:
 -            status, = row
@@ -1875,10 +1875,10 @@ index 9d32a5bb..70560438 100644
 +    def _methodHelp(self, method):
 +        return self._handlers[method].__doc__
 diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
-index 2c3d10db..71c6c7e1 100755
+index b3775b60..b26fc7dd 100755
 --- a/src/bitmessagemain.py
 +++ b/src/bitmessagemain.py
-@@ -199,6 +199,8 @@ class Main:
+@@ -200,6 +200,8 @@ class Main:
                      'bitmessagesettings', 'apiusername', 'username')
                  config.set(
                      'bitmessagesettings', 'apipassword', 'password')
@@ -1888,7 +1888,7 @@ index 2c3d10db..71c6c7e1 100755
                      'bitmessagesettings', 'apinotifypath',
                      os.path.join(app_dir, 'tests', 'apinotify_handler.py')
 diff --git a/src/tests/test_api.py b/src/tests/test_api.py
-index 2bb6d0ce..61cc0edf 100644
+index 2bb6d0ce..3491e8b4 100644
 --- a/src/tests/test_api.py
 +++ b/src/tests/test_api.py
 @@ -36,11 +36,8 @@ class TestAPI(TestProcessProto):
@@ -1905,3 +1905,32 @@ index 2bb6d0ce..61cc0edf 100644
  
      def test_connection(self):
          """API command 'helloWorld'"""
+@@ -143,14 +140,23 @@ class TestAPI(TestProcessProto):
+     def test_send_broadcast(self):
+         """API command 'sendBroadcast': ensure it returns ackData"""
+         addr = self._add_random_address('random_2')
+-        ack = self.api.sendBroadcast(
+-            addr, base64.encodestring('test_subject'),
+-            base64.encodestring('test message')
+-        )
++        msg = base64.encodestring('test message')
++        ackdata = self.api.sendBroadcast(
++            addr, base64.encodestring('test_subject'), msg)
+         try:
+-            int(ack, 16)
++            int(ackdata, 16)
++            for m in json.loads(self.api.getAllSentMessages())['sentMessages']:
++                if m['ackData'] == ackdata:
++                    sent_msg = m['message']
++                    break
++            else:
++                raise KeyError
+         except ValueError:
+             self.fail('sendBroadcast returned error or ackData is not hex')
++        except KeyError:
++            self.fail('Could not find sent broadcast in sent messages')
++        else:
++            self.assertEqual(sent_msg, msg.strip())
+         finally:
+             self.assertEqual(self.api.deleteAddress(addr), 'success')
+ 

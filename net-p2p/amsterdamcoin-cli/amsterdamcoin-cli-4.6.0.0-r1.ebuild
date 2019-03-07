@@ -1,10 +1,10 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="AMS"
 
-inherit altcoin
+inherit altcoin versionator
 
 MyPN=AmsterdamCoin-v4
 HOMEPAGE="https://amsterdamcoin.com/"

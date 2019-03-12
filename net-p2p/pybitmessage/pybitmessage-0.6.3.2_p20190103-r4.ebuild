@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils versionator systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="5e0d168db60b448b0e027f23f24de17e97882e6d"
+COMMIT="ee7aa6c28de944fe6f5aff49c6b186449b75957a"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -21,7 +21,7 @@ LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="daemon debug libressl +msgpack systemd libnotify libcanberra ncurses opencl qrcode -qt4 qt5 sound ${LINGUAS[@]/#/l10n_}"
+IUSE="daemon debug libressl +msgpack systemd gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -37,11 +37,7 @@ RDEPEND="${DEPEND}
 		dev-python/numpy[${PYTHON_USEDEP}]
 		dev-python/pyopencl[${PYTHON_USEDEP}]
 	)
-	qt4? ( <=dev-python/QtPy-1.2.1[gui,${PYTHON_USEDEP}]
-		   || ( dev-python/PyQt4[${PYTHON_USEDEP}]
-				dev-python/pyside[${PYTHON_USEDEP}] ) )
-	qt5? ( dev-python/QtPy[gui,${PYTHON_USEDEP}]
-		   dev-python/PyQt5[${PYTHON_USEDEP}] )
+	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
 	sound? ( || ( dev-python/gst-python:1.0[${PYTHON_USEDEP}]
 				  media-sound/gst123
 				  media-libs/gst-plugins-base:1.0
@@ -52,6 +48,7 @@ RDEPEND="${DEPEND}
 				 dev-python/notify2[${PYTHON_USEDEP}]
 				 x11-themes/hicolor-icon-theme )
 	libcanberra? ( dev-python/pycanberra[${PYTHON_USEDEP}] )
+	gnome-keyring? ( dev-python/gnome-keyring-python[${PYTHON_USEDEP}] )
 "
 
 S="${WORKDIR}"/${MY_PN}-${COMMIT}
@@ -59,9 +56,8 @@ S="${WORKDIR}"/${MY_PN}-${COMMIT}
 PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
-	"${FILESDIR}"/${PVM}-knownnodes-validate.patch
-	"${FILESDIR}"/${PVM}-api.patch
-	"${FILESDIR}"/${PVM}-qt5.patch
+	"${FILESDIR}"/${PVM}-keystore.patch
+	"${FILESDIR}"/${PVM}-ui-changes.patch
 )
 
 src_prepare() {

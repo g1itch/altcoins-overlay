@@ -1,23 +1,23 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_NAME="feathercoin"
 inherit altcoin gnome2-utils
 
-DESCRIPTION="Qt wallet for Feathercoin crypto-currency"
+DESCRIPTION="Qt wallet for ${COIN_NAME^} crypto-currency"
 HOMEPAGE="http://feathercoin.com/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="examples upnp +wallet zmq cpu_flags_x86_sse2 qrcode"
+IUSE="examples upnp +wallet zeromq qrcode"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
-	dev-libs/univalue
+	>=dev-libs/univalue-1.0.4
 	qrcode? ( media-gfx/qrencode )
-	zmq? ( net-libs/zeromq )
+	zeromq? ( net-libs/zeromq )
 	dev-qt/qtgui:5
 	dev-qt/qtwidgets:5
 	dev-qt/linguist-tools:5
@@ -29,8 +29,7 @@ S="${WORKDIR}"/${COIN_NAME^}-${PV}
 
 src_prepare() {
 	rm -r src/leveldb
-	local PVM=$(get_version_component_range 1-2)
-	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/0.13-sys_leveldb.patch
 	eautoreconf
 }
 
@@ -43,8 +42,7 @@ src_configure() {
 		$(use_with upnp miniupnpc) \
 		$(use_enable upnp upnp-default) \
 		$(use_enable wallet) \
-		$(use_enable zmq) \
-		$(use_enable cpu_flags_x86_sse2 sse2) \
+		$(use_enable zeromq zmq) \
 		--disable-ccache \
 		--disable-static \
 		--with-system-leveldb \

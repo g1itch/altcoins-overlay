@@ -1,0 +1,33 @@
+--- src/net.cpp~	2016-08-10 10:44:38.000000000 +0300
++++ src/net.cpp	2019-03-21 17:40:57.564547641 +0200
+@@ -15,10 +15,10 @@
+ #endif
+ 
+ #ifdef USE_UPNP
+-#include <miniwget.h>
+-#include <miniupnpc.h>
+-#include <upnpcommands.h>
+-#include <upnperrors.h>
++#include <miniupnpc/miniwget.h>
++#include <miniupnpc/miniupnpc.h>
++#include <miniupnpc/upnpcommands.h>
++#include <miniupnpc/upnperrors.h>
+ #endif
+ 
+ // Dump addresses to peers.dat every 15 minutes (900s)
+@@ -1082,10 +1082,14 @@
+ #ifndef UPNPDISCOVER_SUCCESS
+     /* miniupnpc 1.5 */
+     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
+-#else
++#elif MINIUPNPC_API_VERSION < 14
+     /* miniupnpc 1.6 */
+     int error = 0;
+     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
++#else
++    /* miniupnpc 1.9.20150730 */
++    int error = 0;
++    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 2, &error);
+ #endif
+ 
+     struct UPNPUrls urls;

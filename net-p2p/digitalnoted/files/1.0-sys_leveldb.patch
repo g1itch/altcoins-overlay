@@ -1,0 +1,41 @@
+--- src/txdb-leveldb.cpp~	2019-03-31 11:47:35.000000000 +0300
++++ src/txdb-leveldb.cpp	2019-04-03 13:40:33.981724020 +0300
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"
+--- src/makefile.unix~	2019-03-31 11:47:35.000000000 +0300
++++ src/makefile.unix	2019-04-03 13:42:44.436528971 +0300
+@@ -5,6 +5,7 @@
+ USE_UPNP:=0
+ USE_WALLET:=1
+ USE_IPV6:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -188,14 +189,18 @@
+ 	@echo "Building Secp256k1 ..."; cd secp256k1; chmod 755 *; ./autogen.sh; ./configure --enable-module-recovery; make; cd ..;
+ DigitalNoted: secp256k1/src/libsecp256k1_la-secp256k1.o
+ 
++OBJS += obj/txdb-leveldb.o
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ # build leveldb
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; chmod 755 *;make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P

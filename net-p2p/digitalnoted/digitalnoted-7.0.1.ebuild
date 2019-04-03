@@ -1,24 +1,19 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="XDN"
 COIN_FAMILY="cryptonote"
-MY_PV=${PV}-beta
-
-inherit altcoin cmake-utils
+inherit altcoin versionator
 
 HOMEPAGE="http://digitalnote.biz/"
-SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="+wallet"
-
 DEPEND+="dev-lang/python
 	net-libs/miniupnpc"
-
-PVM=$(get_version_component_range 1-2)
 
 src_prepare() {
 	cmake-utils_src_prepare

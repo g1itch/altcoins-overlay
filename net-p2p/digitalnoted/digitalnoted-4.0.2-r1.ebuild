@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -6,13 +6,13 @@ COIN_SYMBOL="XDN"
 COIN_FAMILY="cryptonote"
 MY_PV=${PV}-beta
 
-inherit altcoin cmake-utils
+inherit versionator altcoin cmake-utils
 
-HOMEPAGE="http://digitalnote.biz/"
-SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+HOMEPAGE="http://digitalnote.org/"
+SRC_URI="https://github.com/xdn-project/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="+wallet"
 
 DEPEND+="dev-lang/python
@@ -20,13 +20,16 @@ DEPEND+="dev-lang/python
 
 PVM=$(get_version_component_range 1-2)
 
+PATCHES=(
+	"${FILESDIR}"/${PVM}-miniupnpc-dynamic.patch
+	"${FILESDIR}"/${PVM}-iostream.patch
+)
+
 src_prepare() {
 	cmake-utils_src_prepare
 }
 
 src_configure() {
-	append-cppflags \
-		-Wno-error=unused-const-variable
 	local mycmakeargs=(
 		-DUPNP_STATIC=OFF
 	)

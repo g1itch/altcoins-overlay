@@ -1,61 +1,86 @@
-diff --git a/src/network/tcp.py b/src/network/tcp.py
-index a4d0aa1f..f53a7585 100644
---- a/src/network/tcp.py
-+++ b/src/network/tcp.py
-@@ -130,37 +130,31 @@ class TCPConnection(BMProto, TLSDispatcher):  # pylint: disable=too-many-instanc
-         # We are going to share a maximum number of 1000 addrs (per overlapping
-         # stream) with our peer. 500 from overlapping streams, 250 from the
-         # left child stream, and 250 from the right child stream.
--        maxAddrCount = BMConfigParser().safeGetInt("bitmessagesettings", "maxaddrperstreamsend", 500)
-+        maxAddrCount = BMConfigParser().safeGetInt(
-+            "bitmessagesettings", "maxaddrperstreamsend", 500)
+diff --git a/setup.py b/setup.py
+index 422524bd..14a6b720 100644
+--- a/setup.py
++++ b/setup.py
+@@ -16,6 +16,7 @@ EXTRAS_REQUIRE = {
+     'prctl': ['python_prctl'],  # Named threads
+     'qrcode': ['qrcode'],
+     'sound;platform_system=="Windows"': ['winsound'],
++    'tor': ['stem'],
+     'docs': [
+         'sphinx',  # fab build_docs
+         'graphviz',  # fab build_docs
+@@ -128,6 +129,9 @@ if __name__ == "__main__":
+         ext_modules=[bitmsghash],
+         zip_safe=False,
+         entry_points={
++            'bitmessage.nodes.validator': [
++                'onion = pybitmessage.plugins.validator_onion [tor]'
++            ],
+             'bitmessage.gui.menu': [
+                 'address.qrcode = pybitmessage.plugins.menu_qrcode [qrcode]'
+             ],
+diff --git a/src/knownnodes.py b/src/knownnodes.py
+index 6ccb7daa..7625acfc 100644
+--- a/src/knownnodes.py
++++ b/src/knownnodes.py
+@@ -8,10 +8,12 @@ import pickle
+ import threading
+ import time
  
--        # init
-         templist = []
-         addrs = {}
-         for stream in self.streams:
-             with knownnodes.knownNodesLock:
--                if knownnodes.knownNodes[stream]:
--                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
--                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
--                    elemCount = len(filtered)
--                    if elemCount > maxAddrCount:
--                        elemCount = maxAddrCount
-+                for n, s in enumerate((stream, stream * 2, stream * 2 + 1)):
-+                    nodes = knownnodes.knownNodes[s]
-+                    if not nodes:
-+                        continue
-                     # only if more recent than 3 hours
--                    addrs[stream] = helper_random.randomsample(filtered.items(), elemCount)
--                # sent 250 only if the remote isn't interested in it
--                if knownnodes.knownNodes[stream * 2] and stream not in self.streams:
--                    filtered = {k: v for k, v in knownnodes.knownNodes[stream * 2].items()
--                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
--                    elemCount = len(filtered)
--                    if elemCount > maxAddrCount / 2:
--                        elemCount = int(maxAddrCount / 2)
--                    addrs[stream * 2] = helper_random.randomsample(filtered.items(), elemCount)
--                if knownnodes.knownNodes[(stream * 2) + 1] and stream not in self.streams:
--                    filtered = {k: v for k, v in knownnodes.knownNodes[stream * 2 + 1].items()
--                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
--                    elemCount = len(filtered)
--                    if elemCount > maxAddrCount / 2:
--                        elemCount = int(maxAddrCount / 2)
--                    addrs[stream * 2 + 1] = helper_random.randomsample(filtered.items(), elemCount)
--        for substream in addrs:
-+                    # and having positive or neutral rating
-+                    filtered = [
-+                        (k, v) for k, v in nodes.iteritems()
-+                        if v["lastseen"] > int(time.time()) -
-+                        shared.maximumAgeOfNodesThatIAdvertiseToOthers and
-+                        v["rating"] >= 0
-+                    ]
-+                    # sent 250 only if the remote isn't interested in it
-+                    elemCount = min(
-+                        len(filtered),
-+                        maxAddrCount / 2 if n else maxAddrCount)
-+                    addrs[s] = helper_random.randomsample(filtered, elemCount)
-+        for substream in addrs.keys():
-             for peer, params in addrs[substream]:
-                 templist.append((substream, peer, params["lastseen"]))
-         if templist:
++import protocol
+ import state
+ from bmconfigparser import BMConfigParser
+ from debug import logger
+ from helper_bootstrap import dns
++from plugins.plugin import get_plugins
+ 
+ knownNodesLock = threading.Lock()
+ knownNodes = {stream: {} for stream in range(1, 4)}
+@@ -39,6 +41,8 @@ DEFAULT_NODES_ONION = (
+     state.Peer('quzwelsuziwqgpt2.onion', 8444),
+ )
+ 
++check_plugins = get_plugins('nodes.validator') or []
++
+ 
+ def json_serialize_knownnodes(output):
+     """
+@@ -214,6 +218,11 @@ def cleanupKnownNodes():
+                         needToWriteKnownNodesToDisk = True
+                         del knownNodes[stream][node]
+                         continue
++                    # check hosts by pluggable validators
++                    for check in check_plugins:
++                        print('check %s with %s' % (node, check))
++                        if not check(node):
++                            del knownNodes[stream][node]
+                 except TypeError:
+                     logger.warning('Error in %s', node)
+             keys = []
+diff --git a/src/protocol.py b/src/protocol.py
+index fd37dc44..f57466c0 100644
+--- a/src/protocol.py
++++ b/src/protocol.py
+@@ -186,14 +186,17 @@ def haveSSL(server=False):
+ def checkSocksIP(host):
+     """Predicate to check if we're using a SOCKS proxy"""
+     try:
+-        if state.socksIP is None or not state.socksIP:
+-            state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
++        if not state.socksIP:
++            state.socksIP = socket.gethostbyname(
++                BMConfigParser().get("bitmessagesettings", "sockshostname"))
+     # uninitialised
+     except NameError:
+-        state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
++        state.socksIP = socket.gethostbyname(
++            BMConfigParser().get("bitmessagesettings", "sockshostname"))
+     # resolving failure
+     except socket.gaierror:
+-        state.socksIP = BMConfigParser().get("bitmessagesettings", "sockshostname")
++        state.socksIP = BMConfigParser().get(
++            "bitmessagesettings", "sockshostname")
+     return state.socksIP == host
+ 
+ 

@@ -21,7 +21,8 @@ src_prepare() {
 
 src_configure() {
 	append-cppflags \
-		-Wno-error=unused-const-variable
+		-Wno-error=unused-const-variable \
+		-Wno-error=format-truncation
 	local mycmakeargs=(
 		-DUPNP_STATIC=OFF
 	)

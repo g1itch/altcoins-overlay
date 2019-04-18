@@ -17,6 +17,7 @@ IUSE="examples upnp +wallet zeromq qrcode libressl"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
+	dev-libs/protobuf
 	dev-libs/univalue
 	qrcode? ( media-gfx/qrencode )
 	zeromq? ( net-libs/zeromq )
@@ -26,14 +27,14 @@ RDEPEND+="
 	!net-p2p/${COIN_NAME}d
 "
 
-S="${WORKDIR}"/${MY_PN}-${PV}
+S="${WORKDIR}"/${COIN_NAME}-${PV}
 
 
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/3.9-sys_leveldb.patch
-	epatch "${FILESDIR}"/${PVM}-sys_univalue.patch
+	epatch "${FILESDIR}"/3.12-sys_univalue.patch
 	eautoreconf
 }
 

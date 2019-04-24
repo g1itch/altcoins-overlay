@@ -1,5 +1,5 @@
 diff --git a/setup.py b/setup.py
-index 422524bd..28b494d5 100644
+index e3f97bac..937c148b 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -22,7 +22,8 @@ EXTRAS_REQUIRE = {
@@ -13,7 +13,7 @@ index 422524bd..28b494d5 100644
  
  
 diff --git a/src/api.py b/src/api.py
-index 65d364d7..b33f3237 100644
+index 1e485209..b2976859 100644
 --- a/src/api.py
 +++ b/src/api.py
 @@ -1,20 +1,18 @@
@@ -26,7 +26,7 @@ index 65d364d7..b33f3237 100644
 +"""
  
  # Copyright (c) 2012-2016 Jonathan Warren
- # Copyright (c) 2012-2018 The Bitmessage developers
+ # Copyright (c) 2012-2019 The Bitmessage developers
  
 -This is not what you run to run the Bitmessage API. Instead, enable the API
 -( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
@@ -2044,7 +2044,7 @@ index 2bb6d0ce..67b3a4ab 100644
              self.assertEqual(self.api.deleteAddress(addr), 'success')
  
 diff --git a/src/tests/test_process.py b/src/tests/test_process.py
-index c03754a9..22c0e159 100644
+index 73a6e493..2918285b 100644
 --- a/src/tests/test_process.py
 +++ b/src/tests/test_process.py
 @@ -11,6 +11,8 @@ import unittest

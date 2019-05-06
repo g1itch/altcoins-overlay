@@ -7,7 +7,7 @@ MY_PN=DigitalNoted
 inherit altcoin versionator
 
 HOMEPAGE="http://digitalnote.biz/"
-SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${MY_PN:0:-1}-1/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${MY_PN:0:-1}-2/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
@@ -17,7 +17,7 @@ IUSE="examples ipv6 upnp +wallet"
 DEPEND+="virtual/awk"
 RDEPEND+="virtual/bitcoin-leveldb"
 
-S="${WORKDIR}"/${MY_PN:0:-1}-1-${PV}
+S="${WORKDIR}"/${MY_PN:0:-1}-2-${PV}
 
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)

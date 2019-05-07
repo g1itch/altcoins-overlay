@@ -44,7 +44,7 @@ index 62713b7b..9a7188b7 100644
          if len(data) > 200:
              logger.info(
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 4e3be929..68eaa3d2 100644
+index 4e3be929..d8f70ada 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -119,13 +119,21 @@ class singleWorker(threading.Thread, StoppableThread):
@@ -88,12 +88,12 @@ index 4e3be929..68eaa3d2 100644
              elif command == 'resetPoW':
                  try:
                      proofofwork.resetPoW()
-@@ -456,6 +469,35 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -456,6 +469,37 @@ class singleWorker(threading.Thread, StoppableThread):
                  ' to the keys.dat file. Error message: %s', err
              )
  
 +    def sendOnionPeerObj(self, peer):
-+        TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
++        TTL = int(7 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
 +        embeddedTime = int(time.time() + TTL)
 +        streamNumber = 1  # Don't know yet what should be here
 +        objectType = protocol.OBJECT_ONIONPEER
@@ -115,7 +115,9 @@ index 4e3be929..68eaa3d2 100644
 +
 +        inventoryHash = calculateInventoryHash(payload)
 +        Inventory()[inventoryHash] = (
-+            objectType, streamNumber, payload, embeddedTime, tag)
++            objectType, streamNumber, buffer(payload),
++            embeddedTime, buffer(tag)
++        )
 +        logger.info(
 +            'sending inv (within sendOnionPeerObj function) for object: %s',
 +            hexlify(inventoryHash))

@@ -21,66 +21,129 @@ index 422524bd..14a6b720 100644
                  'address.qrcode = pybitmessage.plugins.menu_qrcode [qrcode]'
              ],
 diff --git a/src/knownnodes.py b/src/knownnodes.py
-index 6ccb7daa..7625acfc 100644
+index 6ccb7daa..d0c21479 100644
 --- a/src/knownnodes.py
 +++ b/src/knownnodes.py
-@@ -8,10 +8,12 @@ import pickle
- import threading
- import time
- 
-+import protocol
- import state
- from bmconfigparser import BMConfigParser
+@@ -13,6 +13,11 @@ from bmconfigparser import BMConfigParser
  from debug import logger
  from helper_bootstrap import dns
-+from plugins.plugin import get_plugins
  
++try:
++    from plugins.plugin import get_plugins
++except ImportError:
++    get_plugins = False
++
  knownNodesLock = threading.Lock()
  knownNodes = {stream: {} for stream in range(1, 4)}
-@@ -39,6 +41,8 @@ DEFAULT_NODES_ONION = (
+ 
+@@ -39,6 +44,10 @@ DEFAULT_NODES_ONION = (
      state.Peer('quzwelsuziwqgpt2.onion', 8444),
  )
  
-+check_plugins = get_plugins('nodes.validator') or []
++check_plugins = [
++    check for check in get_plugins('nodes.validator')
++] if get_plugins else []
 +
  
  def json_serialize_knownnodes(output):
      """
-@@ -214,6 +218,11 @@ def cleanupKnownNodes():
+@@ -214,6 +223,11 @@ def cleanupKnownNodes():
                          needToWriteKnownNodesToDisk = True
                          del knownNodes[stream][node]
                          continue
-+                    # check hosts by pluggable validators
++                    # check with pluggable validators
 +                    for check in check_plugins:
-+                        print('check %s with %s' % (node, check))
 +                        if not check(node):
++                            logger.debug('Invalid node: %s', node)
 +                            del knownNodes[stream][node]
                  except TypeError:
                      logger.warning('Error in %s', node)
              keys = []
-diff --git a/src/protocol.py b/src/protocol.py
-index fd37dc44..f57466c0 100644
---- a/src/protocol.py
-+++ b/src/protocol.py
-@@ -186,14 +186,17 @@ def haveSSL(server=False):
- def checkSocksIP(host):
-     """Predicate to check if we're using a SOCKS proxy"""
-     try:
--        if state.socksIP is None or not state.socksIP:
--            state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
-+        if not state.socksIP:
-+            state.socksIP = socket.gethostbyname(
-+                BMConfigParser().get("bitmessagesettings", "sockshostname"))
-     # uninitialised
-     except NameError:
--        state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
-+        state.socksIP = socket.gethostbyname(
-+            BMConfigParser().get("bitmessagesettings", "sockshostname"))
-     # resolving failure
-     except socket.gaierror:
--        state.socksIP = BMConfigParser().get("bitmessagesettings", "sockshostname")
-+        state.socksIP = BMConfigParser().get(
-+            "bitmessagesettings", "sockshostname")
-     return state.socksIP == host
- 
- 
+diff --git a/src/plugins/test_validator_onion.py b/src/plugins/test_validator_onion.py
+new file mode 100644
+index 00000000..b275ea83
+--- /dev/null
++++ b/src/plugins/test_validator_onion.py
+@@ -0,0 +1,31 @@
++import unittest
++
++from pybitmessage.state import Peer
++
++try:
++    from validator_onion import OnionValidator
++    validator_onion = True
++except ImportError:
++    validator_onion = False
++
++
++@unittest.skipIf(not validator_onion, 'OnionValidator is not available')
++class TestOnionValidator(unittest.TestCase):
++    """Test case for OnionValidator"""
++    @classmethod
++    def setUpClass(cls):
++        cls.check = OnionValidator()
++
++    def test_valid(self):
++        """Ensure validator returns True for valid nodes"""
++        # not onion node
++        self.assertTrue(self.check(Peer('5.45.99.75', 8444)))
++        # default onion node
++        self.assertTrue(self.check(Peer('quzwelsuziwqgpt2.onion', 8444)))
++
++    def test_invalid(self):
++        """Ensure validator returns False for invalid hostnames"""
++        # is not base32
++        self.assertFalse(self.check(Peer('test.onion', 8444)))
++        # no descriptor
++        self.assertFalse(self.check(Peer('aaaaaaaaaaaaaaaa.onion', 8444)))
+diff --git a/src/plugins/validator_onion.py b/src/plugins/validator_onion.py
+new file mode 100644
+index 00000000..13eefa50
+--- /dev/null
++++ b/src/plugins/validator_onion.py
+@@ -0,0 +1,45 @@
++# -*- coding: utf-8 -*-
++
++import base64
++
++import stem
++from stem.control import Controller
++
++
++class OnionValidator(object):
++    """Validation plugin for onion nodes"""
++    def __init__(self):
++        self.controller = Controller.from_port()
++        try:  # TODO: deal with authentication
++            self.controller.authenticate()
++        except (stem.SocketError, stem.connection.AuthenticationFailure):
++            self.controller = False
++
++    def _validate_onion(self, addr):
++        """Check the .onion address validity"""
++        try:
++            base64.b32decode(addr, True)
++        except TypeError:
++            return False
++
++        if not self.controller:
++            return True
++
++        try:
++            self.controller.get_hidden_service_descriptor(addr)
++        except stem.DescriptorUnavailable:
++            return False
++
++        return True
++
++    def __call__(self, node):
++        """Filter check for .onion addresses validation"""
++        addr = node.host
++        try:
++            addr, dom = addr.split('.')
++        except ValueError:
++            return True
++        return self._validate_onion(addr) if dom == 'onion' else True
++
++
++connect_plugin = OnionValidator()

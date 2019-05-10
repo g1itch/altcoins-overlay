@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils versionator systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="38f36d7860d43b3b2feb60095d666c5e3ca56c80"
+COMMIT="4a097e99b3c36cff811a2d59c27f46bd681d2674"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"

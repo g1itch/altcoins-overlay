@@ -1,0 +1,33 @@
+--- configure.ac~	2018-05-25 04:37:18.000000000 +0300
++++ configure.ac	2018-06-04 12:27:48.622881298 +0300
+@@ -420,7 +420,18 @@
+ LEVELDB_CPPFLAGS=
+ LIBLEVELDB=
+ LIBMEMENV=
+-AM_CONDITIONAL([EMBEDDED_LEVELDB],[true])
++AC_ARG_WITH([system-leveldb],
++  [AS_HELP_STRING([--with-system-leveldb],
++  [Build with system LevelDB (default is no; DANGEROUS; NOT SUPPORTED)])],
++  [system_leveldb=$withval],
++  [system_leveldb=no]
++)
++if test x$system_leveldb != xno; then
++  LEVELDB_CPPFLAGS=
++  LIBLEVELDB=-lleveldb
++  LIBMEMENV=-lmemenv
++fi
++AM_CONDITIONAL([EMBEDDED_LEVELDB],[test x$system_leveldb = xno])
+ AC_SUBST(LEVELDB_CPPFLAGS)
+ AC_SUBST(LIBLEVELDB)
+ AC_SUBST(LIBMEMENV)
+--- src/dbwrapper.cpp~	2019-05-06 21:36:33.000000000 +0300
++++ src/dbwrapper.cpp	2019-05-07 13:55:23.617476831 +0300
+@@ -11,7 +11,7 @@
+ #include <leveldb/cache.h>
+ #include <leveldb/env.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv.h>
++#include <leveldb/helpers/memenv.h>
+ #include <stdint.h>
+ #include <algorithm>
+ 

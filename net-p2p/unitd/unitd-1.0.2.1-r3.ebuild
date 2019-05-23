@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -11,7 +11,7 @@ HOMEPAGE="https://bitcointalk.org/index.php?topic=1037825.0"
 SRC_URI="https://github.com/${COIN_NAME}currency/${COIN_NAME}currency/archive/${PV}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="examples ipv6 upnp"
 
 DEPEND+="virtual/awk"

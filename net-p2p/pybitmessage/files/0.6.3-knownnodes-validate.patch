@@ -1,5 +1,5 @@
 diff --git a/setup.py b/setup.py
-index 422524bd..14a6b720 100644
+index e3f97bac..e873a251 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -16,6 +16,7 @@ EXTRAS_REQUIRE = {
@@ -10,7 +10,7 @@ index 422524bd..14a6b720 100644
      'docs': [
          'sphinx',  # fab build_docs
          'graphviz',  # fab build_docs
-@@ -128,6 +129,9 @@ if __name__ == "__main__":
+@@ -129,6 +130,9 @@ if __name__ == "__main__":
          ext_modules=[bitmsghash],
          zip_safe=False,
          entry_points={
@@ -21,7 +21,7 @@ index 422524bd..14a6b720 100644
                  'address.qrcode = pybitmessage.plugins.menu_qrcode [qrcode]'
              ],
 diff --git a/src/knownnodes.py b/src/knownnodes.py
-index 6ccb7daa..d0c21479 100644
+index 6ccb7daa..110f9622 100644
 --- a/src/knownnodes.py
 +++ b/src/knownnodes.py
 @@ -13,6 +13,11 @@ from bmconfigparser import BMConfigParser
@@ -47,7 +47,7 @@ index 6ccb7daa..d0c21479 100644
  
  def json_serialize_knownnodes(output):
      """
-@@ -214,6 +223,11 @@ def cleanupKnownNodes():
+@@ -214,6 +223,12 @@ def cleanupKnownNodes():
                          needToWriteKnownNodesToDisk = True
                          del knownNodes[stream][node]
                          continue
@@ -55,6 +55,7 @@ index 6ccb7daa..d0c21479 100644
 +                    for check in check_plugins:
 +                        if not check(node):
 +                            logger.debug('Invalid node: %s', node)
++                            needToWriteKnownNodesToDisk = True
 +                            del knownNodes[stream][node]
                  except TypeError:
                      logger.warning('Error in %s', node)
@@ -98,7 +99,7 @@ index 00000000..b275ea83
 +        self.assertFalse(self.check(Peer('aaaaaaaaaaaaaaaa.onion', 8444)))
 diff --git a/src/plugins/validator_onion.py b/src/plugins/validator_onion.py
 new file mode 100644
-index 00000000..13eefa50
+index 00000000..32c73174
 --- /dev/null
 +++ b/src/plugins/validator_onion.py
 @@ -0,0 +1,45 @@
@@ -113,11 +114,11 @@ index 00000000..13eefa50
 +class OnionValidator(object):
 +    """Validation plugin for onion nodes"""
 +    def __init__(self):
-+        self.controller = Controller.from_port()
 +        try:  # TODO: deal with authentication
++            self.controller = Controller.from_port()
 +            self.controller.authenticate()
 +        except (stem.SocketError, stem.connection.AuthenticationFailure):
-+            self.controller = False
++            raise ValueError  # do not load this if controller is not available
 +
 +    def _validate_onion(self, addr):
 +        """Check the .onion address validity"""

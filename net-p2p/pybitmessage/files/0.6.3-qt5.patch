@@ -12,7 +12,7 @@ index e3f97bac..0ee1c58e 100644
          'pybitmessage',
          'pybitmessage.bitmessageqt',
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index a645166f..5f767242 100644
+index 5b1b3e11..dc0241d5 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -14,8 +14,7 @@ import time
@@ -5248,7 +5248,7 @@ index 1acdbc3f..9c33616e 100644
 -        self.setFixedSize(QtGui.QWidget.sizeHint(self))
 +        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))
 diff --git a/src/bitmessageqt/foldertree.py b/src/bitmessageqt/foldertree.py
-index f3230210..e2676169 100644
+index 2e7e735f..e2676169 100644
 --- a/src/bitmessageqt/foldertree.py
 +++ b/src/bitmessageqt/foldertree.py
 @@ -6,7 +6,7 @@ src/bitmessageqt/foldertree.py
@@ -5432,7 +5432,15 @@ index f3230210..e2676169 100644
  
  
  class MessageList_SubjectWidget(BMTableWidgetItem):
-@@ -466,12 +463,11 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
+@@ -459,19 +456,18 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
+         if role == QtCore.Qt.UserRole:
+             return self.subject
+         if role == QtCore.Qt.ToolTipRole:
+-            return escape(unicode(self.subject, 'utf-8'))
++            return escape(self.subject)
+         return super(MessageList_SubjectWidget, self).data(role)
+ 
+     # label (or address) alphabetically, disabled at the end
      def __lt__(self, other):
          if isinstance(other, MessageList_SubjectWidget):
              return self.label.lower() < other.label.lower()

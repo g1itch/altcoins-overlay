@@ -1,8 +1,8 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
-MY_PV="${PV}emc"
+MY_PV="${PV/_/emc-}"
 
 inherit altcoin
 

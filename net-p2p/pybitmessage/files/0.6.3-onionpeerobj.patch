@@ -1,14 +1,15 @@
-diff --git a/src/protocol.py b/src/protocol.py
-index 9a0c6a11..eaba973c 100644
---- a/src/protocol.py
-+++ b/src/protocol.py
-@@ -262,7 +262,8 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
-         payload += encodeHost('127.0.0.1')
-         payload += pack('>H', 8444)
-     else:
--        payload += encodeHost(remoteHost)
-+        # 127.0.0.1 for onion v3 services
-+        payload += encodeHost(remoteHost if len(remoteHost) <= 22 else '127.0.0.1')
-         payload += pack('>H', remotePort)  # remote IPv6 and port
+diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
+index f69175e5..e52419c4 100644
+--- a/src/class_singleWorker.py
++++ b/src/class_singleWorker.py
+@@ -482,8 +482,8 @@ class singleWorker(threading.Thread, StoppableThread):
+         if Inventory().by_type_and_tag(objectType, tag):
+             return  # not expired
  
-     # bitflags of the services I offer.
+-        payload = pack('>Q', (embeddedTime))
+-        payload += str(bytearray([0, 0, 0, objectType]))
++        payload = pack('>Q', embeddedTime)
++        payload += pack('>I', objectType)
+         payload += encodeVarint(2 if len(peer.host) == 22 else 3)
+         payload += encodeVarint(streamNumber)
+         payload += objectPayload

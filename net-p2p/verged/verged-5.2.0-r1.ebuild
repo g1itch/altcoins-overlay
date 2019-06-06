@@ -11,7 +11,7 @@ TOR_PF=tor-$(replace_version_separator 4 - ${TOR_PV})
 
 MyPN=${COIN_NAME^^}
 HOMEPAGE="http://vergecurrency.com/"
-SRC_URI="https://github.com/vergecurrency/${MyPN}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz
+SRC_URI="https://github.com/vergecurrency/${MyPN}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz
 https://www.torproject.org/dist/${TOR_PF}.tar.gz"
 
 SLOT="0"

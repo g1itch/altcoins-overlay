@@ -1,15 +1,44 @@
+diff --git a/src/class_singleCleaner.py b/src/class_singleCleaner.py
+index 82d6b491..e2cdbb89 100644
+--- a/src/class_singleCleaner.py
++++ b/src/class_singleCleaner.py
+@@ -84,6 +84,7 @@ class singleCleaner(threading.Thread, StoppableThread):
+                     int(time.time()) - 7380:
+                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
+                 Inventory().clean()
++                queues.workerQueue.put(('sendOnionPeerObj', ''))
+                 # pubkeys
+                 sqlExecute(
+                     "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index f69175e5..e52419c4 100644
+index e52419c4..d979ae19 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
-@@ -482,8 +482,8 @@ class singleWorker(threading.Thread, StoppableThread):
-         if Inventory().by_type_and_tag(objectType, tag):
-             return  # not expired
+@@ -130,10 +130,7 @@ class singleWorker(threading.Thread, StoppableThread):
+         queues.workerQueue.put(('sendbroadcast', ''))
  
--        payload = pack('>Q', (embeddedTime))
--        payload += str(bytearray([0, 0, 0, objectType]))
-+        payload = pack('>Q', embeddedTime)
-+        payload += pack('>I', objectType)
-         payload += encodeVarint(2 if len(peer.host) == 22 else 3)
-         payload += encodeVarint(streamNumber)
-         payload += objectPayload
+         # send onionpeer object
+-        for peer in state.ownAddresses:
+-            if peer.host.endswith('.onion'):
+-                queues.workerQueue.put(('sendOnionPeerObj', peer))
+-                break
++        queues.workerQueue.put(('sendOnionPeerObj', ''))
+ 
+         while state.shutdown == 0:
+             self.busy = 0
+@@ -469,8 +466,14 @@ class singleWorker(threading.Thread, StoppableThread):
+                 ' to the keys.dat file. Error message: %s', err
+             )
+ 
+-    def sendOnionPeerObj(self, peer):
++    def sendOnionPeerObj(self, peer=None):
+         """Send onionpeer object representing peer"""
++        if not peer:  # find own onionhostname
++            for peer in state.ownAddresses:
++                if peer.host.endswith('.onion'):
++                    break
++            else:
++                return
+         TTL = int(7 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
+         embeddedTime = int(time.time() + TTL)
+         streamNumber = 1  # Don't know yet what should be here

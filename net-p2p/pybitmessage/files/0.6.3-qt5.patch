@@ -4820,19 +4820,17 @@ index 30d054d0..a2fa21f4 100644
      sys.exit(app.exec_())
 -
 diff --git a/src/bitmessageqt/blacklist.py b/src/bitmessageqt/blacklist.py
-index 64413ebb..b85235f3 100644
+index 3897bddc..65e37aec 100644
 --- a/src/bitmessageqt/blacklist.py
 +++ b/src/bitmessageqt/blacklist.py
-@@ -1,6 +1,5 @@
+@@ -1,4 +1,4 @@
 -from PyQt4 import QtCore, QtGui
 +from qtpy import QtCore, QtGui, QtWidgets
- from tr import _translate
--import l10n
+ 
  import widgets
  from addresses import addBMIfNotPresent
- from bmconfigparser import BMConfigParser
-@@ -11,31 +10,31 @@ from utils import avatarize
- from uisignaler import UISignaler
+@@ -12,31 +12,31 @@ from uisignaler import UISignaler
+ from utils import avatarize
  
  
 -class Blacklist(QtGui.QWidget, RetranslateMixin):
@@ -4877,7 +4875,7 @@ index 64413ebb..b85235f3 100644
  
      def click_radioButtonBlacklist(self):
          if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
-@@ -68,20 +67,20 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -69,20 +69,20 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                      sql = '''select * from blacklist where address=?'''
                  else:
                      sql = '''select * from whitelist where address=?'''
@@ -4903,23 +4901,7 @@ index 64413ebb..b85235f3 100644
                      if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
                          sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                      else:
-@@ -89,25 +88,31 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
-                     sqlExecute(sql, *t)
-                 else:
-                     self.statusBar().showMessage(_translate(
--                        "MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
-+                        "MainWindow",
-+                        "Error: You cannot add the same address to your"
-+                        " list twice. Perhaps rename the existing one"
-+                        " if you want."
-+                    ))
-             else:
-                 self.statusBar().showMessage(_translate(
--                    "MainWindow", "The address you entered was invalid. Ignoring it."))
-+                    "MainWindow",
-+                    "The address you entered was invalid. Ignoring it."
-+                ))
- 
+@@ -108,17 +108,17 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
      def tableWidgetBlacklistItemChanged(self, item):
          if item.column() == 0:
              addressitem = self.tableWidgetBlacklist.item(item.row(), 1)
@@ -4941,7 +4923,7 @@ index 64413ebb..b85235f3 100644
          # Actions
          self.actionBlacklistNew = self.blacklistContextMenuToolbar.addAction(
              _translate(
-@@ -132,10 +137,9 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -143,10 +143,9 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
          self.tableWidgetBlacklist.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -4955,7 +4937,7 @@ index 64413ebb..b85235f3 100644
          # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
          self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
          self.popMenuBlacklist.addSeparator()
-@@ -161,16 +165,16 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -172,16 +171,16 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
          for row in queryreturn:
              label, address, enabled = row
              self.tableWidgetBlacklist.insertRow(0)
@@ -4976,7 +4958,7 @@ index 64413ebb..b85235f3 100644
              self.tableWidgetBlacklist.setItem(0, 1, newItem)
          self.tableWidgetBlacklist.setSortingEnabled(True)
  
-@@ -181,7 +185,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -192,7 +191,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
      def on_action_BlacklistDelete(self):
          currentRow = self.tableWidgetBlacklist.currentRow()
          labelAtCurrentRow = self.tableWidgetBlacklist.item(
@@ -4985,7 +4967,7 @@ index 64413ebb..b85235f3 100644
          addressAtCurrentRow = self.tableWidgetBlacklist.item(
              currentRow, 1).text()
          if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
-@@ -198,7 +202,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -209,7 +208,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
          currentRow = self.tableWidgetBlacklist.currentRow()
          addressAtCurrentRow = self.tableWidgetBlacklist.item(
              currentRow, 1).text()
@@ -4994,7 +4976,7 @@ index 64413ebb..b85235f3 100644
          clipboard.setText(str(addressAtCurrentRow))
  
      def on_context_menuBlacklist(self, point):
-@@ -209,11 +213,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -220,11 +219,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
          currentRow = self.tableWidgetBlacklist.currentRow()
          addressAtCurrentRow = self.tableWidgetBlacklist.item(
              currentRow, 1).text()
@@ -5012,7 +4994,7 @@ index 64413ebb..b85235f3 100644
              sqlExecute(
                  '''UPDATE blacklist SET enabled=1 WHERE address=?''',
                  str(addressAtCurrentRow))
-@@ -226,11 +231,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
+@@ -237,11 +237,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
          currentRow = self.tableWidgetBlacklist.currentRow()
          addressAtCurrentRow = self.tableWidgetBlacklist.item(
              currentRow, 1).text()
@@ -5030,11 +5012,6 @@ index 64413ebb..b85235f3 100644
              sqlExecute(
                  '''UPDATE blacklist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
          else:
-@@ -239,4 +245,3 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
- 
-     def on_action_BlacklistSetAvatar(self):
-         self.window().on_action_SetAvatar(self.tableWidgetBlacklist)
--
 diff --git a/src/bitmessageqt/blacklist.ui b/src/bitmessageqt/blacklist.ui
 index 80993fac..0eb347a3 100644
 --- a/src/bitmessageqt/blacklist.ui
@@ -7921,7 +7898,7 @@ index 720cdf02..ca45ee4a 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index e52419c4..eded50c7 100644
+index d979ae19..e15682a2 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -2,7 +2,7 @@
@@ -7950,7 +7927,7 @@ index e52419c4..eded50c7 100644
  
  
  def sizeof_fmt(num, suffix='h/s'):
-@@ -209,9 +210,8 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -206,9 +207,8 @@ class singleWorker(threading.Thread, StoppableThread):
          return privSigningKeyHex, privEncryptionKeyHex, \
              pubSigningKey, pubEncryptionKey
  
@@ -7962,7 +7939,7 @@ index e52419c4..eded50c7 100644
          target = 2 ** 64 / (
              defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
                  len(payload) + 8 +
-@@ -237,14 +237,17 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -234,14 +234,17 @@ class singleWorker(threading.Thread, StoppableThread):
                  'PoW took %.1f seconds, speed %s.',
                  delta, sizeof_fmt(nonce / delta)
              )
@@ -7982,7 +7959,7 @@ index e52419c4..eded50c7 100644
          # Look up my stream number based on my address hash
          myAddress = shared.myAddressesByHash[adressHash]
          # status
-@@ -298,13 +301,14 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -295,13 +298,14 @@ class singleWorker(threading.Thread, StoppableThread):
  
      def sendOutOrStoreMyV3Pubkey(self, adressHash):
          """
@@ -8001,7 +7978,7 @@ index e52419c4..eded50c7 100644
              # The address has been deleted.
              return
          if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
-@@ -380,9 +384,10 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -377,9 +381,10 @@ class singleWorker(threading.Thread, StoppableThread):
  
      def sendOutOrStoreMyV4Pubkey(self, myAddress):
          """
@@ -8015,7 +7992,7 @@ index e52419c4..eded50c7 100644
          """
          if not BMConfigParser().has_section(myAddress):
              # The address has been deleted.
-@@ -502,7 +507,10 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -505,7 +510,10 @@ class singleWorker(threading.Thread, StoppableThread):
          queues.invQueue.put((streamNumber, inventoryHash))
  
      def sendBroadcast(self):
@@ -8027,7 +8004,7 @@ index e52419c4..eded50c7 100644
          # Reset just in case
          sqlExecute(
              '''UPDATE sent SET status='broadcastqueued' '''
-@@ -533,8 +541,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -536,8 +544,7 @@ class singleWorker(threading.Thread, StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8037,7 +8014,7 @@ index e52419c4..eded50c7 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -622,8 +629,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -625,8 +632,7 @@ class singleWorker(threading.Thread, StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -8047,7 +8024,7 @@ index e52419c4..eded50c7 100644
                          "MainWindow",
                          "Doing work necessary to send broadcast..."))
              ))
-@@ -655,11 +661,9 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -658,11 +664,9 @@ class singleWorker(threading.Thread, StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -8062,7 +8039,7 @@ index e52419c4..eded50c7 100644
              ))
  
              # Update the status of the message in the 'sent' table to have
-@@ -671,7 +675,10 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -674,7 +678,10 @@ class singleWorker(threading.Thread, StoppableThread):
              )
  
      def sendMsg(self):
@@ -8074,7 +8051,7 @@ index e52419c4..eded50c7 100644
          # pylint: disable=too-many-nested-blocks
          # Reset just in case
          sqlExecute(
-@@ -764,8 +771,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -767,8 +774,7 @@ class singleWorker(threading.Thread, StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByToAddress', (
@@ -8084,7 +8061,7 @@ index e52419c4..eded50c7 100644
                                      "MainWindow",
                                      "Encryption key was requested earlier."))
                          ))
-@@ -836,8 +842,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -839,8 +845,7 @@ class singleWorker(threading.Thread, StoppableThread):
                              )
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByToAddress', (
@@ -8094,7 +8071,7 @@ index e52419c4..eded50c7 100644
                                          "MainWindow",
                                          "Sending a request for the"
                                          " recipient\'s encryption key."))
-@@ -861,8 +866,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -864,8 +869,7 @@ class singleWorker(threading.Thread, StoppableThread):
                  shared.ackdataForWhichImWatching[ackdata] = 0
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8104,7 +8081,7 @@ index e52419c4..eded50c7 100644
                              "MainWindow",
                              "Looking up the receiver\'s public key"))
                  ))
-@@ -919,15 +923,14 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -922,15 +926,14 @@ class singleWorker(threading.Thread, StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByAckdata', (
@@ -8123,7 +8100,7 @@ index e52419c4..eded50c7 100644
                          ))
                          # if the human changes their setting and then
                          # sends another message or restarts their client,
-@@ -950,8 +953,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -953,8 +956,7 @@ class singleWorker(threading.Thread, StoppableThread):
                          defaults.networkDefaultPayloadLengthExtraBytes
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -8133,7 +8110,7 @@ index e52419c4..eded50c7 100644
                                  "MainWindow",
                                  "Doing work necessary to send message.\n"
                                  "There is no required difficulty for"
-@@ -983,32 +985,18 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -986,32 +988,18 @@ class singleWorker(threading.Thread, StoppableThread):
                          requiredAverageProofOfWorkNonceTrialsPerByte,
                          requiredPayloadLengthExtraBytes
                      )
@@ -8178,7 +8155,7 @@ index e52419c4..eded50c7 100644
                      if status != 'forcepow':
                          maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
                              'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-@@ -1028,18 +1016,19 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1031,18 +1019,19 @@ class singleWorker(threading.Thread, StoppableThread):
                                  ackdata)
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByAckdata', (
@@ -8209,7 +8186,7 @@ index e52419c4..eded50c7 100644
                              continue
              else:  # if we are sending a message to ourselves or a chan..
                  logger.info('Sending a message.')
-@@ -1052,15 +1041,14 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1055,15 +1044,14 @@ class singleWorker(threading.Thread, StoppableThread):
                  except Exception as err:
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -8228,7 +8205,7 @@ index e52419c4..eded50c7 100644
                      ))
                      logger.error(
                          'Error within sendMsg. Could not read the keys'
-@@ -1077,8 +1065,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1080,8 +1068,7 @@ class singleWorker(threading.Thread, StoppableThread):
                      defaults.networkDefaultPayloadLengthExtraBytes
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8238,7 +8215,7 @@ index e52419c4..eded50c7 100644
                              "MainWindow",
                              "Doing work necessary to send message."))
                  ))
-@@ -1100,8 +1087,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1103,8 +1090,7 @@ class singleWorker(threading.Thread, StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8248,7 +8225,7 @@ index e52419c4..eded50c7 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -1154,8 +1140,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1157,8 +1143,7 @@ class singleWorker(threading.Thread, StoppableThread):
                  # The fullAckPayload is a normal msg protocol message
                  # with the proof of work already completed that the
                  # receiver of this message can easily send out.
@@ -8258,7 +8235,7 @@ index e52419c4..eded50c7 100644
              payload += encodeVarint(len(fullAckPayload))
              payload += fullAckPayload
              dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
-@@ -1167,8 +1152,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1170,8 +1155,7 @@ class singleWorker(threading.Thread, StoppableThread):
              # We have assembled the data that will be encrypted.
              try:
                  encrypted = highlevelcrypto.encrypt(
@@ -8268,7 +8245,7 @@ index e52419c4..eded50c7 100644
              except:
                  sqlExecute(
                      '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
-@@ -1176,12 +1160,11 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1179,12 +1163,11 @@ class singleWorker(threading.Thread, StoppableThread):
                  )
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8284,7 +8261,7 @@ index e52419c4..eded50c7 100644
                  ))
                  continue
  
-@@ -1245,21 +1228,19 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1248,21 +1231,19 @@ class singleWorker(threading.Thread, StoppableThread):
                 not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -8313,7 +8290,7 @@ index e52419c4..eded50c7 100644
                  ))
              logger.info(
                  'Broadcasting inv for my msg(within sendmsg function): %s',
-@@ -1389,8 +1370,7 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1392,8 +1373,7 @@ class singleWorker(threading.Thread, StoppableThread):
          queues.UISignalQueue.put(('updateStatusBar', statusbar))
          queues.UISignalQueue.put((
              'updateSentItemStatusByToAddress', (
@@ -8323,7 +8300,7 @@ index e52419c4..eded50c7 100644
                      "MainWindow",
                      "Doing work necessary to request encryption key."))
          ))
-@@ -1414,30 +1394,31 @@ class singleWorker(threading.Thread, StoppableThread):
+@@ -1417,30 +1397,31 @@ class singleWorker(threading.Thread, StoppableThread):
              int(time.time()), retryNumber + 1, sleeptill, toAddress)
  
          queues.UISignalQueue.put((

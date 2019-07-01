@@ -5819,7 +5819,7 @@ index 6e80f1dc..ec7899a3 100644
 \ No newline at end of file
 +        self.show()
 diff --git a/src/bitmessageqt/networkstatus.py b/src/bitmessageqt/networkstatus.py
-index 3d6e6618..68951bee 100644
+index 5f014563..34076ea5 100644
 --- a/src/bitmessageqt/networkstatus.py
 +++ b/src/bitmessageqt/networkstatus.py
 @@ -6,7 +6,7 @@ src/bitmessageqt/networkstatus.py
@@ -6007,7 +6007,7 @@ index 3d6e6618..68951bee 100644
  
      def updateNetworkStatusTab(self, outbound, add, destination):
          """Add or remove an entry to the list of connected peers"""
-@@ -174,70 +145,73 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+@@ -174,72 +145,75 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
          if add:
              self.tableWidgetConnectionCount.insertRow(0)
              self.tableWidgetConnectionCount.setItem(
@@ -6060,6 +6060,8 @@ index 3d6e6618..68951bee 100644
 +            self.tableWidgetConnectionCount.item(0, 1).setData(
 +                QtCore.Qt.UserRole, outbound)
          else:
+             if len(BMConnectionPool().inboundConnections) == 0:
+                 self.window().setStatusIcon('yellow')
              for i in range(self.tableWidgetConnectionCount.rowCount()):
 -                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
 +                if self.tableWidgetConnectionCount.item(i, 0).data(

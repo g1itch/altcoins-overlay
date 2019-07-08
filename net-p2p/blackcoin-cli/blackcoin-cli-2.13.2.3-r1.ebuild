@@ -3,6 +3,7 @@
 
 EAPI=5
 COIN_SYMBOL="BLK"
+DB_VER=6.2
 
 inherit altcoin
 

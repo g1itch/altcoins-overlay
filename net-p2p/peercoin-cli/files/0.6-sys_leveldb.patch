@@ -1,0 +1,50 @@
+--- src/makefile.unix~	2017-10-24 23:04:09.000000000 +0300
++++ src/makefile.unix	2017-10-25 11:56:58.482508673 +0300
+@@ -12,6 +12,10 @@
+ # :=0 --> Disable IPv6 support
+ USE_IPV6:=1
+ 
++# :=1 --> Use system leveldb
++# :=0 --> Use embedded leveldb
++USE_SYSTEM_LEVELDB:=0
++
+ LINK:=$(CXX)
+ 
+ DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
+@@ -112,7 +116,6 @@
+ xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
+ 
+ OBJS= \
+-    leveldb/libleveldb.a \
+     obj/alert.o \
+     obj/version.o \
+     obj/checkpoints.o \
+@@ -157,12 +160,17 @@
+ #
+ # LevelDB support
+ #
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ MAKEOVERRIDES =
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
++OBJS += leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P
+--- src/leveldb.cpp~	2017-10-24 23:04:09.000000000 +0300
++++ src/leveldb.cpp	2017-10-25 11:57:22.585312113 +0300
+@@ -8,7 +8,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include <boost/filesystem.hpp>
+ 

@@ -1,8 +1,8 @@
 diff --git a/setup.py b/setup.py
-index e3f97bac..937c148b 100644
+index 3a9c7a3c..0737e71d 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -22,7 +22,8 @@ EXTRAS_REQUIRE = {
+@@ -23,7 +23,8 @@ EXTRAS_REQUIRE = {
          'curses',  # src/depends.py
          'python2-pythondialog',  # src/depends.py
          'm2r',  # fab build_docs
@@ -13,10 +13,10 @@ index e3f97bac..937c148b 100644
  
  
 diff --git a/src/api.py b/src/api.py
-index d3e87dfd..8415a3cd 100644
+index fad5d623..a67cd3ed 100644
 --- a/src/api.py
 +++ b/src/api.py
-@@ -1,34 +1,32 @@
+@@ -1,33 +1,31 @@
 -# pylint: disable=too-many-locals,too-many-lines,no-self-use,too-many-public-methods,too-many-branches
 -# pylint: disable=too-many-statements
 +# pylint: disable=protected-access,attribute-defined-outside-init,no-member
@@ -47,7 +47,6 @@ index d3e87dfd..8415a3cd 100644
  import random  # nosec
  import socket
  import subprocess
- import threading
  import time
 +import xmlrpclib
  from binascii import hexlify, unhexlify
@@ -59,7 +58,7 @@ index d3e87dfd..8415a3cd 100644
  import defaults
  import helper_inbox
  import helper_sent
-@@ -39,37 +37,34 @@ import queues
+@@ -37,38 +35,35 @@ import queues
  import shared
  import shutdown
  import state
@@ -72,6 +71,7 @@ index d3e87dfd..8415a3cd 100644
  from debug import logger
  from helper_ackPayload import genAckPayload
  from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
+ from helper_threading import StoppableThread
  from inventory import Inventory
 +from version import softwareVersion
  
@@ -114,7 +114,7 @@ index d3e87dfd..8415a3cd 100644
  
  
  # This thread, of which there is only one, runs the API.
-@@ -98,15 +93,40 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
+@@ -96,15 +91,40 @@ class singleAPI(StoppableThread):
              getattr(errno, 'WSAEADDRINUSE')
          except AttributeError:
              errno.WSAEADDRINUSE = errno.EADDRINUSE
@@ -157,7 +157,7 @@ index d3e87dfd..8415a3cd 100644
              except socket.error as e:
                  if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
                      continue
-@@ -116,6 +136,8 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
+@@ -114,6 +134,8 @@ class singleAPI(StoppableThread):
                          "bitmessagesettings", "apiport", str(port))
                      BMConfigParser().save()
                  break
@@ -166,7 +166,7 @@ index d3e87dfd..8415a3cd 100644
          se.register_introspection_functions()
  
          apiNotifyPath = BMConfigParser().safeGet(
-@@ -135,13 +157,58 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
+@@ -133,13 +155,58 @@ class singleAPI(StoppableThread):
          se.serve_forever()
  
  
@@ -230,7 +230,7 @@ index d3e87dfd..8415a3cd 100644
  
      def do_POST(self):
          """
-@@ -173,22 +240,34 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -171,22 +238,34 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                  size_remaining -= len(L[-1])
              data = ''.join(L)
  
@@ -277,7 +277,7 @@ index d3e87dfd..8415a3cd 100644
              self.send_header("Content-length", str(len(response)))
  
              # HACK :start -> sends cookies here
-@@ -209,15 +288,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -207,15 +286,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                  shutdown.doCleanShutdown()
  
      def APIAuthenticateClient(self):
@@ -301,7 +301,7 @@ index d3e87dfd..8415a3cd 100644
              )
          else:
              logger.warning(
-@@ -227,6 +310,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -225,6 +308,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
  
          return False
  
@@ -313,7 +313,7 @@ index d3e87dfd..8415a3cd 100644
      def _decode(self, text, decode_type):
          try:
              if decode_type == 'hex':
-@@ -235,7 +323,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -233,7 +321,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                  return base64.b64decode(text)
          except Exception as e:
              raise APIError(
@@ -322,7 +322,7 @@ index d3e87dfd..8415a3cd 100644
                  % (e, text)
              )
          return None
-@@ -244,20 +332,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -242,20 +330,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          status, addressVersionNumber, streamNumber, ripe = \
              decodeAddress(address)
          if status != 'success':
@@ -349,7 +349,7 @@ index d3e87dfd..8415a3cd 100644
          if addressVersionNumber < 2 or addressVersionNumber > 4:
              raise APIError(
                  11, 'The address version number currently must be 2, 3 or 4.'
-@@ -269,71 +356,93 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -267,71 +354,93 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                  ' Check the address.'
              )
  
@@ -496,7 +496,7 @@ index d3e87dfd..8415a3cd 100644
          queryreturn = sqlQuery(
              "SELECT address FROM addressbook WHERE address=?", address)
          if queryreturn != []:
-@@ -346,12 +455,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -344,12 +453,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          queues.UISignalQueue.put(('rerenderAddressBook', ''))
          return "Added address %s to address book" % address
  
@@ -512,7 +512,7 @@ index d3e87dfd..8415a3cd 100644
          address = addBMIfNotPresent(address)
          self._verifyAddress(address)
          sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-@@ -360,46 +466,35 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -358,46 +464,35 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          queues.UISignalQueue.put(('rerenderAddressBook', ''))
          return "Deleted address book entry for %s if it existed" % address
  
@@ -581,7 +581,7 @@ index d3e87dfd..8415a3cd 100644
          streamNumberForAddress = 1
          queues.addressGeneratorQueue.put((
              'createRandomAddress', 4, streamNumberForAddress, label, 1, "",
-@@ -407,77 +502,25 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -405,77 +500,25 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          ))
          return queues.apiAddressGeneratorReturnQueue.get()
  
@@ -676,7 +676,7 @@ index d3e87dfd..8415a3cd 100644
          if not passphrase:
              raise APIError(1, 'The specified passphrase is blank.')
          if not isinstance(eighteenByteRipe, bool):
-@@ -488,13 +531,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -486,13 +529,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          # 0 means "just use the proper addressVersionNumber"
          if addressVersionNumber == 0:
              addressVersionNumber = 4
@@ -692,7 +692,7 @@ index d3e87dfd..8415a3cd 100644
          if streamNumber != 1:
              raise APIError(
                  3, 'The stream number must be 1 (or 0 which means'
-@@ -519,27 +562,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -517,27 +560,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              'unused API address', numberOfAddresses, passphrase,
              eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes
          ))
@@ -727,7 +727,7 @@ index d3e87dfd..8415a3cd 100644
              raise APIError(
                  2, 'The address version number currently must be 3 or 4. %i'
                  ' isn\'t supported.' % addressVersionNumber)
-@@ -557,16 +593,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -555,16 +591,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          ))
          return queues.apiAddressGeneratorReturnQueue.get()
  
@@ -746,7 +746,7 @@ index d3e87dfd..8415a3cd 100644
          if not passphrase:
              raise APIError(1, 'The specified passphrase is blank.')
          # It would be nice to make the label the passphrase but it is
-@@ -574,7 +605,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -572,7 +603,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          try:
              unicode(passphrase, 'utf-8')
              label = str_chan + ' ' + passphrase
@@ -755,7 +755,7 @@ index d3e87dfd..8415a3cd 100644
              label = str_chan + ' ' + repr(passphrase)
  
          addressVersionNumber = 4
-@@ -587,18 +618,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -585,18 +616,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              passphrase, True
          ))
          queueReturn = queues.apiAddressGeneratorReturnQueue.get()
@@ -779,7 +779,7 @@ index d3e87dfd..8415a3cd 100644
          passphrase = self._decode(passphrase, "base64")
          if not passphrase:
              raise APIError(1, 'The specified passphrase is blank.')
-@@ -607,121 +635,88 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -605,121 +633,88 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          try:
              unicode(passphrase, 'utf-8')
              label = str_chan + ' ' + passphrase
@@ -948,7 +948,7 @@ index d3e87dfd..8415a3cd 100644
              if not isinstance(readStatus, bool):
                  raise APIError(
                      23, 'Bool expected in readStatus, saw %s instead.' %
-@@ -729,34 +724,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -727,34 +722,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              queryreturn = sqlQuery(
                  "SELECT read FROM inbox WHERE msgid=?", msgid)
              # UPDATE is slow, only update if status is different
@@ -1000,7 +1000,7 @@ index d3e87dfd..8415a3cd 100644
          """Handle a request to get all sent messages"""
  
          queryreturn = sqlQuery(
-@@ -764,217 +751,116 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -762,217 +749,116 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              " message, encodingtype, status, ackdata FROM sent"
              " WHERE folder='sent' ORDER BY lastactiontime"
          )
@@ -1282,7 +1282,7 @@ index d3e87dfd..8415a3cd 100644
              raise APIError(6, 'The encoding type must be 2 or 3.')
          subject = self._decode(subject, "base64")
          message = self._decode(message, "base64")
-@@ -986,12 +872,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -984,12 +870,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              TTL = 28 * 24 * 60 * 60
          toAddress = addBMIfNotPresent(toAddress)
          fromAddress = addBMIfNotPresent(fromAddress)
@@ -1297,7 +1297,7 @@ index d3e87dfd..8415a3cd 100644
                  fromAddress, 'enabled')
          except BaseException:
              raise APIError(
-@@ -999,7 +883,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -997,7 +881,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          if not fromAddressEnabled:
              raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
  
@@ -1306,7 +1306,7 @@ index d3e87dfd..8415a3cd 100644
              'bitmessagesettings', 'ackstealthlevel')
          ackdata = genAckPayload(streamNumber, stealthLevel)
  
-@@ -1016,41 +900,31 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1014,41 +898,31 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
               'msgqueued',
               0,
               'sent',
@@ -1359,7 +1359,7 @@ index d3e87dfd..8415a3cd 100644
              raise APIError(6, 'The encoding type must be 2 or 3.')
  
          subject = self._decode(subject, "base64")
-@@ -1064,13 +938,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1062,13 +936,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          fromAddress = addBMIfNotPresent(fromAddress)
          self._verifyAddress(fromAddress)
          try:
@@ -1376,7 +1376,7 @@ index d3e87dfd..8415a3cd 100644
          ripe = ''
  
          t = ('',
-@@ -1086,59 +960,49 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1084,59 +958,49 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
               'broadcastqueued',
               0,
               'sent',
@@ -1449,7 +1449,7 @@ index d3e87dfd..8415a3cd 100644
              raise APIError(16, 'You are already subscribed to that address.')
          sqlExecute(
              "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
-@@ -1147,37 +1011,37 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1145,37 +1009,37 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          queues.UISignalQueue.put(('rerenderSubscriptions', ''))
          return 'Added subscription.'
  
@@ -1500,7 +1500,7 @@ index d3e87dfd..8415a3cd 100644
          """Handle a request to disseminate an encrypted message"""
  
          # The device issuing this command to PyBitmessage supplies a msg
-@@ -1185,38 +1049,28 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1183,38 +1047,28 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          # to be done. PyBitmessage accepts this msg object and sends it out
          # to the rest of the Bitmessage network as if it had generated
          # the message itself. Please do not yet add this to the api doc.
@@ -1555,7 +1555,7 @@ index d3e87dfd..8415a3cd 100644
          encryptedPayload = pack('>Q', nonce) + encryptedPayload
          toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
          inventoryHash = calculateInventoryHash(encryptedPayload)
-@@ -1226,21 +1080,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1224,21 +1078,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              objectType, toStreamNumber, encryptedPayload,
              int(time.time()) + TTL, ''
          )
@@ -1585,7 +1585,7 @@ index d3e87dfd..8415a3cd 100644
          """Handle a request to disseminate a public key"""
  
          # The device issuing this command to PyBitmessage supplies a pubkey
-@@ -1248,19 +1102,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1246,19 +1100,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          # PyBitmessage accepts this pubkey object and sends it out to the rest
          # of the Bitmessage network as if it had generated the pubkey object
          # itself. Please do not yet add this to the api doc.
@@ -1610,7 +1610,7 @@ index d3e87dfd..8415a3cd 100644
          payload = pack('>Q', nonce) + payload
  
          pubkeyReadPosition = 8  # bypass the nonce
-@@ -1270,8 +1124,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1268,8 +1122,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          else:
              pubkeyReadPosition += 4
          # pylint: disable=unused-variable
@@ -1621,7 +1621,7 @@ index d3e87dfd..8415a3cd 100644
          pubkeyReadPosition += addressVersionLength
          pubkeyStreamNumber = decodeVarint(
              payload[pubkeyReadPosition:pubkeyReadPosition + 10])[0]
-@@ -1281,19 +1135,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1279,19 +1133,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
          Inventory()[inventoryHash] = (
              objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
          )
@@ -1647,7 +1647,7 @@ index d3e87dfd..8415a3cd 100644
          if len(requestedHash) != 32:
              raise APIError(
                  19, 'The length of hash should be 32 bytes (encoded in hex'
-@@ -1307,8 +1161,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1305,8 +1159,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              "SELECT hash, payload FROM inventory WHERE tag = ''"
              " and objecttype = 2")
          with SqlBulkExecute() as sql:
@@ -1657,7 +1657,7 @@ index d3e87dfd..8415a3cd 100644
                  readPosition = 16  # Nonce length + time length
                  # Stream Number length
                  readPosition += decodeVarint(
-@@ -1318,17 +1171,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1316,17 +1169,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
  
          queryreturn = sqlQuery(
              "SELECT payload FROM inventory WHERE tag = ?", requestedHash)
@@ -1681,7 +1681,7 @@ index d3e87dfd..8415a3cd 100644
          """Handle a request to get the status of the client"""
  
          connections_num = len(network.stats.connectedHostsList())
-@@ -1338,7 +1186,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1336,7 +1184,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              networkStatus = 'connectedAndReceivingIncomingConnections'
          else:
              networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
@@ -1690,7 +1690,7 @@ index d3e87dfd..8415a3cd 100644
              'networkConnections': connections_num,
              'numberOfMessagesProcessed': shared.numberOfMessagesProcessed,
              'numberOfBroadcastsProcessed': shared.numberOfBroadcastsProcessed,
-@@ -1346,141 +1194,89 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+@@ -1344,141 +1192,89 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              'networkStatus': networkStatus,
              'softwareName': 'PyBitmessage',
              'softwareVersion': softwareVersion
@@ -1892,10 +1892,10 @@ index d3e87dfd..8415a3cd 100644
 +    def _methodHelp(self, method):
 +        return self._handlers[method].__doc__
 diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
-index 4efd0154..bca82882 100755
+index 90e15c52..487349db 100755
 --- a/src/bitmessagemain.py
 +++ b/src/bitmessagemain.py
-@@ -223,6 +223,8 @@ class Main:
+@@ -243,6 +243,8 @@ class Main:
                      'bitmessagesettings', 'apiusername', 'username')
                  config.set(
                      'bitmessagesettings', 'apipassword', 'password')

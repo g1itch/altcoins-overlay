@@ -1,4 +1,4 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -23,4 +23,11 @@ src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	altcoin_src_prepare
+}
+
+src_install() {
+	altcoin_src_install
+	ewarn 'This coin is probably dead since the end of 2018!'
+	ewarn 'Use with caution!'
+	ewarn 'Look at https://bitcointalk.org/index.php?topic=1895018.2380'
 }

@@ -1,0 +1,33 @@
+--- src/clientversion.h~	2016-04-01 06:29:34.000000000 +0300
++++ src/clientversion.h	2019-09-13 16:54:15.497884149 +0300
+@@ -8,7 +8,7 @@
+ // These need to be macros, as version.cpp's and bitcoin-qt.rc's voodoo requires it
+ #define CLIENT_VERSION_MAJOR       1
+ #define CLIENT_VERSION_MINOR       0
+-#define CLIENT_VERSION_REVISION    0
++#define CLIENT_VERSION_REVISION    3
+ #define CLIENT_VERSION_BUILD       0
+ 
+ // Converts the parameter X to a string after macro replacement on X has been performed.
+--- src/version.h~	2016-04-01 06:29:34.000000000 +0300
++++ src/version.h	2019-09-13 16:55:54.899668460 +0300
+@@ -30,7 +30,7 @@
+ // network protocol versioning
+ //
+ 
+-static const int PROTOCOL_VERSION = 60014;
++static const int PROTOCOL_VERSION = 60100;
+ 
+ // intial proto version, to be increased after version/verack negotiation
+ static const int INIT_PROTO_VERSION = 209;
+--- src/version.cpp~	2016-04-01 06:29:34.000000000 +0300
++++ src/version.cpp	2019-09-13 17:14:51.417997961 +0300
+@@ -36,7 +36,7 @@
+ // git will put "#define GIT_ARCHIVE 1" on the next line inside archives. 
+ #define GIT_ARCHIVE 1
+ #ifdef GIT_ARCHIVE
+-#    define GIT_COMMIT_ID "32a928e"
++#    define GIT_COMMIT_ID "1e73220"
+ #    define GIT_COMMIT_DATE "$Format:%cD"
+ #endif
+ 

@@ -12,7 +12,7 @@ index 3a9c7a3c..7431ff2b 100644
          'pybitmessage',
          'pybitmessage.bitmessageqt',
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 507e6ca0..4073c68b 100644
+index 94c00e38..3fcaadf9 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -14,8 +14,7 @@ import time
@@ -25,56 +25,50 @@ index 507e6ca0..4073c68b 100644
  
  from debug import logger
  from tr import _translate
-@@ -63,32 +62,40 @@ try:
+@@ -58,6 +57,8 @@ try:
  except ImportError:
      get_plugins = False
  
 +TimestampRole = 33
 +
  
- def change_translation(newlocale):
-     global qmytranslator, qsystranslator
-     try:
-         if not qmytranslator.isEmpty():
--            QtGui.QApplication.removeTranslator(qmytranslator)
-+            QtWidgets.QApplication.removeTranslator(qmytranslator)
-     except:
-         pass
-     try:
-         if not qsystranslator.isEmpty():
--            QtGui.QApplication.removeTranslator(qsystranslator)
-+            QtWidgets.QApplication.removeTranslator(qsystranslator)
-     except:
-         pass
+ # TODO: rewrite
+ def powQueueSize():
+@@ -87,12 +88,12 @@ class MyForm(settingsmixin.SMainWindow):
+             newlocale = l10n.getTranslationLanguage()
+         try:
+             if not self.qmytranslator.isEmpty():
+-                QtGui.QApplication.removeTranslator(self.qmytranslator)
++                QtWidgets.QApplication.removeTranslator(self.qmytranslator)
+         except:
+             pass
+         try:
+             if not self.qsystranslator.isEmpty():
+-                QtGui.QApplication.removeTranslator(self.qsystranslator)
++                QtWidgets.QApplication.removeTranslator(self.qsystranslator)
+         except:
+             pass
  
-     qmytranslator = QtCore.QTranslator()
--    translationpath = os.path.join (paths.codePath(), 'translations', 'bitmessage_' + newlocale)
-+    translationpath = os.path.join(
-+        paths.codePath(), 'translations', 'bitmessage_' + newlocale)
-     qmytranslator.load(translationpath)
--    QtGui.QApplication.installTranslator(qmytranslator)
-+    QtWidgets.QApplication.installTranslator(qmytranslator)
+@@ -100,7 +101,7 @@ class MyForm(settingsmixin.SMainWindow):
+         translationpath = os.path.join(
+             paths.codePath(), 'translations', 'bitmessage_' + newlocale)
+         self.qmytranslator.load(translationpath)
+-        QtGui.QApplication.installTranslator(self.qmytranslator)
++        QtWidgets.QApplication.installTranslator(self.qmytranslator)
  
-     qsystranslator = QtCore.QTranslator()
-     if paths.frozen:
--        translationpath = os.path.join (paths.codePath(), 'translations', 'qt_' + newlocale)
-+        translationpath = os.path.join(
-+            paths.codePath(), 'translations', 'qt_' + newlocale)
-     else:
--        translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
-+        translationpath = os.path.join(
-+            str(QtCore.QLibraryInfo.location(
-+                QtCore.QLibraryInfo.TranslationsPath
-+            )), 'qt_' + newlocale
-+        )
-     qsystranslator.load(translationpath)
--    QtGui.QApplication.installTranslator(qsystranslator)
-+    QtWidgets.QApplication.installTranslator(qsystranslator)
+         self.qsystranslator = QtCore.QTranslator()
+         if paths.frozen:
+@@ -111,7 +112,7 @@ class MyForm(settingsmixin.SMainWindow):
+                 str(QtCore.QLibraryInfo.location(
+                     QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
+         self.qsystranslator.load(translationpath)
+-        QtGui.QApplication.installTranslator(self.qsystranslator)
++        QtWidgets.QApplication.installTranslator(self.qsystranslator)
  
-     lang = locale.normalize(l10n.getTranslationLanguage())
-     langs = [lang.split(".")[0] + "." + l10n.encoding, lang.split(".")[0] + "." + 'UTF-8', lang]
-@@ -133,49 +140,35 @@ class MyForm(settingsmixin.SMainWindow):
-     REPLY_TYPE_UPD = 2
+         lang = locale.normalize(l10n.getTranslationLanguage())
+         langs = [
+@@ -134,49 +135,35 @@ class MyForm(settingsmixin.SMainWindow):
+                 logger.error("Failed to set locale to %s", lang, exc_info=True)
  
      def init_file_menu(self):
 -        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
@@ -149,7 +143,7 @@ index 507e6ca0..4073c68b 100644
          # Actions
          self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
              "MainWindow", "Reply to sender"), self.on_action_InboxReply)
-@@ -211,25 +204,22 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -212,25 +199,22 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.tableWidgetInbox.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -182,7 +176,7 @@ index 507e6ca0..4073c68b 100644
          # Actions
          self.actionNewYourIdentities = self.ui.addressContextMenuToolbarYourIdentities.addAction(_translate(
              "MainWindow", "New"), self.on_action_YourIdentitiesNew)
-@@ -263,9 +253,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -264,9 +248,8 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.treeWidgetYourIdentities.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -194,7 +188,7 @@ index 507e6ca0..4073c68b 100644
  
          # load all gui.menu plugins with prefix 'address'
          self.menu_plugins = {'address': []}
-@@ -313,13 +302,12 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -314,13 +297,12 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.treeWidgetChans.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -211,7 +205,7 @@ index 507e6ca0..4073c68b 100644
          # Actions
          self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(
              _translate(
-@@ -350,9 +338,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -351,9 +333,8 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.tableWidgetAddressBook.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -223,7 +217,7 @@ index 507e6ca0..4073c68b 100644
  
      def init_subscriptions_popup_menu(self, connectSignal=True):
          # Actions
-@@ -379,9 +366,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -380,9 +361,8 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.treeWidgetSubscriptions.setContextMenuPolicy(
              QtCore.Qt.CustomContextMenu)
          if connectSignal:
@@ -235,7 +229,7 @@ index 507e6ca0..4073c68b 100644
  
      def init_sent_popup_menu(self, connectSignal=True):
          # Actions
-@@ -398,7 +384,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -399,7 +379,7 @@ class MyForm(settingsmixin.SMainWindow):
          self.actionSentReply = self.ui.sentContextMenuToolbar.addAction(
              _translate("MainWindow", "Send update"),
              self.on_action_SentReply)
@@ -244,7 +238,7 @@ index 507e6ca0..4073c68b 100644
          # self.popMenuSent.addAction( self.actionSentClipboard )
          # self.popMenuSent.addAction( self.actionTrashSentMessage )
  
-@@ -412,17 +398,16 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -413,17 +393,16 @@ class MyForm(settingsmixin.SMainWindow):
              treeWidget.header().setSortIndicator(
                  0, QtCore.Qt.AscendingOrder)
          # init dictionary
@@ -265,7 +259,7 @@ index 507e6ca0..4073c68b 100644
          i = 0
          while i < treeWidget.topLevelItemCount():
              widget = treeWidget.topLevelItem(i)
-@@ -430,8 +415,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -431,8 +410,8 @@ class MyForm(settingsmixin.SMainWindow):
                  toAddress = widget.address
              else:
                  toAddress = None
@@ -276,7 +270,7 @@ index 507e6ca0..4073c68b 100644
                  treeWidget.takeTopLevelItem(i)
                  # no increment
                  continue
-@@ -440,7 +425,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -441,7 +420,8 @@ class MyForm(settingsmixin.SMainWindow):
              while j < widget.childCount():
                  subwidget = widget.child(j)
                  try:
@@ -286,7 +280,7 @@ index 507e6ca0..4073c68b 100644
                      unread += db[toAddress][subwidget.folderName]['count']
                      db[toAddress].pop(subwidget.folderName, None)
                  except:
-@@ -454,45 +440,51 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -455,45 +435,51 @@ class MyForm(settingsmixin.SMainWindow):
                  j = 0
                  for f, c in db[toAddress].iteritems():
                      try:
@@ -347,7 +341,7 @@ index 507e6ca0..4073c68b 100644
          # sort ascending when creating
          if treeWidget.topLevelItemCount() == 0:
              treeWidget.header().setSortIndicator(
-@@ -500,14 +492,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -501,14 +487,14 @@ class MyForm(settingsmixin.SMainWindow):
          # init dictionary
          db = {}
          enabled = {}
@@ -365,7 +359,7 @@ index 507e6ca0..4073c68b 100644
  
              if treeWidget == self.ui.treeWidgetYourIdentities:
                  if isChan:
-@@ -519,7 +511,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -520,7 +506,7 @@ class MyForm(settingsmixin.SMainWindow):
              db[toAddress] = {}
              for folder in folders:
                  db[toAddress][folder] = 0
@@ -374,7 +368,7 @@ index 507e6ca0..4073c68b 100644
              enabled[toAddress] = isEnabled
  
          # get number of (unread) messages
-@@ -537,11 +529,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -538,11 +524,10 @@ class MyForm(settingsmixin.SMainWindow):
              db[None]["sent"] = 0
              db[None]["trash"] = 0
              enabled[None] = True
@@ -388,7 +382,7 @@ index 507e6ca0..4073c68b 100644
          i = 0
          while i < treeWidget.topLevelItemCount():
              widget = treeWidget.topLevelItem(i)
-@@ -549,8 +540,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -550,8 +535,8 @@ class MyForm(settingsmixin.SMainWindow):
                  toAddress = widget.address
              else:
                  toAddress = None
@@ -399,7 +393,7 @@ index 507e6ca0..4073c68b 100644
                  treeWidget.takeTopLevelItem(i)
                  # no increment
                  continue
-@@ -559,8 +550,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -560,8 +545,9 @@ class MyForm(settingsmixin.SMainWindow):
              while j < widget.childCount():
                  subwidget = widget.child(j)
                  try:
@@ -411,7 +405,7 @@ index 507e6ca0..4073c68b 100644
                          unread += db[toAddress][subwidget.folderName]
                      db[toAddress].pop(subwidget.folderName, None)
                  except:
-@@ -576,13 +568,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -577,13 +563,13 @@ class MyForm(settingsmixin.SMainWindow):
                      if toAddress is not None and tab == 'messages' and folder == "new":
                          continue
                      subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
@@ -427,7 +421,7 @@ index 507e6ca0..4073c68b 100644
          i = 0
          for toAddress in db:
              widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"], enabled[toAddress])
-@@ -592,16 +584,16 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -593,16 +579,16 @@ class MyForm(settingsmixin.SMainWindow):
                  if toAddress is not None and tab == 'messages' and folder == "new":
                      continue
                  subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
@@ -447,7 +441,7 @@ index 507e6ca0..4073c68b 100644
          self.ui = Ui_MainWindow()
          self.ui.setupUi(self)
  
-@@ -612,11 +604,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -620,11 +606,13 @@ class MyForm(settingsmixin.SMainWindow):
                  addressInKeysFile)
              if addressVersionNumber == 1:
                  displayMsg = _translate(
@@ -466,16 +460,7 @@ index 507e6ca0..4073c68b 100644
                      BMConfigParser().remove_section(addressInKeysFile)
                      BMConfigParser().save()
  
-@@ -639,7 +633,7 @@ class MyForm(settingsmixin.SMainWindow):
- 
-         # e.g. for editing labels
-         self.recurDepth = 0
--        
-+
-         # switch back to this when replying
-         self.replyFromTab = None
- 
-@@ -675,65 +669,58 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -670,65 +658,58 @@ class MyForm(settingsmixin.SMainWindow):
          self.rerenderSubscriptions()
  
          # Initialize the inbox search
@@ -575,7 +560,7 @@ index 507e6ca0..4073c68b 100644
  
          self.numberOfMessagesProcessed = 0
          self.numberOfBroadcastsProcessed = 0
-@@ -741,44 +728,41 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -736,44 +717,41 @@ class MyForm(settingsmixin.SMainWindow):
          self.unreadCount = 0
  
          # Set the icon sizes for the identicons
@@ -654,7 +639,7 @@ index 507e6ca0..4073c68b 100644
          self.UISignalThread.start()
  
          # Key press in tree view
-@@ -801,19 +785,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -796,19 +774,18 @@ class MyForm(settingsmixin.SMainWindow):
  
          self.rerenderComboBoxSendFrom()
          self.rerenderComboBoxSendFromBroadcast()
@@ -681,7 +666,7 @@ index 507e6ca0..4073c68b 100644
          self.initSettings()
          self.resetNamecoinConnection()
  
-@@ -835,21 +818,25 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -852,21 +829,25 @@ class MyForm(settingsmixin.SMainWindow):
          BMConfigParser().save()
  
      def updateHumanFriendlyTTLDescription(self, TTL):
@@ -714,7 +699,7 @@ index 507e6ca0..4073c68b 100644
              font.setBold(False)
          self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
          self.ui.labelHumanFriendlyTTLDescription.setFont(font)
-@@ -956,8 +943,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -973,8 +954,7 @@ class MyForm(settingsmixin.SMainWindow):
              # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
              # returns an empty list
              for rrow in xrange(related.rowCount()):
@@ -724,7 +709,7 @@ index 507e6ca0..4073c68b 100644
                      break
              else:
                  rrow = None
-@@ -1066,16 +1052,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1083,16 +1063,19 @@ class MyForm(settingsmixin.SMainWindow):
          if sortingEnabled:
              tableWidget.setSortingEnabled(True)
  
@@ -748,7 +733,7 @@ index 507e6ca0..4073c68b 100644
  
          if status == 'awaitingpubkey':
              statusText = _translate(
-@@ -1087,17 +1076,21 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1104,17 +1087,21 @@ class MyForm(settingsmixin.SMainWindow):
              statusText = _translate(
                  "MainWindow", "Queued.")
          elif status == 'msgsent':
@@ -776,7 +761,7 @@ index 507e6ca0..4073c68b 100644
          elif status == 'broadcastqueued':
              statusText = _translate(
                  "MainWindow", "Broadcast queued.")
-@@ -1105,33 +1098,42 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1122,33 +1109,42 @@ class MyForm(settingsmixin.SMainWindow):
              statusText = _translate(
                  "MainWindow", "Doing work necessary to send broadcast.")
          elif status == 'broadcastsent':
@@ -832,7 +817,7 @@ index 507e6ca0..4073c68b 100644
          if toAddress == str_broadcast_subscribers:
              acct = accountClass(fromAddress)
          else:
-@@ -1141,22 +1143,24 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1158,22 +1154,24 @@ class MyForm(settingsmixin.SMainWindow):
          if acct is None:
              acct = BMAccount(fromAddress)
          acct.parseMessage(toAddress, fromAddress, subject, "")
@@ -864,7 +849,7 @@ index 507e6ca0..4073c68b 100644
              time_item.setFont(font)
          items.append(time_item)
          self.addMessageListItem(tableWidget, items)
-@@ -1183,20 +1187,28 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1200,20 +1198,28 @@ class MyForm(settingsmixin.SMainWindow):
          tableWidget.setUpdatesEnabled(False)
          tableWidget.setSortingEnabled(False)
          tableWidget.setRowCount(0)
@@ -897,7 +882,7 @@ index 507e6ca0..4073c68b 100644
          if folder == 'sent':
              self.loadSent(tableWidget, account, where, what)
              return
-@@ -1216,39 +1228,42 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1233,39 +1239,42 @@ class MyForm(settingsmixin.SMainWindow):
          tableWidget.setSortingEnabled(False)
          tableWidget.setRowCount(0)
  
@@ -951,7 +936,7 @@ index 507e6ca0..4073c68b 100644
              "MainWindow", "Show Bitmessage"), m, checkable=True)
          self.actionShow.setChecked(not BMConfigParser().getboolean(
              'bitmessagesettings', 'startintray'))
-@@ -1257,7 +1272,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1274,7 +1283,7 @@ class MyForm(settingsmixin.SMainWindow):
              m.addAction(self.actionShow)
  
          # quiet mode
@@ -960,7 +945,7 @@ index 507e6ca0..4073c68b 100644
              "MainWindow", "Quiet Mode"), m, checkable=True)
          self.actionQuiet.setChecked(not BMConfigParser().getboolean(
              'bitmessagesettings', 'showtraynotifications'))
-@@ -1265,25 +1280,25 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1282,25 +1291,25 @@ class MyForm(settingsmixin.SMainWindow):
          m.addAction(self.actionQuiet)
  
          # Send
@@ -990,7 +975,7 @@ index 507e6ca0..4073c68b 100644
          actionSeparator.setSeparator(True)
          m.addAction(actionSeparator)
  
-@@ -1401,8 +1416,6 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1418,8 +1427,6 @@ class MyForm(settingsmixin.SMainWindow):
              self.tray.showMessage(title, subtitle, 1, 2000)
  
          self._notifier = _simple_notify
@@ -999,7 +984,7 @@ index 507e6ca0..4073c68b 100644
  
          if not get_plugins:
              return
-@@ -1415,7 +1428,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1432,7 +1439,10 @@ class MyForm(settingsmixin.SMainWindow):
  
          self._theme_player = get_plugin('notification.sound', 'theme')
  
@@ -1011,7 +996,7 @@ index 507e6ca0..4073c68b 100644
              _plugin = get_plugin(
                  'notification.sound', 'file', fallback='file.fallback')
              if _plugin:
-@@ -1441,17 +1457,17 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1458,17 +1468,17 @@ class MyForm(settingsmixin.SMainWindow):
      def textEditKeyPressEvent(self, event):
          return self.handleKeyPress(event, self.getCurrentMessageTextedit())
  
@@ -1032,7 +1017,7 @@ index 507e6ca0..4073c68b 100644
              if event.key() == QtCore.Qt.Key_N:
                  currentRow = messagelist.currentRow()
                  if currentRow < messagelist.rowCount() - 1:
-@@ -1481,46 +1497,85 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1498,46 +1508,85 @@ class MyForm(settingsmixin.SMainWindow):
                  self.ui.lineEditTo.setFocus()
                  event.ignore()
              elif event.key() == QtCore.Qt.Key_F:
@@ -1135,7 +1120,7 @@ index 507e6ca0..4073c68b 100644
              return
          sqlStoredProcedure('deleteandvacuume')
          self.rerenderTabTreeMessages()
-@@ -1538,7 +1593,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1555,7 +1604,7 @@ class MyForm(settingsmixin.SMainWindow):
          dialog = dialogs.RegenerateAddressesDialog(self)
          if dialog.exec_():
              if dialog.lineEditPassphrase.text() == "":
@@ -1144,7 +1129,7 @@ index 507e6ca0..4073c68b 100644
                      self, _translate("MainWindow", "bad passphrase"),
                      _translate(
                          "MainWindow",
-@@ -1551,7 +1606,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1568,7 +1617,7 @@ class MyForm(settingsmixin.SMainWindow):
                  addressVersionNumber = int(
                      dialog.lineEditAddressVersionNumber.text())
              except:
@@ -1153,7 +1138,7 @@ index 507e6ca0..4073c68b 100644
                      self,
                      _translate("MainWindow", "Bad address version number"),
                      _translate(
-@@ -1561,7 +1616,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1578,7 +1627,7 @@ class MyForm(settingsmixin.SMainWindow):
                      ))
                  return
              if addressVersionNumber < 3 or addressVersionNumber > 4:
@@ -1162,7 +1147,7 @@ index 507e6ca0..4073c68b 100644
                      self,
                      _translate("MainWindow", "Bad address version number"),
                      _translate(
-@@ -1574,7 +1629,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1591,7 +1640,7 @@ class MyForm(settingsmixin.SMainWindow):
                  addressVersionNumber, streamNumberForAddress,
                  "regenerated deterministic address",
                  dialog.spinBoxNumberOfAddressesToMake.value(),
@@ -1171,12 +1156,8 @@ index 507e6ca0..4073c68b 100644
                  dialog.checkBoxEighteenByteRipe.isChecked()
              ))
              self.ui.tabWidget.setCurrentIndex(
-@@ -1622,10 +1677,10 @@ class MyForm(settingsmixin.SMainWindow):
-                 # The window state has just been changed to
-                 # Normal/Maximised/FullScreen
+@@ -1641,7 +1690,7 @@ class MyForm(settingsmixin.SMainWindow):
                  pass
--        # QtGui.QWidget.changeEvent(self, event)
-+        # QtWidgets.QWidget.changeEvent(self, event)
  
      def __icon_activated(self, reason):
 -        if reason == QtGui.QSystemTrayIcon.Trigger:
@@ -1184,7 +1165,7 @@ index 507e6ca0..4073c68b 100644
              self.actionShow.setChecked(not self.actionShow.isChecked())
              self.appIndicatorShowOrHideWindow()
  
-@@ -1698,7 +1753,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1714,7 +1763,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def initTrayIcon(self, iconFileName, app):
          self.currentTrayIconFileName = iconFileName
@@ -1193,7 +1174,7 @@ index 507e6ca0..4073c68b 100644
              self.calcTrayIcon(iconFileName, self.findInboxUnreadCount()), app)
  
      def setTrayIconFile(self, iconFileName):
-@@ -1706,7 +1761,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1722,7 +1771,7 @@ class MyForm(settingsmixin.SMainWindow):
          self.drawTrayIcon(iconFileName, self.findInboxUnreadCount())
  
      def calcTrayIcon(self, iconFileName, inboxUnreadCount):
@@ -1202,7 +1183,7 @@ index 507e6ca0..4073c68b 100644
          if inboxUnreadCount > 0:
              # choose font and calculate font parameters
              fontName = "Lucida"
-@@ -1718,7 +1773,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1734,7 +1783,8 @@ class MyForm(settingsmixin.SMainWindow):
              rect = fontMetrics.boundingRect(txt)
              # margins that we add in the top-right corner
              marginX = 2
@@ -1212,7 +1193,7 @@ index 507e6ca0..4073c68b 100644
              # if it renders too wide we need to change it to a plus symbol
              if rect.width() > 20:
                  txt = "+"
-@@ -1729,8 +1785,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1745,8 +1795,7 @@ class MyForm(settingsmixin.SMainWindow):
              # draw text
              painter = QtGui.QPainter()
              painter.begin(pixmap)
@@ -1222,7 +1203,7 @@ index 507e6ca0..4073c68b 100644
              painter.setFont(font)
              painter.drawText(24-rect.right()-marginX, -rect.top()+marginY, txt)
              painter.end()
-@@ -1758,11 +1813,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1774,11 +1823,18 @@ class MyForm(settingsmixin.SMainWindow):
          return self.unreadCount
  
      def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
@@ -1243,7 +1224,7 @@ index 507e6ca0..4073c68b 100644
                  continue
  
              for i in range(sent.rowCount()):
-@@ -1770,8 +1832,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1786,8 +1842,11 @@ class MyForm(settingsmixin.SMainWindow):
                  if toAddress == rowAddress:
                      sent.item(i, 3).setToolTip(textToDisplay)
                      try:
@@ -1257,7 +1238,7 @@ index 507e6ca0..4073c68b 100644
                          newlinePosition = 0
                      if newlinePosition > 1:
                          sent.item(i, 3).setText(
-@@ -1780,9 +1845,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1796,9 +1855,11 @@ class MyForm(settingsmixin.SMainWindow):
                          sent.item(i, 3).setText(textToDisplay)
  
      def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
@@ -1272,7 +1253,7 @@ index 507e6ca0..4073c68b 100644
              treeWidget = self.widgetConvert(sent)
              if self.getCurrentFolder(treeWidget) != "sent":
                  continue
-@@ -1790,14 +1857,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1806,14 +1867,18 @@ class MyForm(settingsmixin.SMainWindow):
                  toAddress = sent.item(
                      i, 0).data(QtCore.Qt.UserRole)
                  tableAckdata = sent.item(
@@ -1294,7 +1275,7 @@ index 507e6ca0..4073c68b 100644
                          newlinePosition = 0
                      if newlinePosition > 1:
                          sent.item(i, 3).setText(
-@@ -1814,8 +1885,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1830,8 +1895,7 @@ class MyForm(settingsmixin.SMainWindow):
          ):
              i = None
              for i in range(inbox.rowCount()):
@@ -1304,7 +1285,7 @@ index 507e6ca0..4073c68b 100644
                      break
              else:
                  continue
-@@ -1832,33 +1902,42 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1848,33 +1912,42 @@ class MyForm(settingsmixin.SMainWindow):
          self.notifiedNewVersion = ".".join(str(n) for n in version)
          self.updateStatusBar(_translate(
              "MainWindow",
@@ -1355,7 +1336,7 @@ index 507e6ca0..4073c68b 100644
              self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
  
          oldRows = {}
-@@ -1876,29 +1955,34 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1892,29 +1965,34 @@ class MyForm(settingsmixin.SMainWindow):
          queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
          for row in queryreturn:
              label, address = row
@@ -1399,7 +1380,7 @@ index 507e6ca0..4073c68b 100644
  
          # sort
          self.ui.tableWidgetAddressBook.sortByColumn(
-@@ -1910,11 +1994,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1926,11 +2004,11 @@ class MyForm(settingsmixin.SMainWindow):
          self.rerenderTabTreeSubscriptions()
  
      def click_pushButtonTTL(self):
@@ -1413,7 +1394,7 @@ index 507e6ca0..4073c68b 100644
  
      def click_pushButtonClear(self):
          self.ui.lineEditSubject.setText("")
-@@ -1923,7 +2007,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1939,7 +2017,8 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.comboBoxSendFrom.setCurrentIndex(0)
  
      def click_pushButtonSend(self):
@@ -1423,7 +1404,7 @@ index 507e6ca0..4073c68b 100644
  
          self.statusbar.clearMessage()
  
-@@ -1931,22 +2016,21 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1947,22 +2026,21 @@ class MyForm(settingsmixin.SMainWindow):
                  self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
              # message to specific people
              sendMessageToPeople = True
@@ -1456,7 +1437,7 @@ index 507e6ca0..4073c68b 100644
          """
          The whole network message must fit in 2^18 bytes.
          Let's assume 500 bytes of overhead. If someone wants to get that
-@@ -1955,23 +2039,26 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1971,23 +2049,26 @@ class MyForm(settingsmixin.SMainWindow):
          users can send messages of any length.
          """
          if len(message) > (2 ** 18 - 500):
@@ -1491,7 +1472,7 @@ index 507e6ca0..4073c68b 100644
              for toAddress in toAddressesList:
                  if toAddress != '':
                      # label plus address
-@@ -1980,18 +2067,32 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -1996,18 +2077,32 @@ class MyForm(settingsmixin.SMainWindow):
                      # email address
                      if toAddress.find("@") >= 0:
                          if isinstance(acct, GatewayAccount):
@@ -1530,7 +1511,7 @@ index 507e6ca0..4073c68b 100644
                              acct = MailchuckAccount(fromAddress)
                              acct.register(email)
                              BMConfigParser().set(fromAddress, 'label', email)
-@@ -2001,76 +2102,79 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2017,76 +2112,79 @@ class MyForm(settingsmixin.SMainWindow):
                                  "MainWindow",
                                  "Error: Your account wasn't registered at"
                                  " an email gateway. Sending registration"
@@ -1634,7 +1615,7 @@ index 507e6ca0..4073c68b 100644
                      elif fromAddress == '':
                          self.updateStatusBar(_translate(
                              "MainWindow",
-@@ -2082,12 +2186,31 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2098,12 +2196,31 @@ class MyForm(settingsmixin.SMainWindow):
                          toAddress = addBMIfNotPresent(toAddress)
  
                          if addressVersionNumber > 4 or addressVersionNumber <= 1:
@@ -1670,7 +1651,7 @@ index 507e6ca0..4073c68b 100644
                              continue
                          self.statusbar.clearMessage()
                          if shared.statusIconColor == 'red':
-@@ -2178,7 +2301,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2194,7 +2311,7 @@ class MyForm(settingsmixin.SMainWindow):
                      '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
  
                  toLabel = str_broadcast_subscribers
@@ -1679,7 +1660,7 @@ index 507e6ca0..4073c68b 100644
                  self.displayNewSentMessage(
                      toAddress, toLabel, fromAddress, subject, message, ackdata)
  
-@@ -2207,11 +2330,11 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2223,11 +2340,11 @@ class MyForm(settingsmixin.SMainWindow):
              ))
  
      def click_pushButtonFetchNamecoinID(self):
@@ -1693,7 +1674,7 @@ index 507e6ca0..4073c68b 100644
          else:
              identities[-1] = addr
              self.ui.lineEditTo.setText("; ".join(identities))
-@@ -2241,8 +2364,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2257,8 +2374,8 @@ class MyForm(settingsmixin.SMainWindow):
                  self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
  #        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
          for i in range(self.ui.comboBoxSendFrom.count()):
@@ -1704,7 +1685,7 @@ index 507e6ca0..4073c68b 100644
              self.ui.comboBoxSendFrom.setItemData(
                  i, AccountColor(address).accountColor(),
                  QtCore.Qt.ForegroundRole)
-@@ -2264,13 +2387,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2280,13 +2397,13 @@ class MyForm(settingsmixin.SMainWindow):
                      label = addressInKeysFile
                  self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
          for i in range(self.ui.comboBoxSendFromBroadcast.count()):
@@ -1721,7 +1702,7 @@ index 507e6ca0..4073c68b 100644
              self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
          else:
              self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
-@@ -2279,29 +2402,47 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2295,29 +2412,47 @@ class MyForm(settingsmixin.SMainWindow):
      # receives a message to an address that is acting as a
      # pseudo-mailing-list. The message will be broadcast out. This function
      # puts the message on the 'Sent' tab.
@@ -1778,7 +1759,7 @@ index 507e6ca0..4073c68b 100644
          if toAddress == str_broadcast_subscribers:
              acct = accountClass(fromAddress)
          else:
-@@ -2309,17 +2450,38 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2325,17 +2460,38 @@ class MyForm(settingsmixin.SMainWindow):
          inbox = self.getAccountMessagelist(acct)
          ret = None
          tab = -1
@@ -1823,7 +1804,7 @@ index 507e6ca0..4073c68b 100644
          if ret is None:
              acct.parseMessage(toAddress, fromAddress, subject, "")
          else:
-@@ -2330,11 +2492,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2346,11 +2502,13 @@ class MyForm(settingsmixin.SMainWindow):
                  'bitmessagesettings', 'showtraynotifications'):
              self.notifierShow(
                  _translate("MainWindow", "New Message"),
@@ -1840,7 +1821,7 @@ index 507e6ca0..4073c68b 100644
              # Ubuntu should notify of new message irespective of
              # whether it's in current message list or not
              self.indicatorUpdate(True, to_label=acct.toLabel)
-@@ -2351,7 +2515,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2367,7 +2525,7 @@ class MyForm(settingsmixin.SMainWindow):
          dialog.exec_()
          try:
              address, label = dialog.data
@@ -1849,7 +1830,7 @@ index 507e6ca0..4073c68b 100644
              return
  
          # First we must check to see if the address is already in the
-@@ -2396,7 +2560,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2412,7 +2570,7 @@ class MyForm(settingsmixin.SMainWindow):
          dialog.exec_()
          try:
              address, label = dialog.data
@@ -1858,62 +1839,7 @@ index 507e6ca0..4073c68b 100644
              return
  
          # We must check to see if the address is already in the
-@@ -2459,14 +2623,14 @@ class MyForm(settingsmixin.SMainWindow):
-                 self.settingsDialogInstance.ui.checkBoxUseIdenticons.isChecked()))
-             BMConfigParser().set('bitmessagesettings', 'replybelow', str(
-                 self.settingsDialogInstance.ui.checkBoxReplyBelow.isChecked()))
--                
--            lang = str(self.settingsDialogInstance.ui.languageComboBox.itemData(self.settingsDialogInstance.ui.languageComboBox.currentIndex()).toString())
-+
-+            lang = str(self.settingsDialogInstance.ui.languageComboBox.itemData(self.settingsDialogInstance.ui.languageComboBox.currentIndex()))
-             BMConfigParser().set('bitmessagesettings', 'userlocale', lang)
-             change_translation(l10n.getTranslationLanguage())
--            
-+
-             if int(BMConfigParser().get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
-                 if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect'):
--                    QtGui.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-+                    QtWidgets.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                         "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
-                 BMConfigParser().set('bitmessagesettings', 'port', str(
-                     self.settingsDialogInstance.ui.lineEditTCPPort.text()))
-@@ -2480,7 +2644,7 @@ class MyForm(settingsmixin.SMainWindow):
-             #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
-             if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
-                 if shared.statusIconColor != 'red':
--                    QtGui.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-+                    QtWidgets.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                         "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
-             if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS':
-                 self.statusbar.clearMessage()
-@@ -2509,7 +2673,7 @@ class MyForm(settingsmixin.SMainWindow):
-                 BMConfigParser().set('bitmessagesettings', 'maxuploadrate', str(
-                     int(float(self.settingsDialogInstance.ui.lineEditMaxUploadRate.text()))))
-             except ValueError:
--                QtGui.QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
-+                QtWidgets.QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
-                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
-             else:
-                 set_rates(BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
-@@ -2538,7 +2702,7 @@ class MyForm(settingsmixin.SMainWindow):
-                 BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
-                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
- 
--            if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
-+            if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
-                 BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
-                 queues.workerQueue.put(('resetPoW', ''))
- 
-@@ -2590,7 +2754,7 @@ class MyForm(settingsmixin.SMainWindow):
-                 if (float(self.settingsDialogInstance.ui.lineEditDays.text()) >=0 and float(self.settingsDialogInstance.ui.lineEditMonths.text()) >=0):
-                     shared.maximumLengthOfTimeToBotherResendingMessages = (float(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60) + (float(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12)
-                     if shared.maximumLengthOfTimeToBotherResendingMessages < 432000: # If the time period is less than 5 hours, we give zero values to all fields. No message will be sent again.
--                        QtGui.QMessageBox.about(self, _translate("MainWindow", "Will not resend ever"), _translate(
-+                        QtWidgets.QMessageBox.about(self, _translate("MainWindow", "Will not resend ever"), _translate(
-                             "MainWindow", "Note that the time limit you entered is less than the amount of time Bitmessage waits for the first resend attempt therefore your messages will never be resent."))
-                         BMConfigParser().set('bitmessagesettings', 'stopresendingafterxdays', '0')
-                         BMConfigParser().set('bitmessagesettings', 'stopresendingafterxmonths', '0')
-@@ -2673,15 +2837,14 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2471,15 +2629,14 @@ class MyForm(settingsmixin.SMainWindow):
          dialog = dialogs.EmailGatewayDialog(self, config=BMConfigParser())
          # For Modal dialogs
          dialog.exec_()
@@ -1932,7 +1858,7 @@ index 507e6ca0..4073c68b 100644
                      == acct.fromAddress:
                  self.ui.comboBoxSendFrom.setCurrentIndex(i)
                  break
-@@ -2700,13 +2863,13 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2498,13 +2655,13 @@ class MyForm(settingsmixin.SMainWindow):
          self.ui.textEditMessage.setFocus()
  
      def on_action_MarkAllRead(self):
@@ -1949,7 +1875,7 @@ index 507e6ca0..4073c68b 100644
              return
          tableWidget = self.getCurrentMessagelist()
  
-@@ -2720,7 +2883,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2518,7 +2675,7 @@ class MyForm(settingsmixin.SMainWindow):
          msgids = []
          for i in range(0, idCount):
              msgids.append(str(tableWidget.item(
@@ -1958,7 +1884,7 @@ index 507e6ca0..4073c68b 100644
              tableWidget.item(i, 0).setUnread(False)
              tableWidget.item(i, 1).setUnread(False)
              tableWidget.item(i, 2).setUnread(False)
-@@ -2740,7 +2903,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2538,7 +2695,7 @@ class MyForm(settingsmixin.SMainWindow):
      def network_switch(self):
          dontconnect_option = not BMConfigParser().safeGetBoolean(
              'bitmessagesettings', 'dontconnect')
@@ -1967,7 +1893,7 @@ index 507e6ca0..4073c68b 100644
              self, _translate("MainWindow", "Disconnecting")
              if dontconnect_option else _translate("MainWindow", "Connecting"),
              _translate(
-@@ -2749,9 +2912,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2547,9 +2704,9 @@ class MyForm(settingsmixin.SMainWindow):
              ) if dontconnect_option else _translate(
                  "MainWindow",
                  "Bitmessage will now start connecting to network. Are you sure?"
@@ -1980,7 +1906,7 @@ index 507e6ca0..4073c68b 100644
              return
          BMConfigParser().set(
              'bitmessagesettings', 'dontconnect', str(dontconnect_option))
-@@ -2777,74 +2940,68 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2575,74 +2732,68 @@ class MyForm(settingsmixin.SMainWindow):
          waitForSync = False
  
          # C PoW currently doesn't support interrupting and OpenCL is untested
@@ -2083,7 +2009,7 @@ index 507e6ca0..4073c68b 100644
  
          if waitForConnection:
              self.updateStatusBar(_translate(
-@@ -2878,16 +3035,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2676,16 +2827,18 @@ class MyForm(settingsmixin.SMainWindow):
                      maxWorkerQueue = curWorkerQueue
                  if curWorkerQueue > 0:
                      self.updateStatusBar(_translate(
@@ -2106,7 +2032,7 @@ index 507e6ca0..4073c68b 100644
  
              QtCore.QCoreApplication.processEvents(
                  QtCore.QEventLoop.AllEvents, 1000
-@@ -2901,29 +3060,27 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2699,29 +2852,27 @@ class MyForm(settingsmixin.SMainWindow):
  
              # check if upload (of objects created locally) pending
              self.updateStatusBar(_translate(
@@ -2141,7 +2067,7 @@ index 507e6ca0..4073c68b 100644
          QtCore.QCoreApplication.processEvents(
              QtCore.QEventLoop.AllEvents, 1000
          )
-@@ -2936,17 +3093,17 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2734,17 +2885,17 @@ class MyForm(settingsmixin.SMainWindow):
                      obj.saveSettings()
  
          self.updateStatusBar(_translate(
@@ -2162,7 +2088,7 @@ index 507e6ca0..4073c68b 100644
  
          logger.info("Shutdown complete")
          super(MyForm, myapp).close()
-@@ -2980,17 +3137,25 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2778,17 +2929,25 @@ class MyForm(settingsmixin.SMainWindow):
          totalLines = len(lines)
          for i in xrange(totalLines):
              if 'Message ostensibly from ' in lines[i]:
@@ -2196,7 +2122,7 @@ index 507e6ca0..4073c68b 100644
  
      def on_action_InboxMarkUnread(self):
          tableWidget = self.getCurrentMessagelist()
-@@ -3002,7 +3167,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2800,7 +2959,7 @@ class MyForm(settingsmixin.SMainWindow):
          for row in tableWidget.selectedIndexes():
              currentRow = row.row()
              msgid = str(tableWidget.item(
@@ -2205,7 +2131,7 @@ index 507e6ca0..4073c68b 100644
              msgids.add(msgid)
              # if not tableWidget.item(currentRow, 0).unread:
              #     modified += 1
-@@ -3017,24 +3182,22 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2815,24 +2974,22 @@ class MyForm(settingsmixin.SMainWindow):
          )
  
          self.propagateUnreadCount()
@@ -2243,7 +2169,7 @@ index 507e6ca0..4073c68b 100644
          def quote_line(line):
              # Do quote empty lines.
              if line == '' or line.isspace():
-@@ -3047,15 +3210,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2845,15 +3002,18 @@ class MyForm(settingsmixin.SMainWindow):
                  return quoteWrapper.fill(line)
          return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
  
@@ -2265,7 +2191,7 @@ index 507e6ca0..4073c68b 100644
              if address in listOfAddressesInComboBoxSendFrom:
                  currentIndex = listOfAddressesInComboBoxSendFrom.index(address)
                  box.setCurrentIndex(currentIndex)
-@@ -3091,7 +3257,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2889,7 +3049,7 @@ class MyForm(settingsmixin.SMainWindow):
          fromAddressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, column_from).address
          msgid = str(tableWidget.item(
@@ -2274,7 +2200,7 @@ index 507e6ca0..4073c68b 100644
          queryreturn = sqlQuery(
              "SELECT message FROM inbox WHERE msgid=?", msgid
          ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", msgid)
-@@ -3101,7 +3267,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2899,7 +3059,8 @@ class MyForm(settingsmixin.SMainWindow):
          acct.parseMessage(
              toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow,
              tableWidget.item(currentInboxRow, 2).subject,
@@ -2284,7 +2210,7 @@ index 507e6ca0..4073c68b 100644
          widget = {
              'subject': self.ui.lineEditSubject,
              'from': self.ui.comboBoxSendFrom,
-@@ -3114,23 +3281,26 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2912,23 +3073,26 @@ class MyForm(settingsmixin.SMainWindow):
              )
  #            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
          elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
@@ -2320,7 +2246,7 @@ index 507e6ca0..4073c68b 100644
          else:
              self.setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(toAddressAtCurrentInboxRow)
              broadcast_tab_index = self.ui.tabWidgetSend.indexOf(
-@@ -3174,7 +3344,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2972,7 +3136,7 @@ class MyForm(settingsmixin.SMainWindow):
          quotedText = self.quoted_text(
              unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
          widget['message'].setPlainText(quotedText)
@@ -2329,7 +2255,7 @@ index 507e6ca0..4073c68b 100644
              widget['subject'].setText(
                  tableWidget.item(currentInboxRow, 2).label)
          else:
-@@ -3190,7 +3360,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -2988,7 +3152,7 @@ class MyForm(settingsmixin.SMainWindow):
          if not tableWidget:
              return
          currentInboxRow = tableWidget.currentRow()
@@ -2338,7 +2264,7 @@ index 507e6ca0..4073c68b 100644
          addressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 1).data(QtCore.Qt.UserRole)
          self.ui.tabWidget.setCurrentIndex(
-@@ -3204,7 +3374,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3002,7 +3166,7 @@ class MyForm(settingsmixin.SMainWindow):
          if not tableWidget:
              return
          currentInboxRow = tableWidget.currentRow()
@@ -2347,7 +2273,7 @@ index 507e6ca0..4073c68b 100644
          addressAtCurrentInboxRow = tableWidget.item(
              currentInboxRow, 1).data(QtCore.Qt.UserRole)
          recipientAddress = tableWidget.item(
-@@ -3228,23 +3398,28 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3026,23 +3190,28 @@ class MyForm(settingsmixin.SMainWindow):
                  "Error: You cannot add the same address to your blacklist"
                  " twice. Try renaming the existing one if you want."))
  
@@ -2382,7 +2308,7 @@ index 507e6ca0..4073c68b 100644
                          messageList.removeRow(i)
  
      # Send item on the Inbox tab to trash
-@@ -3254,20 +3429,24 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3052,20 +3221,24 @@ class MyForm(settingsmixin.SMainWindow):
              return
          currentRow = 0
          folder = self.getCurrentFolder()
@@ -2412,8 +2338,8 @@ index 507e6ca0..4073c68b 100644
 +                r.topRow(), r.bottomRow() - r.topRow() + 1)
          idCount = len(inventoryHashesToTrash)
          sqlExecuteChunked(
-             "DELETE FROM inbox" if folder == "trash" or shifted else
-@@ -3286,20 +3465,24 @@ class MyForm(settingsmixin.SMainWindow):
+             ("DELETE FROM inbox" if folder == "trash" or shifted else
+@@ -3084,20 +3257,24 @@ class MyForm(settingsmixin.SMainWindow):
          tableWidget.setUpdatesEnabled(False)
          inventoryHashesToTrash = []
          # ranges in reversed order
@@ -2444,7 +2370,7 @@ index 507e6ca0..4073c68b 100644
          tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
          tableWidget.setUpdatesEnabled(True)
          self.propagateUnreadCount()
-@@ -3318,16 +3501,19 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3116,16 +3293,19 @@ class MyForm(settingsmixin.SMainWindow):
  
          # Retrieve the message data out of the SQL database
          msgid = str(tableWidget.item(
@@ -2468,7 +2394,7 @@ index 507e6ca0..4073c68b 100644
              return
          try:
              f = open(filename, 'w')
-@@ -3339,15 +3525,17 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3137,15 +3317,17 @@ class MyForm(settingsmixin.SMainWindow):
  
      # Send item on the Sent tab to trash
      def on_action_SentTrash(self):
@@ -2488,7 +2414,7 @@ index 507e6ca0..4073c68b 100644
              sqlExecute(
                  "DELETE FROM sent" if folder == "trash" or shifted else
                  "UPDATE sent SET folder='trash'"
-@@ -3372,15 +3560,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3170,15 +3352,18 @@ class MyForm(settingsmixin.SMainWindow):
          queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
          for row in queryreturn:
              ackdata, = row
@@ -2510,7 +2436,7 @@ index 507e6ca0..4073c68b 100644
          clipboard.setText(str(addressAtCurrentRow))
  
      # Group of functions for the Address Book dialog box
-@@ -3406,7 +3597,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3204,7 +3389,7 @@ class MyForm(settingsmixin.SMainWindow):
                  addresses_string = item.address
              else:
                  addresses_string += ', ' + item.address
@@ -2519,7 +2445,7 @@ index 507e6ca0..4073c68b 100644
          clipboard.setText(addresses_string)
  
      def on_action_AddressBookSend(self):
-@@ -3416,8 +3607,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3214,8 +3399,7 @@ class MyForm(settingsmixin.SMainWindow):
              return self.updateStatusBar(_translate(
                  "MainWindow", "No addresses selected."))
  
@@ -2529,7 +2455,7 @@ index 507e6ca0..4073c68b 100644
          for item in selected_items:
              address_string = item.accountString()
              if not addresses_string:
-@@ -3448,7 +3638,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3246,7 +3430,7 @@ class MyForm(settingsmixin.SMainWindow):
              )
  
      def on_context_menuAddressBook(self, point):
@@ -2538,7 +2464,7 @@ index 507e6ca0..4073c68b 100644
          self.popMenuAddressBook.addAction(self.actionAddressBookSend)
          self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
          self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-@@ -3478,7 +3668,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3276,7 +3460,7 @@ class MyForm(settingsmixin.SMainWindow):
          self.click_pushButtonAddSubscription()
  
      def on_action_SubscriptionsDelete(self):
@@ -2547,7 +2473,7 @@ index 507e6ca0..4073c68b 100644
                  self, "Delete subscription?",
                  _translate(
                      "MainWindow",
-@@ -3489,8 +3679,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3287,8 +3471,8 @@ class MyForm(settingsmixin.SMainWindow):
                      " messages, but you can still view messages you"
                      " already received.\n\nAre you sure you want to"
                      " delete the subscription?"
@@ -2558,7 +2484,7 @@ index 507e6ca0..4073c68b 100644
              return
          address = self.getCurrentAccount()
          sqlExecute('''DELETE FROM subscriptions WHERE address=?''',
-@@ -3502,7 +3692,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3300,7 +3484,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_action_SubscriptionsClipboard(self):
          address = self.getCurrentAccount()
@@ -2567,7 +2493,7 @@ index 507e6ca0..4073c68b 100644
          clipboard.setText(str(address))
  
      def on_action_SubscriptionsEnable(self):
-@@ -3527,7 +3717,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3325,7 +3509,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_context_menuSubscriptions(self, point):
          currentItem = self.getCurrentItem()
@@ -2576,7 +2502,7 @@ index 507e6ca0..4073c68b 100644
          if isinstance(currentItem, Ui_AddressWidget):
              self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
              self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-@@ -3567,17 +3757,15 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3365,17 +3549,15 @@ class MyForm(settingsmixin.SMainWindow):
              return self.ui.tableWidgetInboxSubscriptions
          elif widget == self.ui.treeWidgetChans:
              return self.ui.tableWidgetInboxChans
@@ -2597,7 +2523,7 @@ index 507e6ca0..4073c68b 100644
          if currentIndex >= 0 and currentIndex < len(treeWidgetList):
              return treeWidgetList[currentIndex]
          else:
-@@ -3595,18 +3783,18 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3393,18 +3575,18 @@ class MyForm(settingsmixin.SMainWindow):
              return self.ui.treeWidgetYourIdentities
  
      def getCurrentMessagelist(self):
@@ -2620,7 +2546,7 @@ index 507e6ca0..4073c68b 100644
      def getAccountMessagelist(self, account):
          try:
              if account.type == AccountMixin.CHAN:
-@@ -3623,20 +3811,20 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3421,20 +3603,20 @@ class MyForm(settingsmixin.SMainWindow):
          if messagelist:
              currentRow = messagelist.currentRow()
              if currentRow >= 0:
@@ -2645,7 +2571,7 @@ index 507e6ca0..4073c68b 100644
          if currentIndex >= 0 and currentIndex < len(messagelistList):
              return messagelistList[currentIndex]
          else:
-@@ -3656,33 +3844,29 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3454,33 +3636,29 @@ class MyForm(settingsmixin.SMainWindow):
      def getCurrentSearchLine(self, currentIndex=None, retObj=False):
          if currentIndex is None:
              currentIndex = self.ui.tabWidget.currentIndex()
@@ -2685,7 +2611,7 @@ index 507e6ca0..4073c68b 100644
  
      # Group of functions for the Your Identities dialog box
      def getCurrentItem(self, treeWidget=None):
-@@ -3726,7 +3910,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3524,7 +3702,7 @@ class MyForm(settingsmixin.SMainWindow):
          if account.type == AccountMixin.NORMAL:
              return  # maybe in the future
          elif account.type == AccountMixin.CHAN:
@@ -2694,7 +2620,7 @@ index 507e6ca0..4073c68b 100644
                      self, "Delete channel?",
                      _translate(
                          "MainWindow",
-@@ -3737,8 +3921,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3535,8 +3713,8 @@ class MyForm(settingsmixin.SMainWindow):
                          " messages, but you can still view messages you"
                          " already received.\n\nAre you sure you want to"
                          " delete the channel?"
@@ -2705,7 +2631,7 @@ index 507e6ca0..4073c68b 100644
                  BMConfigParser().remove_section(str(account.address))
              else:
                  return
-@@ -3779,43 +3963,43 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3577,43 +3755,43 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_action_Clipboard(self):
          address = self.getCurrentAccount()
@@ -2764,7 +2690,7 @@ index 507e6ca0..4073c68b 100644
      def on_action_SetAvatar(self, thisTableWidget):
          currentRow = thisTableWidget.currentRow()
          addressAtCurrentRow = thisTableWidget.item(
-@@ -3829,15 +4013,29 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3627,15 +3805,29 @@ class MyForm(settingsmixin.SMainWindow):
          if not os.path.exists(state.appdata + 'avatars/'):
              os.makedirs(state.appdata + 'avatars/')
          hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
@@ -2799,7 +2725,7 @@ index 507e6ca0..4073c68b 100644
              upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
              lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
              if os.path.isfile(lower):
-@@ -3846,33 +4044,42 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3644,33 +3836,42 @@ class MyForm(settingsmixin.SMainWindow):
                  current_files += [upper]
          filters[0:0] = ['Image files (' + ' '.join(all_images_filter) + ')']
          filters[1:1] = ['All files (*.*)']
@@ -2858,7 +2784,7 @@ index 507e6ca0..4073c68b 100644
                  for file in current_files:
                      QtCore.QFile.remove(file)
                  QtCore.QFile.remove(destination)
-@@ -3904,10 +4111,10 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3702,10 +3903,10 @@ class MyForm(settingsmixin.SMainWindow):
              "MainWindow", "Sound files (%s)" %
              ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
          ))]
@@ -2871,7 +2797,7 @@ index 507e6ca0..4073c68b 100644
  
          if not sourcefile:
              return
-@@ -3922,15 +4129,15 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3720,15 +3921,15 @@ class MyForm(settingsmixin.SMainWindow):
          pattern = destfile.lower()
          for item in os.listdir(destdir):
              if item.lower() == pattern:
@@ -2890,7 +2816,7 @@ index 507e6ca0..4073c68b 100644
                  if overwrite:
                      QtCore.QFile.remove(os.path.join(destdir, item))
                  break
-@@ -3941,18 +4148,23 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3739,18 +3940,23 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_context_menuYourIdentities(self, point):
          currentItem = self.getCurrentItem()
@@ -2920,7 +2846,7 @@ index 507e6ca0..4073c68b 100644
              self.popMenuYourIdentities.addAction(self.actionEmailGateway)
              self.popMenuYourIdentities.addSeparator()
              if currentItem.type != AccountMixin.ALL:
-@@ -3971,7 +4183,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3769,7 +3975,7 @@ class MyForm(settingsmixin.SMainWindow):
      # TODO make one popMenu
      def on_context_menuChan(self, point):
          currentItem = self.getCurrentItem()
@@ -2929,7 +2855,7 @@ index 507e6ca0..4073c68b 100644
          if isinstance(currentItem, Ui_AddressWidget):
              self.popMenu.addAction(self.actionNew)
              self.popMenu.addAction(self.actionDelete)
-@@ -4007,7 +4219,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3805,7 +4011,7 @@ class MyForm(settingsmixin.SMainWindow):
              self.on_context_menuSent(point)
              return
  
@@ -2938,7 +2864,7 @@ index 507e6ca0..4073c68b 100644
          self.popMenuInbox.addAction(self.actionForceHtml)
          self.popMenuInbox.addAction(self.actionMarkUnread)
          self.popMenuInbox.addSeparator()
-@@ -4042,7 +4254,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3840,7 +4046,7 @@ class MyForm(settingsmixin.SMainWindow):
  
      def on_context_menuSent(self, point):
          currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -2947,7 +2873,7 @@ index 507e6ca0..4073c68b 100644
          self.popMenuSent.addAction(self.actionSentClipboard)
          self._contact_selected = self.ui.tableWidgetInbox.item(currentRow, 0)
          # preloaded gui.menu plugins with prefix 'address'
-@@ -4056,7 +4268,7 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3854,7 +4060,7 @@ class MyForm(settingsmixin.SMainWindow):
          # menu option (Force Send) if it is.
          if currentRow >= 0:
              ackData = str(self.ui.tableWidgetInbox.item(
@@ -2956,7 +2882,7 @@ index 507e6ca0..4073c68b 100644
              queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
              for row in queryreturn:
                  status, = row
-@@ -4067,24 +4279,26 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3865,24 +4071,26 @@ class MyForm(settingsmixin.SMainWindow):
  
      def inboxSearchLineEditUpdated(self, text):
          # dynamic search for too short text is slow
@@ -2987,7 +2913,7 @@ index 507e6ca0..4073c68b 100644
          if messagelist:
              messagelist.setFocus()
  
-@@ -4119,8 +4333,8 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3917,8 +4125,8 @@ class MyForm(settingsmixin.SMainWindow):
          # "All accounts" can't be renamed
          if item.type == AccountMixin.ALL:
              return
@@ -2998,7 +2924,7 @@ index 507e6ca0..4073c68b 100644
          oldLabel = item.defaultLabel()
  
          # unchanged, do not do anything either
-@@ -4139,7 +4353,9 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3937,7 +4145,9 @@ class MyForm(settingsmixin.SMainWindow):
          self.rerenderMessagelistFromLabels()
          if item.type != AccountMixin.SUBSCRIPTION:
              self.rerenderMessagelistToLabels()
@@ -3009,7 +2935,7 @@ index 507e6ca0..4073c68b 100644
              self.rerenderAddressBook()
          self.recurDepth -= 1
  
-@@ -4159,10 +4375,12 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -3957,10 +4167,12 @@ class MyForm(settingsmixin.SMainWindow):
              )
  
          try:
@@ -3024,129 +2950,7 @@ index 507e6ca0..4073c68b 100644
              message = _translate(
                  "MainWindow",
                  "Error occurred: could not load message from disk."
-@@ -4253,10 +4471,10 @@ class MyForm(settingsmixin.SMainWindow):
-                     obj.loadSettings()
- 
- 
--class settingsDialog(QtGui.QDialog):
--
-+class settingsDialog(QtWidgets.QDialog):
-+    # pylint: disable=too-many-branches
-     def __init__(self, parent):
--        QtGui.QWidget.__init__(self, parent)
-+        super(settingsDialog, self).__init__(parent)
-         self.ui = Ui_settingsDialog()
-         self.ui.setupUi(self)
-         self.parent = parent
-@@ -4278,7 +4496,7 @@ class settingsDialog(QtGui.QDialog):
-             BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'))
-         self.ui.checkBoxReplyBelow.setChecked(
-             BMConfigParser().safeGetBoolean('bitmessagesettings', 'replybelow'))
--        
-+
-         if state.appdata == paths.lookupExeFolder():
-             self.ui.checkBoxPortableMode.setChecked(True)
-         else:
-@@ -4334,8 +4552,8 @@ class settingsDialog(QtGui.QDialog):
-             BMConfigParser().get('bitmessagesettings', 'socksusername')))
-         self.ui.lineEditSocksPassword.setText(str(
-             BMConfigParser().get('bitmessagesettings', 'sockspassword')))
--        QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL(
--            "currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
-+        self.ui.comboBoxProxyType.currentIndexChanged.connect(
-+            self.comboBoxProxyTypeChanged)
-         self.ui.lineEditMaxDownloadRate.setText(str(
-             BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
-         self.ui.lineEditMaxUploadRate.setText(str(
-@@ -4391,39 +4609,39 @@ class settingsDialog(QtGui.QDialog):
-         else:
-             assert False
- 
--        QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
--            "toggled(bool)"), self.namecoinTypeChanged)
--        QtCore.QObject.connect(self.ui.radioButtonNamecoinNmcontrol, QtCore.SIGNAL(
--            "toggled(bool)"), self.namecoinTypeChanged)
--        QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
--            "clicked()"), self.click_pushButtonNamecoinTest)
-+        self.ui.radioButtonNamecoinNamecoind.toggled.connect(
-+            self.namecoinTypeChanged)
-+        self.ui.radioButtonNamecoinNmcontrol.toggled.connect(
-+            self.namecoinTypeChanged)
-+        self.ui.pushButtonNamecoinTest.clicked.connect(
-+            self.click_pushButtonNamecoinTest)
- 
--        #Message Resend tab
-+        # Message Resend tab
-         self.ui.lineEditDays.setText(str(
-             BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')))
-         self.ui.lineEditMonths.setText(str(
-             BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')))
--        
--        
--        #'System' tab removed for now.
--        """try:
--            maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
--        except:
--            maxCores = 99999
--        if maxCores <= 1:
--            self.ui.comboBoxMaxCores.setCurrentIndex(0)
--        elif maxCores == 2:
--            self.ui.comboBoxMaxCores.setCurrentIndex(1)
--        elif maxCores <= 4:
--            self.ui.comboBoxMaxCores.setCurrentIndex(2)
--        elif maxCores <= 8:
--            self.ui.comboBoxMaxCores.setCurrentIndex(3)
--        elif maxCores <= 16:
--            self.ui.comboBoxMaxCores.setCurrentIndex(4)
--        else:
--            self.ui.comboBoxMaxCores.setCurrentIndex(5)"""
- 
--        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-+        # 'System' tab removed for now.
-+        # try:
-+        #     maxCores = BMConfigParser().getint(
-+        #         'bitmessagesettings', 'maxcores')
-+        # except:
-+        #     maxCores = 99999
-+        # if maxCores <= 1:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(0)
-+        # elif maxCores == 2:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(1)
-+        # elif maxCores <= 4:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(2)
-+        # elif maxCores <= 8:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(3)
-+        # elif maxCores <= 16:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(4)
-+        # else:
-+        #     self.ui.comboBoxMaxCores.setCurrentIndex(5)
-+
-+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
- 
-     def comboBoxProxyTypeChanged(self, comboBoxIndex):
-         if comboBoxIndex == 0:
-@@ -4471,13 +4689,13 @@ class settingsDialog(QtGui.QDialog):
-         """Test the namecoin settings specified in the settings dialog."""
-         self.ui.labelNamecoinTestResult.setText(_translate(
-             "MainWindow", "Testing..."))
--        options = {}
--        options["type"] = self.getNamecoinType()
--        options["host"] = str(self.ui.lineEditNamecoinHost.text().toUtf8())
--        options["port"] = str(self.ui.lineEditNamecoinPort.text().toUtf8())
--        options["user"] = str(self.ui.lineEditNamecoinUser.text().toUtf8())
--        options["password"] = str(self.ui.lineEditNamecoinPassword.text().toUtf8())
--        nc = namecoin.namecoinConnection(options)
-+        nc = namecoin.namecoinConnection({
-+            'type': self.getNamecoinType(),
-+            'host': str(self.ui.lineEditNamecoinHost.text()),
-+            'port': str(self.ui.lineEditNamecoinPort.text()),
-+            'user': str(self.ui.lineEditNamecoinUser.text()),
-+            'password': str(self.ui.lineEditNamecoinPassword.text())
-+        })
-         status, text = nc.test()
-         self.ui.labelNamecoinTestResult.setText(text)
-         if status == 'success':
-@@ -4487,17 +4705,36 @@ class settingsDialog(QtGui.QDialog):
+@@ -4054,17 +4266,36 @@ class MyForm(settingsmixin.SMainWindow):
  # In order for the time columns on the Inbox and Sent tabs to be sorted
  # correctly (rather than alphabetically), we need to overload the <
  # operator and use this class instead of QTableWidgetItem.
@@ -3186,7 +2990,7 @@ index 507e6ca0..4073c68b 100644
      """
      Listener to allow our Qt form to get focus when another instance of the
      application is open.
-@@ -4516,15 +4753,15 @@ class MySingleApplication(QtGui.QApplication):
+@@ -4083,15 +4314,15 @@ class MySingleApplication(QtGui.QApplication):
          self.server = None
          self.is_running = False
  
@@ -3205,7 +3009,7 @@ index 507e6ca0..4073c68b 100644
  
          socket.abort()
  
-@@ -4535,7 +4772,7 @@ class MySingleApplication(QtGui.QApplication):
+@@ -4102,7 +4333,7 @@ class MySingleApplication(QtGui.QApplication):
          else:
              # Nope, create a local server with this id and assign on_new_connection
              # for whenever a second instance tries to run focus the application.
@@ -5030,34 +4834,27 @@ index 80993fac..0eb347a3 100644
   </customwidgets>
   <resources>
 diff --git a/src/bitmessageqt/dialogs.py b/src/bitmessageqt/dialogs.py
-index 1acdbc3f..9c33616e 100644
+index b4bcd2fd..4774ea8e 100644
 --- a/src/bitmessageqt/dialogs.py
 +++ b/src/bitmessageqt/dialogs.py
-@@ -3,19 +3,19 @@ src/bitmessageqt/dialogs.py
+@@ -3,7 +3,7 @@ src/bitmessageqt/dialogs.py
  ===========================
  """
  
 -from PyQt4 import QtGui
--
--from version import softwareVersion
 +from qtpy import QtWidgets
  
  import paths
  import widgets
- from address_dialogs import (
--    AddAddressDialog, EmailGatewayDialog, NewAddressDialog, NewSubscriptionDialog, RegenerateAddressesDialog,
-+    AddAddressDialog, EmailGatewayDialog, NewAddressDialog,
-+    NewSubscriptionDialog, RegenerateAddressesDialog,
-     SpecialAddressBehaviorDialog
- )
- from newchandialog import NewChanDialog
- from retranslateui import RetranslateMixin
+@@ -18,7 +18,6 @@ from settings import SettingsDialog
  from tr import _translate
-+from version import softwareVersion
+ from version import softwareVersion
  
+-
  __all__ = [
      "NewChanDialog", "AddAddressDialog", "NewAddressDialog",
-@@ -24,7 +24,7 @@ __all__ = [
+     "NewSubscriptionDialog", "RegenerateAddressesDialog",
+@@ -27,7 +26,7 @@ __all__ = [
  ]
  
  
@@ -5066,7 +4863,7 @@ index 1acdbc3f..9c33616e 100644
      """The `About` dialog"""
      def __init__(self, parent=None):
          super(AboutDialog, self).__init__(parent)
-@@ -49,10 +49,10 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
+@@ -52,10 +51,10 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
          except AttributeError:
              pass
  
@@ -5079,7 +4876,7 @@ index 1acdbc3f..9c33616e 100644
      """The `Icon Glossary` dialog, explaining the status icon colors"""
      def __init__(self, parent=None, config=None):
          super(IconGlossaryDialog, self).__init__(parent)
-@@ -63,22 +63,23 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
+@@ -66,22 +65,23 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
  
          self.labelPortNumber.setText(_translate(
              "iconGlossaryDialog",
@@ -6343,768 +6140,54 @@ index edacd4bb..3890219c 100644
          tmp = SafeHTMLParser.replace_pre(data)
          tmp = self.uriregex1.sub(r'<a href="\1">\1</a>', tmp)
 diff --git a/src/bitmessageqt/settings.py b/src/bitmessageqt/settings.py
-index 3a3db962..b9211a57 100644
+index 513f285b..19893079 100644
 --- a/src/bitmessageqt/settings.py
 +++ b/src/bitmessageqt/settings.py
-@@ -1,469 +1,445 @@
--# -*- coding: utf-8 -*-
--# pylint: disable=too-many-instance-attributes,too-many-locals,too-many-statements,attribute-defined-outside-init
--"""
--src/bitmessageqt/settings.py
--============================
--
--Form implementation generated from reading ui file 'settings.ui'
--
--Created: Thu Dec 25 23:21:20 2014
--     by: PyQt4 UI code generator 4.10.3
--
--WARNING! All changes made in this file will be lost!
--"""
-+# pylint: skip-file
-+# flake8: noqa
- 
- from sys import platform
+@@ -1,7 +1,7 @@
+ import os
+ import sys
  
 -from PyQt4 import QtCore, QtGui
--
--from . import bitmessage_icons_rc  # pylint: disable=unused-import
--from .languagebox import LanguageBox
--
--try:
--    _fromUtf8 = QtCore.QString.fromUtf8
--except AttributeError:
--    def _fromUtf8(s):
--        return s
--
--try:
--    _encoding = QtGui.QApplication.UnicodeUTF8
 +from qtpy import QtCore, QtGui, QtWidgets
  
--    def _translate(context, text, disambig):
--        return QtGui.QApplication.translate(context, text, disambig, _encoding)
--except AttributeError:
--    def _translate(context, text, disambig):
--        return QtGui.QApplication.translate(context, text, disambig)
-+# Please don't touch this is needed for icons!
-+import bitmessage_icons_rc  # noqa F401
-+from languagebox import LanguageBox
-+from tr import _translate
+ import debug
+ import defaults
+@@ -20,7 +20,7 @@ from network.asyncore_pollchoose import set_rates
+ from tr import _translate
  
  
- class Ui_settingsDialog(object):
-     """Encapsulate a UI settings dialog object"""
+-class SettingsDialog(QtGui.QDialog):
++class SettingsDialog(QtWidgets.QDialog):
+     """The "Settings" dialog"""
+     def __init__(self, parent=None, firstrun=False):
+         super(SettingsDialog, self).__init__(parent)
+@@ -42,7 +42,7 @@ class SettingsDialog(QtGui.QDialog):
+             self.tabWidgetSettings.setCurrentIndex(
+                 self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
+             )
+-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
++        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
  
-     def setupUi(self, settingsDialog):
--        """Set up the UI"""
--
--        settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-+        settingsDialog.setObjectName("settingsDialog")
-         settingsDialog.resize(521, 413)
--        self.gridLayout = QtGui.QGridLayout(settingsDialog)
--        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
--        self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
-+        self.gridLayout = QtWidgets.QGridLayout(settingsDialog)
-+        self.gridLayout.setObjectName("gridLayout")
-+        self.buttonBox = QtWidgets.QDialogButtonBox(settingsDialog)
-         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
--        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel | QtGui.QDialogButtonBox.Ok)
--        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-+        self.buttonBox.setObjectName("buttonBox")
-         self.gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
--        self.tabWidgetSettings = QtGui.QTabWidget(settingsDialog)
--        self.tabWidgetSettings.setObjectName(_fromUtf8("tabWidgetSettings"))
--        self.tabUserInterface = QtGui.QWidget()
-+        self.tabWidgetSettings = QtWidgets.QTabWidget(settingsDialog)
-+        self.tabWidgetSettings.setObjectName("tabWidgetSettings")
-+        self.tabUserInterface = QtWidgets.QWidget()
-         self.tabUserInterface.setEnabled(True)
--        self.tabUserInterface.setObjectName(_fromUtf8("tabUserInterface"))
--        self.formLayout = QtGui.QFormLayout(self.tabUserInterface)
--        self.formLayout.setObjectName(_fromUtf8("formLayout"))
--        self.checkBoxStartOnLogon = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxStartOnLogon.setObjectName(_fromUtf8("checkBoxStartOnLogon"))
--        self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.checkBoxStartOnLogon)
--        self.groupBoxTray = QtGui.QGroupBox(self.tabUserInterface)
--        self.groupBoxTray.setObjectName(_fromUtf8("groupBoxTray"))
--        self.formLayoutTray = QtGui.QFormLayout(self.groupBoxTray)
--        self.formLayoutTray.setObjectName(_fromUtf8("formLayoutTray"))
--        self.checkBoxStartInTray = QtGui.QCheckBox(self.groupBoxTray)
--        self.checkBoxStartInTray.setObjectName(_fromUtf8("checkBoxStartInTray"))
--        self.formLayoutTray.setWidget(0, QtGui.QFormLayout.SpanningRole, self.checkBoxStartInTray)
--        self.checkBoxMinimizeToTray = QtGui.QCheckBox(self.groupBoxTray)
-+        self.tabUserInterface.setObjectName("tabUserInterface")
-+        self.formLayout = QtWidgets.QFormLayout(self.tabUserInterface)
-+        self.formLayout.setObjectName("formLayout")
-+        self.checkBoxStartOnLogon = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxStartOnLogon.setObjectName("checkBoxStartOnLogon")
-+        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.checkBoxStartOnLogon)
-+        self.groupBoxTray = QtWidgets.QGroupBox(self.tabUserInterface)
-+        self.groupBoxTray.setObjectName("groupBoxTray")
-+        self.formLayoutTray = QtWidgets.QFormLayout(self.groupBoxTray)
-+        self.formLayoutTray.setObjectName("formLayoutTray")
-+        self.checkBoxStartInTray = QtWidgets.QCheckBox(self.groupBoxTray)
-+        self.checkBoxStartInTray.setObjectName("checkBoxStartInTray")
-+        self.formLayoutTray.setWidget(0, QtWidgets.QFormLayout.SpanningRole, self.checkBoxStartInTray)
-+        self.checkBoxMinimizeToTray = QtWidgets.QCheckBox(self.groupBoxTray)
-         self.checkBoxMinimizeToTray.setChecked(True)
--        self.checkBoxMinimizeToTray.setObjectName(_fromUtf8("checkBoxMinimizeToTray"))
--        self.formLayoutTray.setWidget(1, QtGui.QFormLayout.LabelRole, self.checkBoxMinimizeToTray)
--        self.checkBoxTrayOnClose = QtGui.QCheckBox(self.groupBoxTray)
-+        self.checkBoxMinimizeToTray.setObjectName("checkBoxMinimizeToTray")
-+        self.formLayoutTray.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.checkBoxMinimizeToTray)
-+        self.checkBoxTrayOnClose = QtWidgets.QCheckBox(self.groupBoxTray)
-         self.checkBoxTrayOnClose.setChecked(True)
--        self.checkBoxTrayOnClose.setObjectName(_fromUtf8("checkBoxTrayOnClose"))
--        self.formLayoutTray.setWidget(2, QtGui.QFormLayout.LabelRole, self.checkBoxTrayOnClose)
--        self.formLayout.setWidget(1, QtGui.QFormLayout.SpanningRole, self.groupBoxTray)
--        self.checkBoxHideTrayConnectionNotifications = QtGui.QCheckBox(self.tabUserInterface)
-+        self.checkBoxTrayOnClose.setObjectName("checkBoxTrayOnClose")
-+        self.formLayoutTray.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.checkBoxTrayOnClose)
-+        self.formLayout.setWidget(1, QtWidgets.QFormLayout.SpanningRole, self.groupBoxTray)
-+        self.checkBoxHideTrayConnectionNotifications = QtWidgets.QCheckBox(self.tabUserInterface)
-         self.checkBoxHideTrayConnectionNotifications.setChecked(False)
--        self.checkBoxHideTrayConnectionNotifications.setObjectName(
--            _fromUtf8("checkBoxHideTrayConnectionNotifications"))
--        self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.checkBoxHideTrayConnectionNotifications)
--        self.checkBoxShowTrayNotifications = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxShowTrayNotifications.setObjectName(_fromUtf8("checkBoxShowTrayNotifications"))
--        self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.checkBoxShowTrayNotifications)
--        self.checkBoxPortableMode = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxPortableMode.setObjectName(_fromUtf8("checkBoxPortableMode"))
--        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.checkBoxPortableMode)
--        self.PortableModeDescription = QtGui.QLabel(self.tabUserInterface)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
-+        self.checkBoxHideTrayConnectionNotifications.setObjectName("checkBoxHideTrayConnectionNotifications")
-+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.checkBoxHideTrayConnectionNotifications)
-+        self.checkBoxShowTrayNotifications = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxShowTrayNotifications.setObjectName("checkBoxShowTrayNotifications")
-+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.checkBoxShowTrayNotifications)
-+        self.checkBoxPortableMode = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxPortableMode.setObjectName("checkBoxPortableMode")
-+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.checkBoxPortableMode)
-+        self.PortableModeDescription = QtWidgets.QLabel(self.tabUserInterface)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.PortableModeDescription.sizePolicy().hasHeightForWidth())
-         self.PortableModeDescription.setSizePolicy(sizePolicy)
-         self.PortableModeDescription.setWordWrap(True)
--        self.PortableModeDescription.setObjectName(_fromUtf8("PortableModeDescription"))
--        self.formLayout.setWidget(5, QtGui.QFormLayout.SpanningRole, self.PortableModeDescription)
--        self.checkBoxWillinglySendToMobile = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxWillinglySendToMobile.setObjectName(_fromUtf8("checkBoxWillinglySendToMobile"))
--        self.formLayout.setWidget(6, QtGui.QFormLayout.SpanningRole, self.checkBoxWillinglySendToMobile)
--        self.checkBoxUseIdenticons = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxUseIdenticons.setObjectName(_fromUtf8("checkBoxUseIdenticons"))
--        self.formLayout.setWidget(7, QtGui.QFormLayout.LabelRole, self.checkBoxUseIdenticons)
--        self.checkBoxReplyBelow = QtGui.QCheckBox(self.tabUserInterface)
--        self.checkBoxReplyBelow.setObjectName(_fromUtf8("checkBoxReplyBelow"))
--        self.formLayout.setWidget(8, QtGui.QFormLayout.LabelRole, self.checkBoxReplyBelow)
--        self.groupBox = QtGui.QGroupBox(self.tabUserInterface)
--        self.groupBox.setObjectName(_fromUtf8("groupBox"))
--        self.formLayout_2 = QtGui.QFormLayout(self.groupBox)
--        self.formLayout_2.setObjectName(_fromUtf8("formLayout_2"))
-+        self.PortableModeDescription.setObjectName("PortableModeDescription")
-+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.PortableModeDescription)
-+        self.checkBoxWillinglySendToMobile = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxWillinglySendToMobile.setObjectName("checkBoxWillinglySendToMobile")
-+        self.formLayout.setWidget(6, QtWidgets.QFormLayout.SpanningRole, self.checkBoxWillinglySendToMobile)
-+        self.checkBoxUseIdenticons = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxUseIdenticons.setObjectName("checkBoxUseIdenticons")
-+        self.formLayout.setWidget(7, QtWidgets.QFormLayout.LabelRole, self.checkBoxUseIdenticons)
-+        self.checkBoxReplyBelow = QtWidgets.QCheckBox(self.tabUserInterface)
-+        self.checkBoxReplyBelow.setObjectName("checkBoxReplyBelow")
-+        self.formLayout.setWidget(8, QtWidgets.QFormLayout.LabelRole, self.checkBoxReplyBelow)
-+        self.groupBox = QtWidgets.QGroupBox(self.tabUserInterface)
-+        self.groupBox.setObjectName("groupBox")
-+        self.formLayout_2 = QtWidgets.QFormLayout(self.groupBox)
-+        self.formLayout_2.setObjectName("formLayout_2")
-         self.languageComboBox = LanguageBox(self.groupBox)
-         self.languageComboBox.setMinimumSize(QtCore.QSize(100, 0))
--        self.languageComboBox.setObjectName(_fromUtf8("languageComboBox"))  # pylint: disable=not-callable
--        self.formLayout_2.setWidget(0, QtGui.QFormLayout.LabelRole, self.languageComboBox)
--        self.formLayout.setWidget(9, QtGui.QFormLayout.FieldRole, self.groupBox)
--        self.tabWidgetSettings.addTab(self.tabUserInterface, _fromUtf8(""))
--        self.tabNetworkSettings = QtGui.QWidget()
--        self.tabNetworkSettings.setObjectName(_fromUtf8("tabNetworkSettings"))
--        self.gridLayout_4 = QtGui.QGridLayout(self.tabNetworkSettings)
--        self.gridLayout_4.setObjectName(_fromUtf8("gridLayout_4"))
--        self.groupBox1 = QtGui.QGroupBox(self.tabNetworkSettings)
--        self.groupBox1.setObjectName(_fromUtf8("groupBox1"))
--        self.gridLayout_3 = QtGui.QGridLayout(self.groupBox1)
--        self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
--        self.label = QtGui.QLabel(self.groupBox1)
--        self.label.setObjectName(_fromUtf8("label"))
-+        self.languageComboBox.setObjectName("languageComboBox")
-+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.languageComboBox)
-+        self.formLayout.setWidget(9, QtWidgets.QFormLayout.FieldRole, self.groupBox)
-+        self.tabWidgetSettings.addTab(self.tabUserInterface, "")
-+        self.tabNetworkSettings = QtWidgets.QWidget()
-+        self.tabNetworkSettings.setObjectName("tabNetworkSettings")
-+        self.gridLayout_4 = QtWidgets.QGridLayout(self.tabNetworkSettings)
-+        self.gridLayout_4.setObjectName("gridLayout_4")
-+        self.groupBox1 = QtWidgets.QGroupBox(self.tabNetworkSettings)
-+        self.groupBox1.setObjectName("groupBox1")
-+        self.gridLayout_3 = QtWidgets.QGridLayout(self.groupBox1)
-+        self.gridLayout_3.setObjectName("gridLayout_3")
-+        self.label = QtWidgets.QLabel(self.groupBox1)
-+        self.label.setObjectName("label")
-         self.gridLayout_3.addWidget(self.label, 0, 0, 1, 1, QtCore.Qt.AlignRight)
--        self.lineEditTCPPort = QtGui.QLineEdit(self.groupBox1)
-+        self.lineEditTCPPort = QtWidgets.QLineEdit(self.groupBox1)
-         self.lineEditTCPPort.setMaximumSize(QtCore.QSize(70, 16777215))
--        self.lineEditTCPPort.setObjectName(_fromUtf8("lineEditTCPPort"))
-+        self.lineEditTCPPort.setObjectName("lineEditTCPPort")
-         self.gridLayout_3.addWidget(self.lineEditTCPPort, 0, 1, 1, 1, QtCore.Qt.AlignLeft)
--        self.labelUPnP = QtGui.QLabel(self.groupBox1)
--        self.labelUPnP.setObjectName(_fromUtf8("labelUPnP"))
-+        self.labelUPnP = QtWidgets.QLabel(self.groupBox1)
-+        self.labelUPnP.setObjectName("labelUPnP")
-         self.gridLayout_3.addWidget(self.labelUPnP, 0, 2, 1, 1, QtCore.Qt.AlignRight)
--        self.checkBoxUPnP = QtGui.QCheckBox(self.groupBox1)
--        self.checkBoxUPnP.setObjectName(_fromUtf8("checkBoxUPnP"))
-+        self.checkBoxUPnP = QtWidgets.QCheckBox(self.groupBox1)
-+        self.checkBoxUPnP.setObjectName("checkBoxUPnP")
-         self.gridLayout_3.addWidget(self.checkBoxUPnP, 0, 3, 1, 1, QtCore.Qt.AlignLeft)
-         self.gridLayout_4.addWidget(self.groupBox1, 0, 0, 1, 1)
--        self.groupBox_3 = QtGui.QGroupBox(self.tabNetworkSettings)
--        self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
--        self.gridLayout_9 = QtGui.QGridLayout(self.groupBox_3)
--        self.gridLayout_9.setObjectName(_fromUtf8("gridLayout_9"))
--        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        self.groupBox_3 = QtWidgets.QGroupBox(self.tabNetworkSettings)
-+        self.groupBox_3.setObjectName("groupBox_3")
-+        self.gridLayout_9 = QtWidgets.QGridLayout(self.groupBox_3)
-+        self.gridLayout_9.setObjectName("gridLayout_9")
-+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_9.addItem(spacerItem1, 0, 0, 2, 1)
--        self.label_24 = QtGui.QLabel(self.groupBox_3)
--        self.label_24.setObjectName(_fromUtf8("label_24"))
-+        self.label_24 = QtWidgets.QLabel(self.groupBox_3)
-+        self.label_24.setObjectName("label_24")
-         self.gridLayout_9.addWidget(self.label_24, 0, 1, 1, 1)
--        self.lineEditMaxDownloadRate = QtGui.QLineEdit(self.groupBox_3)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditMaxDownloadRate = QtWidgets.QLineEdit(self.groupBox_3)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditMaxDownloadRate.sizePolicy().hasHeightForWidth())
-         self.lineEditMaxDownloadRate.setSizePolicy(sizePolicy)
-         self.lineEditMaxDownloadRate.setMaximumSize(QtCore.QSize(60, 16777215))
--        self.lineEditMaxDownloadRate.setObjectName(_fromUtf8("lineEditMaxDownloadRate"))
-+        self.lineEditMaxDownloadRate.setObjectName("lineEditMaxDownloadRate")
-         self.gridLayout_9.addWidget(self.lineEditMaxDownloadRate, 0, 2, 1, 1)
--        self.label_25 = QtGui.QLabel(self.groupBox_3)
--        self.label_25.setObjectName(_fromUtf8("label_25"))
-+        self.label_25 = QtWidgets.QLabel(self.groupBox_3)
-+        self.label_25.setObjectName("label_25")
-         self.gridLayout_9.addWidget(self.label_25, 1, 1, 1, 1)
--        self.lineEditMaxUploadRate = QtGui.QLineEdit(self.groupBox_3)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditMaxUploadRate = QtWidgets.QLineEdit(self.groupBox_3)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditMaxUploadRate.sizePolicy().hasHeightForWidth())
-         self.lineEditMaxUploadRate.setSizePolicy(sizePolicy)
-         self.lineEditMaxUploadRate.setMaximumSize(QtCore.QSize(60, 16777215))
--        self.lineEditMaxUploadRate.setObjectName(_fromUtf8("lineEditMaxUploadRate"))
-+        self.lineEditMaxUploadRate.setObjectName("lineEditMaxUploadRate")
-         self.gridLayout_9.addWidget(self.lineEditMaxUploadRate, 1, 2, 1, 1)
--        self.label_26 = QtGui.QLabel(self.groupBox_3)
--        self.label_26.setObjectName(_fromUtf8("label_26"))
-+        self.label_26 = QtWidgets.QLabel(self.groupBox_3)
-+        self.label_26.setObjectName("label_26")
-         self.gridLayout_9.addWidget(self.label_26, 2, 1, 1, 1)
--        self.lineEditMaxOutboundConnections = QtGui.QLineEdit(self.groupBox_3)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditMaxOutboundConnections = QtWidgets.QLineEdit(self.groupBox_3)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditMaxOutboundConnections.sizePolicy().hasHeightForWidth())
-         self.lineEditMaxOutboundConnections.setSizePolicy(sizePolicy)
-         self.lineEditMaxOutboundConnections.setMaximumSize(QtCore.QSize(60, 16777215))
--        self.lineEditMaxOutboundConnections.setObjectName(_fromUtf8("lineEditMaxOutboundConnections"))
-+        self.lineEditMaxOutboundConnections.setObjectName("lineEditMaxOutboundConnections")
-         self.lineEditMaxOutboundConnections.setValidator(
-             QtGui.QIntValidator(0, 8, self.lineEditMaxOutboundConnections))
-         self.gridLayout_9.addWidget(self.lineEditMaxOutboundConnections, 2, 2, 1, 1)
-         self.gridLayout_4.addWidget(self.groupBox_3, 2, 0, 1, 1)
--        self.groupBox_2 = QtGui.QGroupBox(self.tabNetworkSettings)
--        self.groupBox_2.setObjectName(_fromUtf8("groupBox_2"))
--        self.gridLayout_2 = QtGui.QGridLayout(self.groupBox_2)
--        self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
--        self.label_2 = QtGui.QLabel(self.groupBox_2)
--        self.label_2.setObjectName(_fromUtf8("label_2"))
-+        self.groupBox_2 = QtWidgets.QGroupBox(self.tabNetworkSettings)
-+        self.groupBox_2.setObjectName("groupBox_2")
-+        self.gridLayout_2 = QtWidgets.QGridLayout(self.groupBox_2)
-+        self.gridLayout_2.setObjectName("gridLayout_2")
-+        self.label_2 = QtWidgets.QLabel(self.groupBox_2)
-+        self.label_2.setObjectName("label_2")
-         self.gridLayout_2.addWidget(self.label_2, 0, 0, 1, 1)
--        self.label_3 = QtGui.QLabel(self.groupBox_2)
--        self.label_3.setObjectName(_fromUtf8("label_3"))
-+        self.label_3 = QtWidgets.QLabel(self.groupBox_2)
-+        self.label_3.setObjectName("label_3")
-         self.gridLayout_2.addWidget(self.label_3, 1, 1, 1, 1)
--        self.lineEditSocksHostname = QtGui.QLineEdit(self.groupBox_2)
--        self.lineEditSocksHostname.setObjectName(_fromUtf8("lineEditSocksHostname"))
--        self.lineEditSocksHostname.setPlaceholderText(_fromUtf8("127.0.0.1"))
-+        self.lineEditSocksHostname = QtWidgets.QLineEdit(self.groupBox_2)
-+        self.lineEditSocksHostname.setObjectName("lineEditSocksHostname")
-+        self.lineEditSocksHostname.setPlaceholderText("127.0.0.1")
-         self.gridLayout_2.addWidget(self.lineEditSocksHostname, 1, 2, 1, 2)
--        self.label_4 = QtGui.QLabel(self.groupBox_2)
--        self.label_4.setObjectName(_fromUtf8("label_4"))
-+        self.label_4 = QtWidgets.QLabel(self.groupBox_2)
-+        self.label_4.setObjectName("label_4")
-         self.gridLayout_2.addWidget(self.label_4, 1, 4, 1, 1)
--        self.lineEditSocksPort = QtGui.QLineEdit(self.groupBox_2)
--        self.lineEditSocksPort.setObjectName(_fromUtf8("lineEditSocksPort"))
-+        self.lineEditSocksPort = QtWidgets.QLineEdit(self.groupBox_2)
-+        self.lineEditSocksPort.setObjectName("lineEditSocksPort")
-         if platform in ['darwin', 'win32', 'win64']:
--            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9150"))
-+            self.lineEditSocksPort.setPlaceholderText("9150")
-         else:
--            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9050"))
-+            self.lineEditSocksPort.setPlaceholderText("9050")
-         self.gridLayout_2.addWidget(self.lineEditSocksPort, 1, 5, 1, 1)
--        self.checkBoxAuthentication = QtGui.QCheckBox(self.groupBox_2)
--        self.checkBoxAuthentication.setObjectName(_fromUtf8("checkBoxAuthentication"))
-+        self.checkBoxAuthentication = QtWidgets.QCheckBox(self.groupBox_2)
-+        self.checkBoxAuthentication.setObjectName("checkBoxAuthentication")
-         self.gridLayout_2.addWidget(self.checkBoxAuthentication, 2, 1, 1, 1)
--        self.label_5 = QtGui.QLabel(self.groupBox_2)
--        self.label_5.setObjectName(_fromUtf8("label_5"))
-+        self.label_5 = QtWidgets.QLabel(self.groupBox_2)
-+        self.label_5.setObjectName("label_5")
-         self.gridLayout_2.addWidget(self.label_5, 2, 2, 1, 1)
--        self.lineEditSocksUsername = QtGui.QLineEdit(self.groupBox_2)
-+        self.lineEditSocksUsername = QtWidgets.QLineEdit(self.groupBox_2)
-         self.lineEditSocksUsername.setEnabled(False)
--        self.lineEditSocksUsername.setObjectName(_fromUtf8("lineEditSocksUsername"))
-+        self.lineEditSocksUsername.setObjectName("lineEditSocksUsername")
-         self.gridLayout_2.addWidget(self.lineEditSocksUsername, 2, 3, 1, 1)
--        self.label_6 = QtGui.QLabel(self.groupBox_2)
--        self.label_6.setObjectName(_fromUtf8("label_6"))
-+        self.label_6 = QtWidgets.QLabel(self.groupBox_2)
-+        self.label_6.setObjectName("label_6")
-         self.gridLayout_2.addWidget(self.label_6, 2, 4, 1, 1)
--        self.lineEditSocksPassword = QtGui.QLineEdit(self.groupBox_2)
-+        self.lineEditSocksPassword = QtWidgets.QLineEdit(self.groupBox_2)
-         self.lineEditSocksPassword.setEnabled(False)
-         self.lineEditSocksPassword.setInputMethodHints(
-             QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText)
--        self.lineEditSocksPassword.setEchoMode(QtGui.QLineEdit.Password)
--        self.lineEditSocksPassword.setObjectName(_fromUtf8("lineEditSocksPassword"))
-+        self.lineEditSocksPassword.setEchoMode(QtWidgets.QLineEdit.Password)
-+        self.lineEditSocksPassword.setObjectName("lineEditSocksPassword")
-         self.gridLayout_2.addWidget(self.lineEditSocksPassword, 2, 5, 1, 1)
--        self.checkBoxSocksListen = QtGui.QCheckBox(self.groupBox_2)
--        self.checkBoxSocksListen.setObjectName(_fromUtf8("checkBoxSocksListen"))
-+        self.checkBoxSocksListen = QtWidgets.QCheckBox(self.groupBox_2)
-+        self.checkBoxSocksListen.setObjectName("checkBoxSocksListen")
-         self.gridLayout_2.addWidget(self.checkBoxSocksListen, 3, 1, 1, 4)
--        self.comboBoxProxyType = QtGui.QComboBox(self.groupBox_2)
--        self.comboBoxProxyType.setObjectName(_fromUtf8("comboBoxProxyType"))  # pylint: disable=not-callable
--        self.comboBoxProxyType.addItem(_fromUtf8(""))
--        self.comboBoxProxyType.addItem(_fromUtf8(""))
--        self.comboBoxProxyType.addItem(_fromUtf8(""))
-+        self.comboBoxProxyType = QtWidgets.QComboBox(self.groupBox_2)
-+        self.comboBoxProxyType.setObjectName("comboBoxProxyType")
-+        self.comboBoxProxyType.addItem("")
-+        self.comboBoxProxyType.addItem("")
-+        self.comboBoxProxyType.addItem("")
-         self.gridLayout_2.addWidget(self.comboBoxProxyType, 0, 1, 1, 1)
-         self.gridLayout_4.addWidget(self.groupBox_2, 1, 0, 1, 1)
--        spacerItem2 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-         self.gridLayout_4.addItem(spacerItem2, 3, 0, 1, 1)
--        self.tabWidgetSettings.addTab(self.tabNetworkSettings, _fromUtf8(""))
--        self.tabDemandedDifficulty = QtGui.QWidget()
--        self.tabDemandedDifficulty.setObjectName(_fromUtf8("tabDemandedDifficulty"))
--        self.gridLayout_6 = QtGui.QGridLayout(self.tabDemandedDifficulty)
--        self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
--        self.label_9 = QtGui.QLabel(self.tabDemandedDifficulty)
--        self.label_9.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_9.setObjectName(_fromUtf8("label_9"))
-+        self.tabWidgetSettings.addTab(self.tabNetworkSettings, "")
-+        self.tabDemandedDifficulty = QtWidgets.QWidget()
-+        self.tabDemandedDifficulty.setObjectName("tabDemandedDifficulty")
-+        self.gridLayout_6 = QtWidgets.QGridLayout(self.tabDemandedDifficulty)
-+        self.gridLayout_6.setObjectName("gridLayout_6")
-+        self.label_9 = QtWidgets.QLabel(self.tabDemandedDifficulty)
-+        self.label_9.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_9.setObjectName("label_9")
-         self.gridLayout_6.addWidget(self.label_9, 1, 1, 1, 1)
--        self.label_10 = QtGui.QLabel(self.tabDemandedDifficulty)
-+        self.label_10 = QtWidgets.QLabel(self.tabDemandedDifficulty)
-         self.label_10.setWordWrap(True)
--        self.label_10.setObjectName(_fromUtf8("label_10"))
-+        self.label_10.setObjectName("label_10")
-         self.gridLayout_6.addWidget(self.label_10, 2, 0, 1, 3)
--        self.label_11 = QtGui.QLabel(self.tabDemandedDifficulty)
--        self.label_11.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_11.setObjectName(_fromUtf8("label_11"))
-+        self.label_11 = QtWidgets.QLabel(self.tabDemandedDifficulty)
-+        self.label_11.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_11.setObjectName("label_11")
-         self.gridLayout_6.addWidget(self.label_11, 3, 1, 1, 1)
--        self.label_8 = QtGui.QLabel(self.tabDemandedDifficulty)
-+        self.label_8 = QtWidgets.QLabel(self.tabDemandedDifficulty)
-         self.label_8.setWordWrap(True)
--        self.label_8.setObjectName(_fromUtf8("label_8"))
-+        self.label_8.setObjectName("label_8")
-         self.gridLayout_6.addWidget(self.label_8, 0, 0, 1, 3)
--        spacerItem3 = QtGui.QSpacerItem(203, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem3 = QtWidgets.QSpacerItem(203, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_6.addItem(spacerItem3, 1, 0, 1, 1)
--        self.label_12 = QtGui.QLabel(self.tabDemandedDifficulty)
-+        self.label_12 = QtWidgets.QLabel(self.tabDemandedDifficulty)
-         self.label_12.setWordWrap(True)
--        self.label_12.setObjectName(_fromUtf8("label_12"))
-+        self.label_12.setObjectName("label_12")
-         self.gridLayout_6.addWidget(self.label_12, 4, 0, 1, 3)
--        self.lineEditSmallMessageDifficulty = QtGui.QLineEdit(self.tabDemandedDifficulty)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditSmallMessageDifficulty = QtWidgets.QLineEdit(self.tabDemandedDifficulty)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditSmallMessageDifficulty.sizePolicy().hasHeightForWidth())
-         self.lineEditSmallMessageDifficulty.setSizePolicy(sizePolicy)
-         self.lineEditSmallMessageDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
--        self.lineEditSmallMessageDifficulty.setObjectName(_fromUtf8("lineEditSmallMessageDifficulty"))
-+        self.lineEditSmallMessageDifficulty.setObjectName("lineEditSmallMessageDifficulty")
-         self.gridLayout_6.addWidget(self.lineEditSmallMessageDifficulty, 3, 2, 1, 1)
--        self.lineEditTotalDifficulty = QtGui.QLineEdit(self.tabDemandedDifficulty)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditTotalDifficulty = QtWidgets.QLineEdit(self.tabDemandedDifficulty)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditTotalDifficulty.sizePolicy().hasHeightForWidth())
-         self.lineEditTotalDifficulty.setSizePolicy(sizePolicy)
-         self.lineEditTotalDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
--        self.lineEditTotalDifficulty.setObjectName(_fromUtf8("lineEditTotalDifficulty"))
-+        self.lineEditTotalDifficulty.setObjectName("lineEditTotalDifficulty")
-         self.gridLayout_6.addWidget(self.lineEditTotalDifficulty, 1, 2, 1, 1)
--        spacerItem4 = QtGui.QSpacerItem(203, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem4 = QtWidgets.QSpacerItem(203, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_6.addItem(spacerItem4, 3, 0, 1, 1)
--        spacerItem5 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-+        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-         self.gridLayout_6.addItem(spacerItem5, 5, 0, 1, 1)
--        self.tabWidgetSettings.addTab(self.tabDemandedDifficulty, _fromUtf8(""))
--        self.tabMaxAcceptableDifficulty = QtGui.QWidget()
--        self.tabMaxAcceptableDifficulty.setObjectName(_fromUtf8("tabMaxAcceptableDifficulty"))
--        self.gridLayout_7 = QtGui.QGridLayout(self.tabMaxAcceptableDifficulty)
--        self.gridLayout_7.setObjectName(_fromUtf8("gridLayout_7"))
--        self.label_15 = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
-+        self.tabWidgetSettings.addTab(self.tabDemandedDifficulty, "")
-+        self.tabMaxAcceptableDifficulty = QtWidgets.QWidget()
-+        self.tabMaxAcceptableDifficulty.setObjectName("tabMaxAcceptableDifficulty")
-+        self.gridLayout_7 = QtWidgets.QGridLayout(self.tabMaxAcceptableDifficulty)
-+        self.gridLayout_7.setObjectName("gridLayout_7")
-+        self.label_15 = QtWidgets.QLabel(self.tabMaxAcceptableDifficulty)
-         self.label_15.setWordWrap(True)
--        self.label_15.setObjectName(_fromUtf8("label_15"))
-+        self.label_15.setObjectName("label_15")
-         self.gridLayout_7.addWidget(self.label_15, 0, 0, 1, 3)
--        spacerItem6 = QtGui.QSpacerItem(102, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem6 = QtWidgets.QSpacerItem(102, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_7.addItem(spacerItem6, 1, 0, 1, 1)
--        self.label_13 = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
-+        self.label_13 = QtWidgets.QLabel(self.tabMaxAcceptableDifficulty)
-         self.label_13.setLayoutDirection(QtCore.Qt.LeftToRight)
--        self.label_13.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_13.setObjectName(_fromUtf8("label_13"))
-+        self.label_13.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_13.setObjectName("label_13")
-         self.gridLayout_7.addWidget(self.label_13, 1, 1, 1, 1)
--        self.lineEditMaxAcceptableTotalDifficulty = QtGui.QLineEdit(self.tabMaxAcceptableDifficulty)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditMaxAcceptableTotalDifficulty = QtWidgets.QLineEdit(self.tabMaxAcceptableDifficulty)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditMaxAcceptableTotalDifficulty.sizePolicy().hasHeightForWidth())
-         self.lineEditMaxAcceptableTotalDifficulty.setSizePolicy(sizePolicy)
-         self.lineEditMaxAcceptableTotalDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
--        self.lineEditMaxAcceptableTotalDifficulty.setObjectName(_fromUtf8("lineEditMaxAcceptableTotalDifficulty"))
-+        self.lineEditMaxAcceptableTotalDifficulty.setObjectName("lineEditMaxAcceptableTotalDifficulty")
-         self.gridLayout_7.addWidget(self.lineEditMaxAcceptableTotalDifficulty, 1, 2, 1, 1)
--        spacerItem7 = QtGui.QSpacerItem(102, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem7 = QtWidgets.QSpacerItem(102, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_7.addItem(spacerItem7, 2, 0, 1, 1)
--        self.label_14 = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
--        self.label_14.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_14.setObjectName(_fromUtf8("label_14"))
-+        self.label_14 = QtWidgets.QLabel(self.tabMaxAcceptableDifficulty)
-+        self.label_14.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_14.setObjectName("label_14")
-         self.gridLayout_7.addWidget(self.label_14, 2, 1, 1, 1)
--        self.lineEditMaxAcceptableSmallMessageDifficulty = QtGui.QLineEdit(self.tabMaxAcceptableDifficulty)
--        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-+        self.lineEditMaxAcceptableSmallMessageDifficulty = QtWidgets.QLineEdit(self.tabMaxAcceptableDifficulty)
-+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-         sizePolicy.setHorizontalStretch(0)
-         sizePolicy.setVerticalStretch(0)
-         sizePolicy.setHeightForWidth(self.lineEditMaxAcceptableSmallMessageDifficulty.sizePolicy().hasHeightForWidth())
-         self.lineEditMaxAcceptableSmallMessageDifficulty.setSizePolicy(sizePolicy)
-         self.lineEditMaxAcceptableSmallMessageDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
--        self.lineEditMaxAcceptableSmallMessageDifficulty.setObjectName(
--            _fromUtf8("lineEditMaxAcceptableSmallMessageDifficulty"))
-+        self.lineEditMaxAcceptableSmallMessageDifficulty.setObjectName("lineEditMaxAcceptableSmallMessageDifficulty")
-         self.gridLayout_7.addWidget(self.lineEditMaxAcceptableSmallMessageDifficulty, 2, 2, 1, 1)
--        spacerItem8 = QtGui.QSpacerItem(20, 147, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-+        spacerItem8 = QtWidgets.QSpacerItem(20, 147, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-         self.gridLayout_7.addItem(spacerItem8, 3, 1, 1, 1)
--        self.labelOpenCL = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
--        self.labelOpenCL.setObjectName(_fromUtf8("labelOpenCL"))
-+        self.labelOpenCL = QtWidgets.QLabel(self.tabMaxAcceptableDifficulty)
-+        self.labelOpenCL.setObjectName("labelOpenCL")
-         self.gridLayout_7.addWidget(self.labelOpenCL, 4, 0, 1, 1)
--        self.comboBoxOpenCL = QtGui.QComboBox(self.tabMaxAcceptableDifficulty)
--        self.comboBoxOpenCL.setObjectName = (_fromUtf8("comboBoxOpenCL"))
-+        self.comboBoxOpenCL = QtWidgets.QComboBox(self.tabMaxAcceptableDifficulty)
-+        self.comboBoxOpenCL.setObjectName = ("comboBoxOpenCL")
-         self.gridLayout_7.addWidget(self.comboBoxOpenCL, 4, 1, 1, 1)
--        self.tabWidgetSettings.addTab(self.tabMaxAcceptableDifficulty, _fromUtf8(""))
--        self.tabNamecoin = QtGui.QWidget()
--        self.tabNamecoin.setObjectName(_fromUtf8("tabNamecoin"))
--        self.gridLayout_8 = QtGui.QGridLayout(self.tabNamecoin)
--        self.gridLayout_8.setObjectName(_fromUtf8("gridLayout_8"))
--        spacerItem9 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        self.tabWidgetSettings.addTab(self.tabMaxAcceptableDifficulty, "")
-+        self.tabNamecoin = QtWidgets.QWidget()
-+        self.tabNamecoin.setObjectName("tabNamecoin")
-+        self.gridLayout_8 = QtWidgets.QGridLayout(self.tabNamecoin)
-+        self.gridLayout_8.setObjectName("gridLayout_8")
-+        spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_8.addItem(spacerItem9, 2, 0, 1, 1)
--        self.label_16 = QtGui.QLabel(self.tabNamecoin)
-+        self.label_16 = QtWidgets.QLabel(self.tabNamecoin)
-         self.label_16.setWordWrap(True)
--        self.label_16.setObjectName(_fromUtf8("label_16"))
-+        self.label_16.setObjectName("label_16")
-         self.gridLayout_8.addWidget(self.label_16, 0, 0, 1, 3)
--        self.label_17 = QtGui.QLabel(self.tabNamecoin)
--        self.label_17.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_17.setObjectName(_fromUtf8("label_17"))
-+        self.label_17 = QtWidgets.QLabel(self.tabNamecoin)
-+        self.label_17.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_17.setObjectName("label_17")
-         self.gridLayout_8.addWidget(self.label_17, 2, 1, 1, 1)
--        self.lineEditNamecoinHost = QtGui.QLineEdit(self.tabNamecoin)
--        self.lineEditNamecoinHost.setObjectName(_fromUtf8("lineEditNamecoinHost"))
-+        self.lineEditNamecoinHost = QtWidgets.QLineEdit(self.tabNamecoin)
-+        self.lineEditNamecoinHost.setObjectName("lineEditNamecoinHost")
-         self.gridLayout_8.addWidget(self.lineEditNamecoinHost, 2, 2, 1, 1)
--        spacerItem10 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_8.addItem(spacerItem10, 3, 0, 1, 1)
--        spacerItem11 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_8.addItem(spacerItem11, 4, 0, 1, 1)
--        self.label_18 = QtGui.QLabel(self.tabNamecoin)
-+        self.label_18 = QtWidgets.QLabel(self.tabNamecoin)
-         self.label_18.setEnabled(True)
--        self.label_18.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_18.setObjectName(_fromUtf8("label_18"))
-+        self.label_18.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_18.setObjectName("label_18")
-         self.gridLayout_8.addWidget(self.label_18, 3, 1, 1, 1)
--        self.lineEditNamecoinPort = QtGui.QLineEdit(self.tabNamecoin)
--        self.lineEditNamecoinPort.setObjectName(_fromUtf8("lineEditNamecoinPort"))
-+        self.lineEditNamecoinPort = QtWidgets.QLineEdit(self.tabNamecoin)
-+        self.lineEditNamecoinPort.setObjectName("lineEditNamecoinPort")
-         self.gridLayout_8.addWidget(self.lineEditNamecoinPort, 3, 2, 1, 1)
--        spacerItem12 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-+        spacerItem12 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-         self.gridLayout_8.addItem(spacerItem12, 8, 1, 1, 1)
--        self.labelNamecoinUser = QtGui.QLabel(self.tabNamecoin)
--        self.labelNamecoinUser.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.labelNamecoinUser.setObjectName(_fromUtf8("labelNamecoinUser"))
-+        self.labelNamecoinUser = QtWidgets.QLabel(self.tabNamecoin)
-+        self.labelNamecoinUser.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.labelNamecoinUser.setObjectName("labelNamecoinUser")
-         self.gridLayout_8.addWidget(self.labelNamecoinUser, 4, 1, 1, 1)
--        self.lineEditNamecoinUser = QtGui.QLineEdit(self.tabNamecoin)
--        self.lineEditNamecoinUser.setObjectName(_fromUtf8("lineEditNamecoinUser"))
-+        self.lineEditNamecoinUser = QtWidgets.QLineEdit(self.tabNamecoin)
-+        self.lineEditNamecoinUser.setObjectName("lineEditNamecoinUser")
-         self.gridLayout_8.addWidget(self.lineEditNamecoinUser, 4, 2, 1, 1)
--        spacerItem13 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem13 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_8.addItem(spacerItem13, 5, 0, 1, 1)
--        self.labelNamecoinPassword = QtGui.QLabel(self.tabNamecoin)
-+        self.labelNamecoinPassword = QtWidgets.QLabel(self.tabNamecoin)
-         self.labelNamecoinPassword.setAlignment(
-             QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.labelNamecoinPassword.setObjectName(_fromUtf8("labelNamecoinPassword"))
-+        self.labelNamecoinPassword.setObjectName("labelNamecoinPassword")
-         self.gridLayout_8.addWidget(self.labelNamecoinPassword, 5, 1, 1, 1)
--        self.lineEditNamecoinPassword = QtGui.QLineEdit(self.tabNamecoin)
-+        self.lineEditNamecoinPassword = QtWidgets.QLineEdit(self.tabNamecoin)
-         self.lineEditNamecoinPassword.setInputMethodHints(
-             QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText)
--        self.lineEditNamecoinPassword.setEchoMode(QtGui.QLineEdit.Password)
--        self.lineEditNamecoinPassword.setObjectName(_fromUtf8("lineEditNamecoinPassword"))
-+        self.lineEditNamecoinPassword.setEchoMode(QtWidgets.QLineEdit.Password)
-+        self.lineEditNamecoinPassword.setObjectName("lineEditNamecoinPassword")
-         self.gridLayout_8.addWidget(self.lineEditNamecoinPassword, 5, 2, 1, 1)
--        self.labelNamecoinTestResult = QtGui.QLabel(self.tabNamecoin)
--        self.labelNamecoinTestResult.setText(_fromUtf8(""))
--        self.labelNamecoinTestResult.setObjectName(_fromUtf8("labelNamecoinTestResult"))
-+        self.labelNamecoinTestResult = QtWidgets.QLabel(self.tabNamecoin)
-+        self.labelNamecoinTestResult.setText("")
-+        self.labelNamecoinTestResult.setObjectName("labelNamecoinTestResult")
-         self.gridLayout_8.addWidget(self.labelNamecoinTestResult, 7, 0, 1, 2)
--        self.pushButtonNamecoinTest = QtGui.QPushButton(self.tabNamecoin)
--        self.pushButtonNamecoinTest.setObjectName(_fromUtf8("pushButtonNamecoinTest"))
-+        self.pushButtonNamecoinTest = QtWidgets.QPushButton(self.tabNamecoin)
-+        self.pushButtonNamecoinTest.setObjectName("pushButtonNamecoinTest")
-         self.gridLayout_8.addWidget(self.pushButtonNamecoinTest, 7, 2, 1, 1)
--        self.horizontalLayout = QtGui.QHBoxLayout()
--        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
--        self.label_21 = QtGui.QLabel(self.tabNamecoin)
--        self.label_21.setObjectName(_fromUtf8("label_21"))
-+        self.horizontalLayout = QtWidgets.QHBoxLayout()
-+        self.horizontalLayout.setObjectName("horizontalLayout")
-+        self.label_21 = QtWidgets.QLabel(self.tabNamecoin)
-+        self.label_21.setObjectName("label_21")
-         self.horizontalLayout.addWidget(self.label_21)
--        self.radioButtonNamecoinNamecoind = QtGui.QRadioButton(self.tabNamecoin)
--        self.radioButtonNamecoinNamecoind.setObjectName(_fromUtf8("radioButtonNamecoinNamecoind"))
-+        self.radioButtonNamecoinNamecoind = QtWidgets.QRadioButton(self.tabNamecoin)
-+        self.radioButtonNamecoinNamecoind.setObjectName("radioButtonNamecoinNamecoind")
-         self.horizontalLayout.addWidget(self.radioButtonNamecoinNamecoind)
--        self.radioButtonNamecoinNmcontrol = QtGui.QRadioButton(self.tabNamecoin)
--        self.radioButtonNamecoinNmcontrol.setObjectName(_fromUtf8("radioButtonNamecoinNmcontrol"))
-+        self.radioButtonNamecoinNmcontrol = QtWidgets.QRadioButton(self.tabNamecoin)
-+        self.radioButtonNamecoinNmcontrol.setObjectName("radioButtonNamecoinNmcontrol")
-         self.horizontalLayout.addWidget(self.radioButtonNamecoinNmcontrol)
-         self.gridLayout_8.addLayout(self.horizontalLayout, 1, 0, 1, 3)
--        self.tabWidgetSettings.addTab(self.tabNamecoin, _fromUtf8(""))
--        self.tabResendsExpire = QtGui.QWidget()
--        self.tabResendsExpire.setObjectName(_fromUtf8("tabResendsExpire"))
--        self.gridLayout_5 = QtGui.QGridLayout(self.tabResendsExpire)
--        self.gridLayout_5.setObjectName(_fromUtf8("gridLayout_5"))
--        self.label_7 = QtGui.QLabel(self.tabResendsExpire)
-+        self.tabWidgetSettings.addTab(self.tabNamecoin, "")
-+        self.tabResendsExpire = QtWidgets.QWidget()
-+        self.tabResendsExpire.setObjectName("tabResendsExpire")
-+        self.gridLayout_5 = QtWidgets.QGridLayout(self.tabResendsExpire)
-+        self.gridLayout_5.setObjectName("gridLayout_5")
-+        self.label_7 = QtWidgets.QLabel(self.tabResendsExpire)
-         self.label_7.setWordWrap(True)
--        self.label_7.setObjectName(_fromUtf8("label_7"))
-+        self.label_7.setObjectName("label_7")
-         self.gridLayout_5.addWidget(self.label_7, 0, 0, 1, 3)
--        spacerItem14 = QtGui.QSpacerItem(212, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-+        spacerItem14 = QtWidgets.QSpacerItem(212, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-         self.gridLayout_5.addItem(spacerItem14, 1, 0, 1, 1)
--        self.widget = QtGui.QWidget(self.tabResendsExpire)
-+        self.widget = QtWidgets.QWidget(self.tabResendsExpire)
-         self.widget.setMinimumSize(QtCore.QSize(231, 75))
--        self.widget.setObjectName(_fromUtf8("widget"))
--        self.label_19 = QtGui.QLabel(self.widget)
-+        self.widget.setObjectName("widget")
-+        self.label_19 = QtWidgets.QLabel(self.widget)
-         self.label_19.setGeometry(QtCore.QRect(10, 20, 101, 20))
--        self.label_19.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_19.setObjectName(_fromUtf8("label_19"))
--        self.label_20 = QtGui.QLabel(self.widget)
-+        self.label_19.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_19.setObjectName("label_19")
-+        self.label_20 = QtWidgets.QLabel(self.widget)
-         self.label_20.setGeometry(QtCore.QRect(30, 40, 80, 16))
--        self.label_20.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
--        self.label_20.setObjectName(_fromUtf8("label_20"))
--        self.lineEditDays = QtGui.QLineEdit(self.widget)
-+        self.label_20.setAlignment(
-+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-+        self.label_20.setObjectName("label_20")
-+        self.lineEditDays = QtWidgets.QLineEdit(self.widget)
-         self.lineEditDays.setGeometry(QtCore.QRect(113, 20, 51, 20))
--        self.lineEditDays.setObjectName(_fromUtf8("lineEditDays"))
--        self.lineEditMonths = QtGui.QLineEdit(self.widget)
-+        self.lineEditDays.setObjectName("lineEditDays")
-+        self.lineEditMonths = QtWidgets.QLineEdit(self.widget)
-         self.lineEditMonths.setGeometry(QtCore.QRect(113, 40, 51, 20))
--        self.lineEditMonths.setObjectName(_fromUtf8("lineEditMonths"))
--        self.label_22 = QtGui.QLabel(self.widget)
-+        self.lineEditMonths.setObjectName("lineEditMonths")
-+        self.label_22 = QtWidgets.QLabel(self.widget)
-         self.label_22.setGeometry(QtCore.QRect(169, 23, 61, 16))
--        self.label_22.setObjectName(_fromUtf8("label_22"))
--        self.label_23 = QtGui.QLabel(self.widget)
-+        self.label_22.setObjectName("label_22")
-+        self.label_23 = QtWidgets.QLabel(self.widget)
-         self.label_23.setGeometry(QtCore.QRect(170, 41, 71, 16))
--        self.label_23.setObjectName(_fromUtf8("label_23"))
-+        self.label_23.setObjectName("label_23")
-         self.gridLayout_5.addWidget(self.widget, 1, 2, 1, 1)
--        spacerItem15 = QtGui.QSpacerItem(20, 129, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-+        spacerItem15 = QtWidgets.QSpacerItem(20, 129, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-         self.gridLayout_5.addItem(spacerItem15, 2, 1, 1, 1)
--        self.tabWidgetSettings.addTab(self.tabResendsExpire, _fromUtf8(""))
-+        self.tabWidgetSettings.addTab(self.tabResendsExpire, "")
-         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
- 
-         self.retranslateUi(settingsDialog)
-         self.tabWidgetSettings.setCurrentIndex(0)
--        QtCore.QObject.connect(  # pylint: disable=no-member
--            self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), settingsDialog.accept)
--        QtCore.QObject.connect(  # pylint: disable=no-member
--            self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), settingsDialog.reject)
--        QtCore.QObject.connect(  # pylint: disable=no-member
--            self.checkBoxAuthentication,
--            QtCore.SIGNAL(
--                _fromUtf8("toggled(bool)")),
-+
-+        self.buttonBox.accepted.connect(settingsDialog.accept)
-+        self.buttonBox.rejected.connect(settingsDialog.reject)
-+        self.checkBoxAuthentication.toggled.connect(
-             self.lineEditSocksUsername.setEnabled)
--        QtCore.QObject.connect(  # pylint: disable=no-member
--            self.checkBoxAuthentication,
--            QtCore.SIGNAL(
--                _fromUtf8("toggled(bool)")),
-+        self.checkBoxAuthentication.toggled.connect(
-             self.lineEditSocksPassword.setEnabled)
-+
-         QtCore.QMetaObject.connectSlotsByName(settingsDialog)
-+
-         settingsDialog.setTabOrder(self.tabWidgetSettings, self.checkBoxStartOnLogon)
-         settingsDialog.setTabOrder(self.checkBoxStartOnLogon, self.checkBoxStartInTray)
-         settingsDialog.setTabOrder(self.checkBoxStartInTray, self.checkBoxMinimizeToTray)
-@@ -623,8 +599,7 @@ class Ui_settingsDialog(object):
-         self.label_20.setText(_translate("settingsDialog", "and", None))
-         self.label_22.setText(_translate("settingsDialog", "days", None))
-         self.label_23.setText(_translate("settingsDialog", "months.", None))
-+
-         self.tabWidgetSettings.setTabText(
--            self.tabWidgetSettings.indexOf(
--                self.tabResendsExpire),
--            _translate(
--                "settingsDialog", "Resends Expire", None))
-+            self.tabWidgetSettings.indexOf(self.tabResendsExpire),
-+            _translate("settingsDialog", "Resends Expire", None))
+     def adjust_from_config(self, config):
+         """Adjust all widgets state according to config settings"""
+@@ -341,7 +341,7 @@ class SettingsDialog(QtGui.QDialog):
+             self.config.set('bitmessagesettings', 'maxuploadrate', str(
+                 int(float(self.lineEditMaxUploadRate.text()))))
+         except ValueError:
+-            QtGui.QMessageBox.about(
++            QtWidgets.QMessageBox.about(
+                 self, _translate("MainWindow", "Number needed"),
+                 _translate(
+                     "MainWindow",
+@@ -464,7 +464,7 @@ class SettingsDialog(QtGui.QDialog):
+             if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
+                 # If the time period is less than 5 hours, we give
+                 # zero values to all fields. No message will be sent again.
+-                QtGui.QMessageBox.about(
++                QtWidgets.QMessageBox.about(
+                     self,
+                     _translate("MainWindow", "Will not resend ever"),
+                     _translate(
 diff --git a/src/bitmessageqt/settingsmixin.py b/src/bitmessageqt/settingsmixin.py
 index 3d5999e2..9e53c6fb 100644
 --- a/src/bitmessageqt/settingsmixin.py

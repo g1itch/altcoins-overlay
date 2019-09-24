@@ -9,10 +9,10 @@ index 05970440..c30276e4 100644
 -Categories=Office;Email;
 +Categories=Office;Email;Network;
 diff --git a/setup.py b/setup.py
-index e3f97bac..4486cf57 100644
+index 3a9c7a3c..622c1932 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -22,7 +22,8 @@ EXTRAS_REQUIRE = {
+@@ -23,7 +23,8 @@ EXTRAS_REQUIRE = {
          'curses',  # src/depends.py
          'python2-pythondialog',  # src/depends.py
          'm2r',  # fab build_docs
@@ -22,22 +22,70 @@ index e3f97bac..4486cf57 100644
  }
  
  
-@@ -147,6 +148,10 @@ if __name__ == "__main__":
+@@ -148,6 +149,9 @@ if __name__ == "__main__":
                  'libmessaging ='
                  'pybitmessage.plugins.indicator_libmessaging [gir]'
              ],
 +            'bitmessage.desktop': [
-+                'freedesktop ='
-+                'pybitmessage.plugins.desktop_xdg [xdg]'
++                'freedesktop = pybitmessage.plugins.desktop_xdg [xdg]'
 +            ],
-             # 'console_scripts': [
-             #        'pybitmessage = pybitmessage.bitmessagemain:main'
-             # ]
+             'bitmessage.proxyconfig': [
+                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
+             ],
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index a645166f..cc2137b6 100644
+index 94c00e38..6139d5f4 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
-@@ -1346,12 +1346,21 @@ class MyForm(settingsmixin.SMainWindow):
+@@ -628,8 +628,6 @@ class MyForm(settingsmixin.SMainWindow):
+                     BMConfigParser().remove_section(addressInKeysFile)
+                     BMConfigParser().save()
+ 
+-        self.updateStartOnLogon()
+-
+         self.change_translation()
+ 
+         # e.g. for editing labels
+@@ -824,26 +822,25 @@ class MyForm(settingsmixin.SMainWindow):
+             self._contact_selected = None
+ 
+     def updateStartOnLogon(self):
+-        # Configure Bitmessage to start on startup (or remove the
+-        # configuration) based on the setting in the keys.dat file
++        """
++        Configure Bitmessage to start on startup (or remove the
++        configuration) based on the setting in the keys.dat file
++        """
++        startonlogon = BMConfigParser().safeGetBoolean(
++            'bitmessagesettings', 'startonlogon')
+         if 'win32' in sys.platform or 'win64' in sys.platform:
+             # Auto-startup for Windows
+             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+-            self.settings = QtCore.QSettings(
++            settings = QtCore.QSettings(
+                 RUN_PATH, QtCore.QSettings.NativeFormat)
+             # In case the user moves the program and the registry entry is
+             # no longer valid, this will delete the old registry entry.
+-            self.settings.remove("PyBitmessage")
+-            if BMConfigParser().getboolean(
+-                    'bitmessagesettings', 'startonlogon'
+-            ):
+-                self.settings.setValue("PyBitmessage", sys.argv[0])
+-        elif 'darwin' in sys.platform:
+-            # startup for mac
+-            pass
+-        elif 'linux' in sys.platform:
+-            # startup for linux
+-            pass
++            if startonlogon:
++                settings.setValue("PyBitmessage", sys.argv[0])
++            else:
++                settings.remove("PyBitmessage")
++        elif self.desktop:
++            self.desktop.adjust_startonlogon(startonlogon)
+ 
+     def updateTTL(self, sliderPosition):
+         TTL = int(sliderPosition ** 3.199 + 3600)
+@@ -1399,12 +1396,21 @@ class MyForm(settingsmixin.SMainWindow):
      def sqlInit(self):
          register_adapter(QtCore.QByteArray, str)
  
@@ -61,62 +109,47 @@ index a645166f..cc2137b6 100644
          try:
              self.indicatorUpdate = get_plugin('indicator')(self)
          except (NameError, TypeError):
-@@ -2557,20 +2566,18 @@ class MyForm(settingsmixin.SMainWindow):
- 
-             BMConfigParser().save()
- 
-+            startonlogon = BMConfigParser().safeGetBoolean(
-+                'bitmessagesettings', 'startonlogon')
-             if 'win32' in sys.platform or 'win64' in sys.platform:
--            # Auto-startup for Windows
-+                # Auto-startup for Windows
-                 RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-                 self.settings = QtCore.QSettings(RUN_PATH, QtCore.QSettings.NativeFormat)
--                if BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'):
-+                if startonlogon:
-                     self.settings.setValue("PyBitmessage", sys.argv[0])
-                 else:
-                     self.settings.remove("PyBitmessage")
--            elif 'darwin' in sys.platform:
--                # startup for mac
--                pass
--            elif 'linux' in sys.platform:
--                # startup for linux
--                pass
-+            elif self.desktop:
-+                self.desktop.adjust_startonlogon(startonlogon)
- 
-             if state.appdata != paths.lookupExeFolder() and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
-                 # Write the keys.dat file to disk in the new location
-@@ -4247,19 +4254,18 @@ class settingsDialog(QtGui.QDialog):
-                 self.ui.checkBoxPortableMode.setDisabled(True)
+@@ -4132,6 +4138,7 @@ def run():
+     myapp.appIndicatorInit(app)
+     myapp.indicatorInit()
+     myapp.notifierInit()
++    myapp.updateStartOnLogon()
+     myapp._firstrun = BMConfigParser().safeGetBoolean(
+         'bitmessagesettings', 'dontconnect')
+     if myapp._firstrun:
+diff --git a/src/bitmessageqt/settings.py b/src/bitmessageqt/settings.py
+index 513f285b..4c432833 100644
+--- a/src/bitmessageqt/settings.py
++++ b/src/bitmessageqt/settings.py
+@@ -77,19 +77,18 @@ class SettingsDialog(QtGui.QDialog):
+                 self.checkBoxPortableMode.setDisabled(True)
  
          if 'darwin' in sys.platform:
--            self.ui.checkBoxStartOnLogon.setDisabled(True)
--            self.ui.checkBoxStartOnLogon.setText(_translate(
+-            self.checkBoxStartOnLogon.setDisabled(True)
+-            self.checkBoxStartOnLogon.setText(_translate(
 -                "MainWindow", "Start-on-login not yet supported on your OS."))
-             self.ui.checkBoxMinimizeToTray.setDisabled(True)
-             self.ui.checkBoxMinimizeToTray.setText(_translate(
+             self.checkBoxMinimizeToTray.setDisabled(True)
+             self.checkBoxMinimizeToTray.setText(_translate(
                  "MainWindow", "Minimize-to-tray not yet supported on your OS."))
-             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-             self.ui.checkBoxShowTrayNotifications.setText(_translate(
+             self.checkBoxShowTrayNotifications.setDisabled(True)
+             self.checkBoxShowTrayNotifications.setText(_translate(
                  "MainWindow", "Tray notifications not yet supported on your OS."))
 -        elif 'linux' in sys.platform:
 +
 +        if 'win' not in sys.platform and not self.parent.desktop:
-             self.ui.checkBoxStartOnLogon.setDisabled(True)
-             self.ui.checkBoxStartOnLogon.setText(_translate(
+             self.checkBoxStartOnLogon.setDisabled(True)
+             self.checkBoxStartOnLogon.setText(_translate(
                  "MainWindow", "Start-on-login not yet supported on your OS."))
 +
          # On the Network settings tab:
-         self.ui.lineEditTCPPort.setText(str(
-             BMConfigParser().get('bitmessagesettings', 'port')))
+         self.lineEditTCPPort.setText(str(
+             config.get('bitmessagesettings', 'port')))
 diff --git a/src/plugins/desktop_xdg.py b/src/plugins/desktop_xdg.py
 new file mode 100644
-index 00000000..c4e7d372
+index 00000000..ec81cc18
 --- /dev/null
 +++ b/src/plugins/desktop_xdg.py
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,32 @@
 +# -*- coding: utf-8 -*-
 +
 +import os
@@ -125,6 +158,7 @@ index 00000000..c4e7d372
 +
 +
 +class DesktopXDG(object):
++    """pyxdg Freedesktop desktop implementation"""
 +    def __init__(self):
 +        menu_entry = Menu.parse().getMenu('Office').getMenuEntry(
 +            'pybitmessage.desktop')
@@ -132,6 +166,7 @@ index 00000000..c4e7d372
 +            self.desktop = menu_entry.DesktopEntry
 +
 +    def adjust_startonlogon(self, autostart=False):
++        """Configure autostart according to settings"""
 +        if not self.desktop:
 +            return
 +
@@ -140,7 +175,10 @@ index 00000000..c4e7d372
 +        if autostart:
 +            self.desktop.write(autostart_path)
 +        else:
-+            os.remove(autostart_path)
++            try:
++                os.remove(autostart_path)
++            except OSError:
++                pass
 +
 +
 +connect_plugin = DesktopXDG

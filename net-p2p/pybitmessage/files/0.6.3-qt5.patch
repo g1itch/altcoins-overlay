@@ -1,8 +1,8 @@
 diff --git a/setup.py b/setup.py
-index 3a9c7a3c..7431ff2b 100644
+index 3e585b6b..58a80dfc 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -60,7 +60,7 @@ if __name__ == "__main__":
+@@ -54,7 +54,7 @@ if __name__ == "__main__":
          libraries=['pthread', 'crypto'],
      )
  
@@ -6733,10 +6733,10 @@ index 8ef807f2..e3232fe6 100644
  def load(resFile, widget):
      uic.loadUi(resource_path(resFile), widget)
 diff --git a/src/class_addressGenerator.py b/src/class_addressGenerator.py
-index d930fc99..a5f84391 100644
+index fa268377..9fa03df5 100644
 --- a/src/class_addressGenerator.py
 +++ b/src/class_addressGenerator.py
-@@ -206,9 +206,10 @@ class addressGenerator(StoppableThread):
+@@ -205,9 +205,10 @@ class addressGenerator(StoppableThread):
                      queues.workerQueue.put((
                          'sendOutOrStoreMyV4Pubkey', address))
  
@@ -6748,9 +6748,9 @@ index d930fc99..a5f84391 100644
 +                'getDeterministicAddress', 'createChan', 'joinChan'
 +            ):
                  if len(deterministicPassphrase) == 0:
-                     logger.warning(
+                     self.logger.warning(
                          'You are creating deterministic'
-@@ -218,9 +219,8 @@ class addressGenerator(StoppableThread):
+@@ -217,9 +218,8 @@ class addressGenerator(StoppableThread):
                      queues.UISignalQueue.put((
                          'updateStatusBar',
                          tr._translate(
@@ -6762,7 +6762,7 @@ index d930fc99..a5f84391 100644
                      ))
                  signingKeyNonce = 0
                  encryptionKeyNonce = 1
-@@ -324,9 +324,9 @@ class addressGenerator(StoppableThread):
+@@ -323,9 +323,9 @@ class addressGenerator(StoppableThread):
                                  'updateStatusBar',
                                  tr._translate(
                                      "MainWindow",
@@ -6773,19 +6773,20 @@ index d930fc99..a5f84391 100644
 +                                ).format(address)
                              ))
                          else:
-                             logger.debug('label: %s', label)
+                             self.logger.debug('label: %s', label)
 diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
-index 1a9c0d81..fac52367 100644
+index 6ae46658..080f56a3 100644
 --- a/src/class_objectProcessor.py
 +++ b/src/class_objectProcessor.py
-@@ -1,6 +1,5 @@
+@@ -1,7 +1,6 @@
  import hashlib
+ import logging
  import random
 -import shared
  import threading
  import time
  from binascii import hexlify
-@@ -8,6 +7,7 @@ from subprocess import call  # nosec
+@@ -9,6 +8,7 @@ from subprocess import call  # nosec
  
  import highlevelcrypto
  import knownnodes
@@ -6793,7 +6794,7 @@ index 1a9c0d81..fac52367 100644
  from addresses import (
      calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
      encodeVarint, varintDecodeError
-@@ -134,12 +134,11 @@ class objectProcessor(threading.Thread):
+@@ -136,12 +136,11 @@ class objectProcessor(threading.Thread):
                  ' WHERE ackdata=?',
                  'ackreceived', int(time.time()), data[readPosition:])
              queues.UISignalQueue.put((
@@ -6812,7 +6813,7 @@ index 1a9c0d81..fac52367 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 0798296e..811d5071 100644
+index 77fa18c0..67db7563 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -2,7 +2,7 @@
@@ -6824,7 +6825,7 @@ index 0798296e..811d5071 100644
  
  from __future__ import division
  
-@@ -23,13 +23,14 @@ import protocol
+@@ -23,12 +23,13 @@ import protocol
  import queues
  import shared
  import state
@@ -6833,15 +6834,14 @@ index 0798296e..811d5071 100644
 +from addresses import (
 +    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint)
  from bmconfigparser import BMConfigParser
- from debug import logger
  from helper_sql import sqlExecute, sqlQuery
- from helper_threading import StoppableThread
  from inventory import Inventory
+ from network.threads import StoppableThread
 +from tr import _translate
  
  
  def sizeof_fmt(num, suffix='h/s'):
-@@ -204,9 +205,8 @@ class singleWorker(StoppableThread):
+@@ -203,9 +204,8 @@ class singleWorker(StoppableThread):
          return privSigningKeyHex, privEncryptionKeyHex, \
              pubSigningKey, pubEncryptionKey
  
@@ -6853,7 +6853,7 @@ index 0798296e..811d5071 100644
          target = 2 ** 64 / (
              defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
                  len(payload) + 8 +
-@@ -232,14 +232,17 @@ class singleWorker(StoppableThread):
+@@ -231,13 +231,16 @@ class singleWorker(StoppableThread):
                  'PoW took %.1f seconds, speed %s.',
                  delta, sizeof_fmt(nonce / delta)
              )
@@ -6861,7 +6861,6 @@ index 0798296e..811d5071 100644
 +        except NameError:
              pass
          payload = pack('>Q', nonce) + payload
-         # inventoryHash = calculateInventoryHash(payload)
          return payload
  
      def doPOWForMyV2Pubkey(self, adressHash):
@@ -6873,7 +6872,7 @@ index 0798296e..811d5071 100644
          # Look up my stream number based on my address hash
          myAddress = shared.myAddressesByHash[adressHash]
          # status
-@@ -293,13 +296,14 @@ class singleWorker(StoppableThread):
+@@ -292,13 +295,14 @@ class singleWorker(StoppableThread):
  
      def sendOutOrStoreMyV3Pubkey(self, adressHash):
          """
@@ -6906,7 +6905,7 @@ index 0798296e..811d5071 100644
          """
          if not BMConfigParser().has_section(myAddress):
              # The address has been deleted.
-@@ -503,7 +508,10 @@ class singleWorker(StoppableThread):
+@@ -504,7 +509,10 @@ class singleWorker(StoppableThread):
          queues.invQueue.put((streamNumber, inventoryHash))
  
      def sendBroadcast(self):
@@ -6918,7 +6917,7 @@ index 0798296e..811d5071 100644
          # Reset just in case
          sqlExecute(
              '''UPDATE sent SET status='broadcastqueued' '''
-@@ -534,8 +542,7 @@ class singleWorker(StoppableThread):
+@@ -535,8 +543,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6928,7 +6927,7 @@ index 0798296e..811d5071 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -623,8 +630,7 @@ class singleWorker(StoppableThread):
+@@ -624,8 +631,7 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6938,7 +6937,7 @@ index 0798296e..811d5071 100644
                          "MainWindow",
                          "Doing work necessary to send broadcast..."))
              ))
-@@ -656,11 +662,9 @@ class singleWorker(StoppableThread):
+@@ -657,11 +663,9 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6953,7 +6952,7 @@ index 0798296e..811d5071 100644
              ))
  
              # Update the status of the message in the 'sent' table to have
-@@ -672,7 +676,10 @@ class singleWorker(StoppableThread):
+@@ -673,7 +677,10 @@ class singleWorker(StoppableThread):
              )
  
      def sendMsg(self):
@@ -6965,7 +6964,7 @@ index 0798296e..811d5071 100644
          # pylint: disable=too-many-nested-blocks
          # Reset just in case
          sqlExecute(
-@@ -765,8 +772,7 @@ class singleWorker(StoppableThread):
+@@ -766,8 +773,7 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByToAddress', (
@@ -6975,7 +6974,7 @@ index 0798296e..811d5071 100644
                                      "MainWindow",
                                      "Encryption key was requested earlier."))
                          ))
-@@ -837,8 +843,7 @@ class singleWorker(StoppableThread):
+@@ -838,8 +844,7 @@ class singleWorker(StoppableThread):
                              )
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByToAddress', (
@@ -6985,7 +6984,7 @@ index 0798296e..811d5071 100644
                                          "MainWindow",
                                          "Sending a request for the"
                                          " recipient\'s encryption key."))
-@@ -862,8 +867,7 @@ class singleWorker(StoppableThread):
+@@ -863,8 +868,7 @@ class singleWorker(StoppableThread):
                  shared.ackdataForWhichImWatching[ackdata] = 0
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6995,7 +6994,7 @@ index 0798296e..811d5071 100644
                              "MainWindow",
                              "Looking up the receiver\'s public key"))
                  ))
-@@ -920,15 +924,14 @@ class singleWorker(StoppableThread):
+@@ -921,15 +925,14 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByAckdata', (
@@ -7014,7 +7013,7 @@ index 0798296e..811d5071 100644
                          ))
                          # if the human changes their setting and then
                          # sends another message or restarts their client,
-@@ -951,8 +954,7 @@ class singleWorker(StoppableThread):
+@@ -952,8 +955,7 @@ class singleWorker(StoppableThread):
                          defaults.networkDefaultPayloadLengthExtraBytes
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -7024,7 +7023,7 @@ index 0798296e..811d5071 100644
                                  "MainWindow",
                                  "Doing work necessary to send message.\n"
                                  "There is no required difficulty for"
-@@ -984,32 +986,18 @@ class singleWorker(StoppableThread):
+@@ -985,32 +987,18 @@ class singleWorker(StoppableThread):
                          requiredAverageProofOfWorkNonceTrialsPerByte,
                          requiredPayloadLengthExtraBytes
                      )
@@ -7069,7 +7068,7 @@ index 0798296e..811d5071 100644
                      if status != 'forcepow':
                          maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
                              'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-@@ -1029,18 +1017,19 @@ class singleWorker(StoppableThread):
+@@ -1030,18 +1018,19 @@ class singleWorker(StoppableThread):
                                  ackdata)
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByAckdata', (
@@ -7099,8 +7098,8 @@ index 0798296e..811d5071 100644
 +                            ))
                              continue
              else:  # if we are sending a message to ourselves or a chan..
-                 logger.info('Sending a message.')
-@@ -1053,15 +1042,14 @@ class singleWorker(StoppableThread):
+                 self.logger.info('Sending a message.')
+@@ -1055,15 +1044,14 @@ class singleWorker(StoppableThread):
                  except Exception as err:
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -7117,9 +7116,9 @@ index 0798296e..811d5071 100644
 +                                " message. {0}"
 +                            ).format(l10n.formatTimestamp()))
                      ))
-                     logger.error(
+                     self.logger.error(
                          'Error within sendMsg. Could not read the keys'
-@@ -1078,8 +1066,7 @@ class singleWorker(StoppableThread):
+@@ -1080,8 +1068,7 @@ class singleWorker(StoppableThread):
                      defaults.networkDefaultPayloadLengthExtraBytes
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7129,7 +7128,7 @@ index 0798296e..811d5071 100644
                              "MainWindow",
                              "Doing work necessary to send message."))
                  ))
-@@ -1101,8 +1088,7 @@ class singleWorker(StoppableThread):
+@@ -1103,8 +1090,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7139,7 +7138,7 @@ index 0798296e..811d5071 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -1155,8 +1141,7 @@ class singleWorker(StoppableThread):
+@@ -1157,8 +1143,7 @@ class singleWorker(StoppableThread):
                  # The fullAckPayload is a normal msg protocol message
                  # with the proof of work already completed that the
                  # receiver of this message can easily send out.
@@ -7149,7 +7148,7 @@ index 0798296e..811d5071 100644
              payload += encodeVarint(len(fullAckPayload))
              payload += fullAckPayload
              dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
-@@ -1168,8 +1153,7 @@ class singleWorker(StoppableThread):
+@@ -1170,8 +1155,7 @@ class singleWorker(StoppableThread):
              # We have assembled the data that will be encrypted.
              try:
                  encrypted = highlevelcrypto.encrypt(
@@ -7159,7 +7158,7 @@ index 0798296e..811d5071 100644
              except:
                  sqlExecute(
                      '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
-@@ -1177,12 +1161,11 @@ class singleWorker(StoppableThread):
+@@ -1179,12 +1163,11 @@ class singleWorker(StoppableThread):
                  )
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7175,7 +7174,7 @@ index 0798296e..811d5071 100644
                  ))
                  continue
  
-@@ -1246,21 +1229,19 @@ class singleWorker(StoppableThread):
+@@ -1248,21 +1231,19 @@ class singleWorker(StoppableThread):
                 not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7202,9 +7201,9 @@ index 0798296e..811d5071 100644
 +                            " Sent on {0}"
 +                        ).format(l10n.formatTimestamp()))
                  ))
-             logger.info(
+             self.logger.info(
                  'Broadcasting inv for my msg(within sendmsg function): %s',
-@@ -1390,8 +1371,7 @@ class singleWorker(StoppableThread):
+@@ -1392,8 +1373,7 @@ class singleWorker(StoppableThread):
          queues.UISignalQueue.put(('updateStatusBar', statusbar))
          queues.UISignalQueue.put((
              'updateSentItemStatusByToAddress', (
@@ -7214,7 +7213,7 @@ index 0798296e..811d5071 100644
                      "MainWindow",
                      "Doing work necessary to request encryption key."))
          ))
-@@ -1415,30 +1395,31 @@ class singleWorker(StoppableThread):
+@@ -1417,30 +1397,31 @@ class singleWorker(StoppableThread):
              int(time.time()), retryNumber + 1, sleeptill, toAddress)
  
          queues.UISignalQueue.put((
@@ -7393,10 +7392,10 @@ index 0114ec94..d62dcc7d 100755
      simply checking if msgpack package with all its dependency
      is available or not as recommended for messages coding.
 diff --git a/src/fallback/__init__.py b/src/fallback/__init__.py
-index d45c754d..d7726c52 100644
+index 9a8d646f..8e48d76c 100644
 --- a/src/fallback/__init__.py
 +++ b/src/fallback/__init__.py
-@@ -24,3 +24,30 @@ else:
+@@ -30,3 +30,30 @@ else:
          if data:
              hasher.update(data)
          return hasher
@@ -7520,64 +7519,10 @@ index d6704731..7de9f1e5 100644
                  return False
      return True
 diff --git a/src/namecoin.py b/src/namecoin.py
-index 6674bdcd..1ba320ed 100644
+index c9238f63..93eadf11 100644
 --- a/src/namecoin.py
 +++ b/src/namecoin.py
-@@ -1,31 +1,25 @@
--# pylint: disable=too-many-branches,protected-access
--"""
--Copyright (C) 2013 by Daniel Kraft <d@domob.eu>
--This file is part of the Bitmessage project.
--
--Permission is hereby granted, free of charge, to any person obtaining a copy
--of this software and associated documentation files (the "Software"), to deal
--in the Software without restriction, including without limitation the rights
--to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
--copies of the Software, and to permit persons to whom the Software is
--furnished to do so, subject to the following conditions:
--
--The above copyright notice and this permission notice shall be included in all
--copies or substantial portions of the Software.
--
--THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
--IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
--FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
--AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
--LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
--OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
--SOFTWARE.
--
--.. todo:: from debug import logger crashes PyBitmessage due to a circular dependency. The debug module will also
--override/disable logging.getLogger() # loggers so module level logging functions are used instead
--"""
--
--from __future__ import absolute_import
-+# Copyright (C) 2013 by Daniel Kraft <d@domob.eu>
-+# Copyright (C) 2016-2019 The Bitmessage Developers
-+# This file is part of the Bitmessage project.
-+
-+# Permission is hereby granted, free of charge, to any person obtaining a copy
-+# of this software and associated documentation files (the "Software"), to deal
-+# in the Software without restriction, including without limitation the rights
-+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+# copies of the Software, and to permit persons to whom the Software is
-+# furnished to do so, subject to the following conditions:
-+
-+# The above copyright notice and this permission notice shall be included in all
-+# copies or substantial portions of the Software.
-+
-+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+# SOFTWARE.
-+# pylint: disable=too-many-branches
- 
- import base64
- import httplib
-@@ -34,11 +28,11 @@ import os
+@@ -31,11 +31,11 @@ import os
  import socket
  import sys
  
@@ -7592,7 +7537,7 @@ index 6674bdcd..1ba320ed 100644
  
  
  configSection = "bitmessagesettings"
-@@ -46,7 +40,6 @@ configSection = "bitmessagesettings"
+@@ -43,7 +43,6 @@ configSection = "bitmessagesettings"
  
  class RPCError(Exception):
      """Error thrown when the RPC call returns an error."""
@@ -7600,7 +7545,7 @@ index 6674bdcd..1ba320ed 100644
      error = None
  
      def __init__(self, data):
-@@ -71,8 +64,8 @@ class namecoinConnection(object):
+@@ -68,8 +67,8 @@ class namecoinConnection(object):
  
      def __init__(self, options=None):
          """
@@ -7611,7 +7556,7 @@ index 6674bdcd..1ba320ed 100644
          currently entered connection settings in the config dialog without
          actually changing the values (yet).
          """
-@@ -97,7 +90,7 @@ class namecoinConnection(object):
+@@ -94,7 +93,7 @@ class namecoinConnection(object):
      def query(self, string):
          """
          Query for the bitmessage address corresponding to the given identity
@@ -7620,7 +7565,7 @@ index 6674bdcd..1ba320ed 100644
          the result as (Error, Address) pair, where the Error is an error
          message to display or None in case of success.
          """
-@@ -116,9 +109,9 @@ class namecoinConnection(object):
+@@ -113,9 +112,9 @@ class namecoinConnection(object):
                  res = self.callRPC("data", ["getValue", string])
                  res = res["reply"]
                  if not res:
@@ -7633,7 +7578,7 @@ index 6674bdcd..1ba320ed 100644
              else:
                  assert False
          except RPCError as exc:
-@@ -127,17 +120,17 @@ class namecoinConnection(object):
+@@ -124,17 +123,17 @@ class namecoinConnection(object):
                  errmsg = exc.error["message"]
              else:
                  errmsg = exc.error
@@ -7659,7 +7604,7 @@ index 6674bdcd..1ba320ed 100644
  
          try:
              res = json.loads(res)
-@@ -154,14 +147,16 @@ class namecoinConnection(object):
+@@ -151,14 +150,16 @@ class namecoinConnection(object):
          return (
              None, "%s <%s>" % (display_name, res)
          ) if valid else (
@@ -7680,7 +7625,7 @@ index 6674bdcd..1ba320ed 100644
          command, and builds either an error message or a success message with
          some info from it.
          """
-@@ -181,33 +176,36 @@ class namecoinConnection(object):
+@@ -178,33 +179,36 @@ class namecoinConnection(object):
                      versStr = "0.%d.%d" % (v1, v2)
                  else:
                      versStr = "0.%d.%d.%d" % (v1, v2, v3)
@@ -7730,7 +7675,7 @@ index 6674bdcd..1ba320ed 100644
                      "MainWindow", "The connection to namecoin failed.")
              )
  
-@@ -267,7 +265,9 @@ class namecoinConnection(object):
+@@ -264,7 +268,9 @@ class namecoinConnection(object):
          return result
  
      def queryServer(self, data):
@@ -7742,10 +7687,10 @@ index 6674bdcd..1ba320ed 100644
          try:
              s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 diff --git a/src/plugins/menu_qrcode.py b/src/plugins/menu_qrcode.py
-index 7f21c6b8..c5007a47 100644
+index 2e65bd88..304567fd 100644
 --- a/src/plugins/menu_qrcode.py
 +++ b/src/plugins/menu_qrcode.py
-@@ -6,7 +6,7 @@ A menu plugin showing QR-Code for bitmessage address in modal dialog.
+@@ -9,7 +9,7 @@ A menu plugin showing QR-Code for bitmessage address in modal dialog.
  import urllib
  
  import qrcode
@@ -7754,7 +7699,7 @@ index 7f21c6b8..c5007a47 100644
  
  from pybitmessage.tr import _translate
  
-@@ -37,23 +37,23 @@ class Image(qrcode.image.base.BaseImage):
+@@ -41,23 +41,23 @@ class Image(qrcode.image.base.BaseImage):           # pylint: disable=abstract-m
              QtCore.Qt.black)
  
  
@@ -7784,7 +7729,7 @@ index 7f21c6b8..c5007a47 100644
          layout.addWidget(self.image)
          layout.addWidget(self.label)
          layout.addWidget(buttonBox)
-@@ -70,7 +70,7 @@ class QRCodeDialog(QtGui.QDialog):
+@@ -74,7 +74,7 @@ class QRCodeDialog(QtGui.QDialog):
          self.label.setText(text)
          self.label.setToolTip(text)
          self.label.setFixedWidth(pixmap.width())
@@ -7794,10 +7739,10 @@ index 7f21c6b8..c5007a47 100644
  
  def connect_plugin(form):
 diff --git a/src/plugins/plugin.py b/src/plugins/plugin.py
-index 6601adaf..0e49c318 100644
+index e671a73f..3a966f75 100644
 --- a/src/plugins/plugin.py
 +++ b/src/plugins/plugin.py
-@@ -20,6 +20,7 @@ def get_plugins(group, point='', name=None, fallback=None):
+@@ -23,6 +23,7 @@ def get_plugins(group, point='', name=None, fallback=None):
              except (AttributeError,
                      ImportError,
                      ValueError,
@@ -7806,17 +7751,11 @@ index 6601adaf..0e49c318 100644
                      pkg_resources.UnknownExtra):
                  continue
 diff --git a/src/qidenticon.py b/src/qidenticon.py
-index 8db8430a..5f087973 100644
+index deafc570..b61f55ff 100644
 --- a/src/qidenticon.py
 +++ b/src/qidenticon.py
-@@ -1,5 +1,3 @@
--#!/usr/bin/env python
--# -*- coding:utf-8 -*-
- # pylint: disable=too-many-locals,too-many-arguments,too-many-function-args
- """
- = usage =
-@@ -12,9 +10,7 @@ Return a PIL Image class instance which have generated identicon image.
- ```size``` specifies `patch size`. Generated image size is 3 * ```size```.
+@@ -10,9 +10,7 @@ Return a PIL Image class instance which have generated identicon image.
+ ``size`` specifies `patch size`. Generated image size is 3 * ``size``.
  """
  
 -from PyQt4 import QtGui
@@ -7824,9 +7763,9 @@ index 8db8430a..5f087973 100644
 -from PyQt4.QtGui import QPixmap, QPainter, QPolygonF
 +from qtpy import QtCore, QtGui
  
- __all__ = ['render_identicon', 'IdenticonRendererBase']
  
-@@ -41,10 +37,12 @@ class IdenticonRendererBase(object):
+ class IdenticonRendererBase(object):
+@@ -37,10 +35,12 @@ class IdenticonRendererBase(object):
          """
  
          # decode the code
@@ -7841,7 +7780,7 @@ index 8db8430a..5f087973 100644
  
          # fill background
          backColor = QtGui.QColor(255, 255, 255, opacity)
-@@ -58,7 +56,8 @@ class IdenticonRendererBase(object):
+@@ -54,7 +54,8 @@ class IdenticonRendererBase(object):
              'backColor': backColor}
  
          # middle patch
@@ -7851,7 +7790,7 @@ index 8db8430a..5f087973 100644
  
          # side patch
          kwds['foreColor'] = foreColor
-@@ -76,8 +75,9 @@ class IdenticonRendererBase(object):
+@@ -72,8 +73,9 @@ class IdenticonRendererBase(object):
  
          return image
  
@@ -7861,9 +7800,9 @@ index 8db8430a..5f087973 100644
 +            self, pos, turn, invert, patch_type, image, size, foreColor,
 +            backColor, penwidth):  # pylint: disable=unused-argument
          """
-         @param size patch size
+         :param size: patch size
          """
-@@ -87,39 +87,44 @@ class IdenticonRendererBase(object):
+@@ -83,39 +85,44 @@ class IdenticonRendererBase(object):
              invert = not invert
              path = [(0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)]
  
@@ -7918,7 +7857,7 @@ index 8db8430a..5f087973 100644
  
          painter.end()
  
-@@ -127,7 +132,6 @@ class IdenticonRendererBase(object):
+@@ -123,7 +130,6 @@ class IdenticonRendererBase(object):
  
      def decode(self, code, twoColor):
          """virtual functions"""
@@ -7926,7 +7865,7 @@ index 8db8430a..5f087973 100644
          raise NotImplementedError
  
  
-@@ -170,7 +174,8 @@ class DonRenderer(IdenticonRendererBase):
+@@ -166,7 +172,8 @@ class DonRenderer(IdenticonRendererBase):
          [(0, 0), (2, 0), (0, 2)],
          # [15] empty:
          []]
@@ -7936,7 +7875,7 @@ index 8db8430a..5f087973 100644
      MIDDLE_PATCH_SET = [0, 4, 8, 15]
  
      # modify path set
-@@ -219,7 +224,8 @@ class DonRenderer(IdenticonRendererBase):
+@@ -215,7 +222,8 @@ class DonRenderer(IdenticonRendererBase):
          foreColor = QtGui.QColor(*foreColor)
  
          if twoColor:
@@ -7946,7 +7885,7 @@ index 8db8430a..5f087973 100644
              secondColor = QtGui.QColor(*secondColor)
          else:
              secondColor = foreColor
-@@ -230,9 +236,9 @@ class DonRenderer(IdenticonRendererBase):
+@@ -226,9 +234,9 @@ class DonRenderer(IdenticonRendererBase):
              foreColor, secondColor, swap_cross
  
  
@@ -8028,7 +7967,7 @@ index 8b41167f..19ca4ff8 100644
 +else:
 +    _translate = _tr_dummy
 diff --git a/src/upnp.py b/src/upnp.py
-index fdc4bc1d..c9ecd2ad 100644
+index b1ee2e7b..9413305d 100644
 --- a/src/upnp.py
 +++ b/src/upnp.py
 @@ -3,7 +3,7 @@

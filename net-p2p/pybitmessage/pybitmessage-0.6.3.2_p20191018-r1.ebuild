@@ -58,7 +58,7 @@ S="${WORKDIR}"/${MY_PN}-${COMMIT}
 PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
-	# "${FILESDIR}"/${PVM}-api.patch
+	"${FILESDIR}"/${PVM}-api.patch
 	"${FILESDIR}"/${PVM}-qt5.patch
 )
 

@@ -1,0 +1,90 @@
+diff --git a/setup.py b/setup.py
+index 3e585b6b..8a3d659d 100644
+--- a/setup.py
++++ b/setup.py
+@@ -144,11 +144,11 @@ if __name__ == "__main__":
+             'bitmessage.proxyconfig': [
+                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
+             ],
+-            # 'console_scripts': [
+-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
+-            # ]
++            'console_scripts': [
++                'pybitmessage = pybitmessage.bitmessagemain:main'
++            ]
+         },
+-        scripts=['src/pybitmessage'],
++        # scripts=['src/pybitmessage'],
+         cmdclass={'install': InstallCmd},
+         command_options={
+             'build_sphinx': {
+diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
+index 4ad9311f..91ac8dd4 100755
+--- a/src/bitmessagemain.py
++++ b/src/bitmessagemain.py
+@@ -7,25 +7,16 @@
+ # Right now, PyBitmessage only support connecting to stream 1. It doesn't
+ # yet contain logic to expand into further streams.
+ 
+-# The software version variable is now held in shared.py
+-
+-import os
+-import sys
+-
+-app_dir = os.path.dirname(os.path.abspath(__file__))
+-os.chdir(app_dir)
+-sys.path.insert(0, app_dir)
+-
+-
+-import depends
+-depends.check_dependencies()
++from pathmagic import app_dir, depends
+ 
+ import ctypes
+ import getopt
+ import multiprocessing
+ # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
++import os
+ import signal
+ import socket
++import sys
+ import threading
+ import time
+ import traceback
+diff --git a/src/pathmagic.py b/src/pathmagic.py
+new file mode 100644
+index 00000000..c96fd209
+--- /dev/null
++++ b/src/pathmagic.py
+@@ -0,0 +1,12 @@
++
++
++import os
++import sys
++
++app_dir = os.path.dirname(os.path.abspath(__file__))
++os.chdir(app_dir)
++sys.path.insert(0, app_dir)
++
++
++import depends  # noqa:E402
++depends.check_dependencies()
+diff --git a/src/pybitmessage b/src/pybitmessage
+index decebfff..5e5bcfda 100644
+--- a/src/pybitmessage
++++ b/src/pybitmessage
+@@ -3,9 +3,13 @@
+ import os
+ import pkg_resources
+ 
++# print('SCRIPT')
++
+ dist = pkg_resources.get_distribution('pybitmessage')
+ script_file = os.path.join(dist.location, dist.key, 'bitmessagemain.py')
+ new_globals = globals()
+-new_globals.update(__file__=script_file)
++new_globals.update(__file__=script_file, __package__='pybitmessage')
++
++# print('GLOBALS: %s' % new_globals)
+ 
+ execfile(script_file, new_globals)

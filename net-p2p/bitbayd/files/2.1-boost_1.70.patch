@@ -49,7 +49,7 @@ index a5da6fe..5d29f2b 100644
          boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
          boost::asio::ip::tcp::resolver::iterator end;
 diff --git a/src/rpcserver.cpp b/src/rpcserver.cpp
-index e7c0cf4..c9fae79 100644
+index e7c0cf4..cd76894 100644
 --- a/src/rpcserver.cpp
 +++ b/src/rpcserver.cpp
 @@ -37,7 +37,7 @@ using namespace json_spirit;
@@ -83,15 +83,17 @@ index e7c0cf4..c9fae79 100644
  
      acceptor->async_accept(
              conn->sslStream.lowest_layer(),
-@@ -518,7 +518,7 @@ void StartRPCThreads()
+@@ -518,8 +518,8 @@ void StartRPCThreads()
      }
  
      assert(rpc_io_service == NULL);
 -    rpc_io_service = new asio::io_service();
+-    rpc_ssl_context = new ssl::context(*rpc_io_service, ssl::context::sslv23);
 +    rpc_io_service = new ioContext();
-     rpc_ssl_context = new ssl::context(*rpc_io_service, ssl::context::sslv23);
++    rpc_ssl_context = new ssl::context(ssl::context::sslv23);
  
      const bool fUseSSL = GetBoolArg("-rpcssl", false);
+ 
 @@ -601,7 +601,7 @@ void StartRPCThreads()
  
      rpc_worker_group = new boost::thread_group();

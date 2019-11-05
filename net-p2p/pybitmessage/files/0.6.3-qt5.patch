@@ -6134,7 +6134,7 @@ index edacd4bb..3890219c 100644
          tmp = SafeHTMLParser.replace_pre(data)
          tmp = self.uriregex1.sub(r'<a href="\1">\1</a>', tmp)
 diff --git a/src/bitmessageqt/settings.py b/src/bitmessageqt/settings.py
-index 513f285b..19893079 100644
+index 982328cc..bc5a8e61 100644
 --- a/src/bitmessageqt/settings.py
 +++ b/src/bitmessageqt/settings.py
 @@ -1,7 +1,7 @@
@@ -6164,7 +6164,7 @@ index 513f285b..19893079 100644
  
      def adjust_from_config(self, config):
          """Adjust all widgets state according to config settings"""
-@@ -341,7 +341,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -351,7 +351,7 @@ class SettingsDialog(QtGui.QDialog):
              self.config.set('bitmessagesettings', 'maxuploadrate', str(
                  int(float(self.lineEditMaxUploadRate.text()))))
          except ValueError:
@@ -6173,7 +6173,7 @@ index 513f285b..19893079 100644
                  self, _translate("MainWindow", "Number needed"),
                  _translate(
                      "MainWindow",
-@@ -464,7 +464,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -474,7 +474,7 @@ class SettingsDialog(QtGui.QDialog):
              if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
                  # If the time period is less than 5 hours, we give
                  # zero values to all fields. No message will be sent again.
@@ -7898,36 +7898,47 @@ index deafc570..b61f55ff 100644
          renderer = DonRenderer
      return renderer(code).render(size, twoColor, opacity, penwidth)
 diff --git a/src/tr.py b/src/tr.py
-index 8b41167f..19ca4ff8 100644
+index 87e67219..19ca4ff8 100644
 --- a/src/tr.py
 +++ b/src/tr.py
-@@ -1,39 +1,33 @@
--import os
-+"""
+@@ -1,55 +1,33 @@
+ """
+-Translating text
 +Slim layer providing environment agnostic _translate()
-+"""
+ """
+-import os
  
  import state
  
--# This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
+ 
 -class translateClass:
+-    """
+-    This is used so that the translateText function can be used
+-    when we are in daemon mode and not using any QT functions.
+-    """
+-    # pylint: disable=old-style-class,too-few-public-methods
 -    def __init__(self, context, text):
 -        self.context = context
 -        self.text = text
--    def arg(self,argument):
--        if '%' in self.text:
--            return translateClass(self.context, self.text.replace('%','',1)) # This doesn't actually do anything with the arguments because we don't have a UI in which to display this information anyway.
--        else:
--            return self.text
- 
--def _translate(context, text, disambiguation = None, encoding = None, n = None):
--    return translateText(context, text, n)
 +def _tr_dummy(context, text, disambiguation=None, n=None):
 +    # pylint: disable=unused-argument
 +    return text
-+
  
--def translateText(context, text, n = None):
+-    def arg(self, _):
+-        """Replace argument placeholders"""
+-        if '%' in self.text:
+-            # This doesn't actually do anything with the arguments
+-            # because we don't have a UI in which to display this information anyway.
+-            return translateClass(self.context, self.text.replace('%', '', 1))
+-        return self.text
+ 
+-
+-def _translate(context, text, disambiguation=None, encoding=None, n=None):    # pylint: disable=unused-argument
+-    return translateText(context, text, n)
+-
+-
+-def translateText(context, text, n=None):
+-    """Translate text in context"""
 +if state.enableGUI and not state.curses:
      try:
 -        enableGUI = state.enableGUI
@@ -7937,24 +7948,27 @@ index 8b41167f..19ca4ff8 100644
 -        try:
 -            from PyQt4 import QtCore, QtGui
 -        except Exception as err:
--            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+-            print 'PyBitmessage requires PyQt unless you want to run it as a daemon'\
+-                ' and interact with it using the API.'\
+-                ' You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download'\
+-                ' or by searching Google for \'PyQt Download\'.'\
+-                ' If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
 -            print 'Error message:', err
--            os._exit(0)
+-            os._exit(0)    # pylint: disable=protected-access
 -        if n is None:
 -            return QtGui.QApplication.translate(context, text)
--        else:
--            return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)
+-        return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)
 +        from fallback import qtpy  # noqa:F401
 +        from qtpy import QtWidgets, QtCore, API
 +    except ImportError:
 +        _translate = _tr_dummy
      else:
 -        if '%' in text:
--            return translateClass(context, text.replace('%','',1))
+-            return translateClass(context, text.replace('%', '', 1))
+-        return text
 +        if API == 'pyqt5':
 +            _translate = QtWidgets.QApplication.translate
-         else:
--            return text
++        else:
 +            def _translate(context, text, disambiguation=None, n=None):
 +                return (
 +                    QtWidgets.QApplication.translate(

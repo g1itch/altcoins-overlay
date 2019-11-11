@@ -5604,7 +5604,7 @@ index 6e80f1dc..ec7899a3 100644
 \ No newline at end of file
 +        self.show()
 diff --git a/src/bitmessageqt/networkstatus.py b/src/bitmessageqt/networkstatus.py
-index 5f014563..34076ea5 100644
+index 6fbf5df6..6748ae77 100644
 --- a/src/bitmessageqt/networkstatus.py
 +++ b/src/bitmessageqt/networkstatus.py
 @@ -6,7 +6,7 @@ src/bitmessageqt/networkstatus.py
@@ -6467,7 +6467,7 @@ index 2a1ddb18..56c4d479 100644
      # single msg tab
      myapp.ui.tabWidgetSend.setCurrentIndex(
 diff --git a/src/bitmessageqt/uisignaler.py b/src/bitmessageqt/uisignaler.py
-index 055f9097..e4a23118 100644
+index 055f9097..f4c7bee5 100644
 --- a/src/bitmessageqt/uisignaler.py
 +++ b/src/bitmessageqt/uisignaler.py
 @@ -1,15 +1,34 @@
@@ -6477,7 +6477,7 @@ index 055f9097..e4a23118 100644
  import sys
  
  import queues
-+import state
++from network.node import Peer
  
  
 -class UISignaler(QThread):
@@ -6493,7 +6493,7 @@ index 055f9097..e4a23118 100644
 +    displayNewInboxMessage = QtCore.Signal(object, str, object, object, str)
 +    displayNewSentMessage = QtCore.Signal(
 +        object, str, str, object, object, str)
-+    updateNetworkStatusTab = QtCore.Signal(bool, bool, state.Peer)
++    updateNetworkStatusTab = QtCore.Signal(bool, bool, Peer)
 +    updateNumberOfMessagesProcessed = QtCore.Signal()
 +    updateNumberOfPubkeysProcessed = QtCore.Signal()
 +    updateNumberOfBroadcastsProcessed = QtCore.Signal()
@@ -6733,10 +6733,10 @@ index 8ef807f2..e3232fe6 100644
  def load(resFile, widget):
      uic.loadUi(resource_path(resFile), widget)
 diff --git a/src/class_addressGenerator.py b/src/class_addressGenerator.py
-index fa268377..9fa03df5 100644
+index c7c7e261..27765f18 100644
 --- a/src/class_addressGenerator.py
 +++ b/src/class_addressGenerator.py
-@@ -205,9 +205,10 @@ class addressGenerator(StoppableThread):
+@@ -209,9 +209,10 @@ class addressGenerator(StoppableThread):
                      queues.workerQueue.put((
                          'sendOutOrStoreMyV4Pubkey', address))
  
@@ -6750,7 +6750,7 @@ index fa268377..9fa03df5 100644
                  if len(deterministicPassphrase) == 0:
                      self.logger.warning(
                          'You are creating deterministic'
-@@ -217,9 +218,8 @@ class addressGenerator(StoppableThread):
+@@ -221,9 +222,8 @@ class addressGenerator(StoppableThread):
                      queues.UISignalQueue.put((
                          'updateStatusBar',
                          tr._translate(
@@ -6762,7 +6762,7 @@ index fa268377..9fa03df5 100644
                      ))
                  signingKeyNonce = 0
                  encryptionKeyNonce = 1
-@@ -323,9 +323,9 @@ class addressGenerator(StoppableThread):
+@@ -327,9 +327,9 @@ class addressGenerator(StoppableThread):
                                  'updateStatusBar',
                                  tr._translate(
                                      "MainWindow",
@@ -6775,7 +6775,7 @@ index fa268377..9fa03df5 100644
                          else:
                              self.logger.debug('label: %s', label)
 diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
-index 6ae46658..080f56a3 100644
+index b22876e8..e66ab80e 100644
 --- a/src/class_objectProcessor.py
 +++ b/src/class_objectProcessor.py
 @@ -1,7 +1,6 @@
@@ -6794,7 +6794,7 @@ index 6ae46658..080f56a3 100644
  from addresses import (
      calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
      encodeVarint, varintDecodeError
-@@ -136,12 +136,11 @@ class objectProcessor(threading.Thread):
+@@ -138,12 +138,11 @@ class objectProcessor(threading.Thread):
                  ' WHERE ackdata=?',
                  'ackreceived', int(time.time()), data[readPosition:])
              queues.UISignalQueue.put((
@@ -6813,7 +6813,7 @@ index 6ae46658..080f56a3 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 77fa18c0..67db7563 100644
+index 60eabe2e..6e178afd 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -2,7 +2,7 @@
@@ -6836,7 +6836,7 @@ index 77fa18c0..67db7563 100644
  from bmconfigparser import BMConfigParser
  from helper_sql import sqlExecute, sqlQuery
  from inventory import Inventory
- from network.threads import StoppableThread
+ from network import StoppableThread
 +from tr import _translate
  
  
@@ -7981,19 +7981,10 @@ index 87e67219..19ca4ff8 100644
 +else:
 +    _translate = _tr_dummy
 diff --git a/src/upnp.py b/src/upnp.py
-index b1ee2e7b..9413305d 100644
+index 99000413..fc09a647 100644
 --- a/src/upnp.py
 +++ b/src/upnp.py
-@@ -3,7 +3,7 @@
- src/upnp.py
- ===========
- 
--A simple upnp module to forward port for BitMessage
-+A simple upnp module to forward port for Bitmessage
- Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
- """
- 
-@@ -273,9 +273,12 @@ class uPnPThread(StoppableThread):
+@@ -270,9 +270,12 @@ class uPnPThread(StoppableThread):
                              with knownnodes.knownNodesLock:
                                  knownnodes.addKnownNode(
                                      1, self_peer, is_self=True)

@@ -6733,24 +6733,33 @@ index 8ef807f2..e3232fe6 100644
  def load(resFile, widget):
      uic.loadUi(resource_path(resFile), widget)
 diff --git a/src/class_addressGenerator.py b/src/class_addressGenerator.py
-index c7c7e261..27765f18 100644
+index 9e19cf50..ba383b97 100644
 --- a/src/class_addressGenerator.py
 +++ b/src/class_addressGenerator.py
-@@ -209,9 +209,10 @@ class addressGenerator(StoppableThread):
+@@ -1,5 +1,5 @@
+ """
+-A thread for creating addresses
++addressGenerator thread class definition
+ """
+ import time
+ import hashlib
+@@ -213,10 +213,11 @@ class addressGenerator(StoppableThread):
                      queues.workerQueue.put((
                          'sendOutOrStoreMyV4Pubkey', address))
  
 -            elif command == 'createDeterministicAddresses' \
 -                    or command == 'getDeterministicAddress' \
 -                    or command == 'createChan' or command == 'joinChan':
+-                if not deterministicPassphrase:
 +            elif command in (
 +                'createDeterministicAddresses',
 +                'getDeterministicAddress', 'createChan', 'joinChan'
 +            ):
-                 if len(deterministicPassphrase) == 0:
++                if len(deterministicPassphrase) == 0:
                      self.logger.warning(
                          'You are creating deterministic'
-@@ -221,9 +222,8 @@ class addressGenerator(StoppableThread):
+                         ' address(es) using a blank passphrase.'
+@@ -225,9 +226,8 @@ class addressGenerator(StoppableThread):
                      queues.UISignalQueue.put((
                          'updateStatusBar',
                          tr._translate(
@@ -6762,7 +6771,7 @@ index c7c7e261..27765f18 100644
                      ))
                  signingKeyNonce = 0
                  encryptionKeyNonce = 1
-@@ -327,9 +327,9 @@ class addressGenerator(StoppableThread):
+@@ -331,17 +331,16 @@ class addressGenerator(StoppableThread):
                                  'updateStatusBar',
                                  tr._translate(
                                      "MainWindow",
@@ -6774,27 +6783,33 @@ index c7c7e261..27765f18 100644
                              ))
                          else:
                              self.logger.debug('label: %s', label)
+                             BMConfigParser().set(address, 'label', label)
+                             BMConfigParser().set(address, 'enabled', 'true')
+                             BMConfigParser().set(address, 'decoy', 'false')
+-                            if command == 'joinChan' \
+-                                    or command == 'createChan':
++                            if command in ('joinChan', 'createChan'):
+                                 BMConfigParser().set(address, 'chan', 'true')
+                             BMConfigParser().set(
+                                 address, 'noncetrialsperbyte',
+@@ -392,8 +391,10 @@ class addressGenerator(StoppableThread):
+                             address)
+ 
+                 # Done generating addresses.
+-                if command == 'createDeterministicAddresses' \
+-                        or command == 'joinChan' or command == 'createChan':
++                if command in (
++                    'createDeterministicAddresses',
++                    'joinChan', 'createChan'
++                ):
+                     queues.apiAddressGeneratorReturnQueue.put(
+                         listOfNewAddressesToSendOutThroughTheAPI)
+                 elif command == 'getDeterministicAddress':
 diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
-index b22876e8..e66ab80e 100644
+index 2c741661..fe28813c 100644
 --- a/src/class_objectProcessor.py
 +++ b/src/class_objectProcessor.py
-@@ -1,7 +1,6 @@
- import hashlib
- import logging
- import random
--import shared
- import threading
- import time
- from binascii import hexlify
-@@ -9,6 +8,7 @@ from subprocess import call  # nosec
- 
- import highlevelcrypto
- import knownnodes
-+import shared
- from addresses import (
-     calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
-     encodeVarint, varintDecodeError
-@@ -138,12 +138,11 @@ class objectProcessor(threading.Thread):
+@@ -148,12 +148,11 @@ class objectProcessor(threading.Thread):
                  ' WHERE ackdata=?',
                  'ackreceived', int(time.time()), data[readPosition:])
              queues.UISignalQueue.put((
@@ -6813,19 +6828,19 @@ index b22876e8..e66ab80e 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 60eabe2e..6e178afd 100644
+index a275b79d..a7b232d8 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
-@@ -2,7 +2,7 @@
- src/class_singleWorker.py
- =========================
+@@ -1,7 +1,7 @@
+ """
+ Thread for performing PoW
  """
 -# pylint: disable=protected-access,too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
 +# pylint: disable=too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
  
  from __future__ import division
  
-@@ -23,12 +23,13 @@ import protocol
+@@ -22,12 +22,13 @@ import protocol
  import queues
  import shared
  import state
@@ -6841,7 +6856,7 @@ index 60eabe2e..6e178afd 100644
  
  
  def sizeof_fmt(num, suffix='h/s'):
-@@ -203,9 +204,8 @@ class singleWorker(StoppableThread):
+@@ -202,9 +203,8 @@ class singleWorker(StoppableThread):
          return privSigningKeyHex, privEncryptionKeyHex, \
              pubSigningKey, pubEncryptionKey
  
@@ -6853,7 +6868,7 @@ index 60eabe2e..6e178afd 100644
          target = 2 ** 64 / (
              defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
                  len(payload) + 8 +
-@@ -231,13 +231,16 @@ class singleWorker(StoppableThread):
+@@ -230,13 +230,16 @@ class singleWorker(StoppableThread):
                  'PoW took %.1f seconds, speed %s.',
                  delta, sizeof_fmt(nonce / delta)
              )
@@ -6872,7 +6887,7 @@ index 60eabe2e..6e178afd 100644
          # Look up my stream number based on my address hash
          myAddress = shared.myAddressesByHash[adressHash]
          # status
-@@ -292,13 +295,14 @@ class singleWorker(StoppableThread):
+@@ -291,13 +294,14 @@ class singleWorker(StoppableThread):
  
      def sendOutOrStoreMyV3Pubkey(self, adressHash):
          """
@@ -6891,7 +6906,7 @@ index 60eabe2e..6e178afd 100644
              # The address has been deleted.
              return
          if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
-@@ -375,9 +379,10 @@ class singleWorker(StoppableThread):
+@@ -374,9 +378,10 @@ class singleWorker(StoppableThread):
  
      def sendOutOrStoreMyV4Pubkey(self, myAddress):
          """
@@ -6905,7 +6920,7 @@ index 60eabe2e..6e178afd 100644
          """
          if not BMConfigParser().has_section(myAddress):
              # The address has been deleted.
-@@ -504,7 +509,10 @@ class singleWorker(StoppableThread):
+@@ -503,7 +508,10 @@ class singleWorker(StoppableThread):
          queues.invQueue.put((streamNumber, inventoryHash))
  
      def sendBroadcast(self):
@@ -6917,7 +6932,7 @@ index 60eabe2e..6e178afd 100644
          # Reset just in case
          sqlExecute(
              '''UPDATE sent SET status='broadcastqueued' '''
-@@ -535,8 +543,7 @@ class singleWorker(StoppableThread):
+@@ -534,8 +542,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6927,7 +6942,7 @@ index 60eabe2e..6e178afd 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -624,8 +631,7 @@ class singleWorker(StoppableThread):
+@@ -623,8 +630,7 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6937,7 +6952,7 @@ index 60eabe2e..6e178afd 100644
                          "MainWindow",
                          "Doing work necessary to send broadcast..."))
              ))
-@@ -657,11 +663,9 @@ class singleWorker(StoppableThread):
+@@ -656,11 +662,9 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6952,7 +6967,7 @@ index 60eabe2e..6e178afd 100644
              ))
  
              # Update the status of the message in the 'sent' table to have
-@@ -673,7 +677,10 @@ class singleWorker(StoppableThread):
+@@ -672,7 +676,10 @@ class singleWorker(StoppableThread):
              )
  
      def sendMsg(self):
@@ -6964,7 +6979,7 @@ index 60eabe2e..6e178afd 100644
          # pylint: disable=too-many-nested-blocks
          # Reset just in case
          sqlExecute(
-@@ -766,8 +773,7 @@ class singleWorker(StoppableThread):
+@@ -765,8 +772,7 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByToAddress', (
@@ -6974,7 +6989,7 @@ index 60eabe2e..6e178afd 100644
                                      "MainWindow",
                                      "Encryption key was requested earlier."))
                          ))
-@@ -838,8 +844,7 @@ class singleWorker(StoppableThread):
+@@ -837,8 +843,7 @@ class singleWorker(StoppableThread):
                              )
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByToAddress', (
@@ -6984,7 +6999,7 @@ index 60eabe2e..6e178afd 100644
                                          "MainWindow",
                                          "Sending a request for the"
                                          " recipient\'s encryption key."))
-@@ -863,8 +868,7 @@ class singleWorker(StoppableThread):
+@@ -862,8 +867,7 @@ class singleWorker(StoppableThread):
                  shared.ackdataForWhichImWatching[ackdata] = 0
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6994,7 +7009,7 @@ index 60eabe2e..6e178afd 100644
                              "MainWindow",
                              "Looking up the receiver\'s public key"))
                  ))
-@@ -921,15 +925,14 @@ class singleWorker(StoppableThread):
+@@ -920,15 +924,14 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByAckdata', (
@@ -7013,7 +7028,7 @@ index 60eabe2e..6e178afd 100644
                          ))
                          # if the human changes their setting and then
                          # sends another message or restarts their client,
-@@ -952,8 +955,7 @@ class singleWorker(StoppableThread):
+@@ -951,8 +954,7 @@ class singleWorker(StoppableThread):
                          defaults.networkDefaultPayloadLengthExtraBytes
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -7023,7 +7038,7 @@ index 60eabe2e..6e178afd 100644
                                  "MainWindow",
                                  "Doing work necessary to send message.\n"
                                  "There is no required difficulty for"
-@@ -985,32 +987,18 @@ class singleWorker(StoppableThread):
+@@ -984,32 +986,18 @@ class singleWorker(StoppableThread):
                          requiredAverageProofOfWorkNonceTrialsPerByte,
                          requiredPayloadLengthExtraBytes
                      )
@@ -7068,7 +7083,7 @@ index 60eabe2e..6e178afd 100644
                      if status != 'forcepow':
                          maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
                              'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-@@ -1030,18 +1018,19 @@ class singleWorker(StoppableThread):
+@@ -1029,18 +1017,19 @@ class singleWorker(StoppableThread):
                                  ackdata)
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByAckdata', (
@@ -7099,7 +7114,7 @@ index 60eabe2e..6e178afd 100644
                              continue
              else:  # if we are sending a message to ourselves or a chan..
                  self.logger.info('Sending a message.')
-@@ -1055,15 +1044,14 @@ class singleWorker(StoppableThread):
+@@ -1054,15 +1043,14 @@ class singleWorker(StoppableThread):
                  except Exception as err:
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -7118,7 +7133,7 @@ index 60eabe2e..6e178afd 100644
                      ))
                      self.logger.error(
                          'Error within sendMsg. Could not read the keys'
-@@ -1080,8 +1068,7 @@ class singleWorker(StoppableThread):
+@@ -1079,8 +1067,7 @@ class singleWorker(StoppableThread):
                      defaults.networkDefaultPayloadLengthExtraBytes
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7128,7 +7143,7 @@ index 60eabe2e..6e178afd 100644
                              "MainWindow",
                              "Doing work necessary to send message."))
                  ))
-@@ -1103,8 +1090,7 @@ class singleWorker(StoppableThread):
+@@ -1102,8 +1089,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7138,7 +7153,7 @@ index 60eabe2e..6e178afd 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -1157,8 +1143,7 @@ class singleWorker(StoppableThread):
+@@ -1156,8 +1142,7 @@ class singleWorker(StoppableThread):
                  # The fullAckPayload is a normal msg protocol message
                  # with the proof of work already completed that the
                  # receiver of this message can easily send out.
@@ -7148,7 +7163,7 @@ index 60eabe2e..6e178afd 100644
              payload += encodeVarint(len(fullAckPayload))
              payload += fullAckPayload
              dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
-@@ -1170,8 +1155,7 @@ class singleWorker(StoppableThread):
+@@ -1169,8 +1154,7 @@ class singleWorker(StoppableThread):
              # We have assembled the data that will be encrypted.
              try:
                  encrypted = highlevelcrypto.encrypt(
@@ -7158,7 +7173,7 @@ index 60eabe2e..6e178afd 100644
              except:
                  sqlExecute(
                      '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
-@@ -1179,12 +1163,11 @@ class singleWorker(StoppableThread):
+@@ -1178,12 +1162,11 @@ class singleWorker(StoppableThread):
                  )
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7174,7 +7189,7 @@ index 60eabe2e..6e178afd 100644
                  ))
                  continue
  
-@@ -1248,21 +1231,19 @@ class singleWorker(StoppableThread):
+@@ -1247,21 +1230,19 @@ class singleWorker(StoppableThread):
                 not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -7203,7 +7218,7 @@ index 60eabe2e..6e178afd 100644
                  ))
              self.logger.info(
                  'Broadcasting inv for my msg(within sendmsg function): %s',
-@@ -1392,8 +1373,7 @@ class singleWorker(StoppableThread):
+@@ -1391,8 +1372,7 @@ class singleWorker(StoppableThread):
          queues.UISignalQueue.put(('updateStatusBar', statusbar))
          queues.UISignalQueue.put((
              'updateSentItemStatusByToAddress', (
@@ -7213,7 +7228,7 @@ index 60eabe2e..6e178afd 100644
                      "MainWindow",
                      "Doing work necessary to request encryption key."))
          ))
-@@ -1417,30 +1397,31 @@ class singleWorker(StoppableThread):
+@@ -1416,30 +1396,31 @@ class singleWorker(StoppableThread):
              int(time.time()), retryNumber + 1, sleeptill, toAddress)
  
          queues.UISignalQueue.put((
@@ -7260,7 +7275,7 @@ index 60eabe2e..6e178afd 100644
              TTL = 24 * 60 * 60  # 1 day
          elif TTL < 7 * 24 * 60 * 60:  # 1 week
 diff --git a/src/depends.py b/src/depends.py
-index 0114ec94..d62dcc7d 100755
+index 68fba01a..f1de5970 100755
 --- a/src/depends.py
 +++ b/src/depends.py
 @@ -3,6 +3,9 @@ Utility functions to check the availability of dependencies
@@ -7317,9 +7332,9 @@ index 0114ec94..d62dcc7d 100755
      },
      "msgpack": {
          "OpenBSD": "py-msgpack",
-@@ -133,17 +137,17 @@ detectOS.result = None
- 
+@@ -135,17 +139,17 @@ detectOS.result = None
  def detectOSRelease():
+     """Detecting the release of OS"""
      with open("/etc/os-release", 'r') as osRelease:
 -        version = None
 +        ver = None
@@ -7338,7 +7353,7 @@ index 0114ec94..d62dcc7d 100755
              detectOS.result = "Ubuntu 12"
  
  
-@@ -165,7 +169,7 @@ def try_import(module, log_extra=False):
+@@ -168,7 +172,7 @@ def try_import(module, log_extra=False):
  def check_ripemd160():
      """Check availability of the RIPEMD160 hash function"""
      try:
@@ -7347,7 +7362,7 @@ index 0114ec94..d62dcc7d 100755
      except ImportError:
          return False
      return RIPEMD160Hash is not None
-@@ -361,21 +365,27 @@ def check_pyqt():
+@@ -362,21 +366,27 @@ def check_pyqt():
      Here we are checking for PyQt4 with its version, as for it require
      PyQt 4.8 or later.
      """
@@ -7382,7 +7397,7 @@ index 0114ec94..d62dcc7d 100755
          logger.error(
              'This version of Qt is too old. PyBitmessage requries'
              ' Qt 4.7 or later.')
-@@ -384,7 +394,7 @@ def check_pyqt():
+@@ -385,7 +395,7 @@ def check_pyqt():
  
  
  def check_msgpack():
@@ -7427,10 +7442,10 @@ index 9a8d646f..8e48d76c 100644
 +        qtpy.__dict__.update(context)
 +        sys.modules['qtpy'] = qtpy
 diff --git a/src/helper_msgcoding.py b/src/helper_msgcoding.py
-index cc632ffa..52aa9cea 100644
+index ae2bf80b..49e9000a 100644
 --- a/src/helper_msgcoding.py
 +++ b/src/helper_msgcoding.py
-@@ -144,5 +144,6 @@ class MsgDecode(object):
+@@ -155,5 +155,6 @@ class MsgDecode(object):
          # Throw away any extra lines (headers) after the subject.
          if subject:
              subject = subject.splitlines()[0]
@@ -7440,29 +7455,32 @@ index cc632ffa..52aa9cea 100644
 +        self.subject = unicode(subject, 'utf-8', 'replace')
 +        self.body = unicode(body, 'utf-8', 'replace')
 diff --git a/src/helper_search.py b/src/helper_search.py
-index d6704731..7de9f1e5 100644
+index 69acec43..72cb8e4b 100644
 --- a/src/helper_search.py
 +++ b/src/helper_search.py
-@@ -1,29 +1,19 @@
--#!/usr/bin/python2.7
-+from helper_sql import sqlQuery
-+from tr import _translate
- 
--from helper_sql import *
- 
+@@ -1,33 +1,19 @@
+-"""Additional SQL helper for searching messages"""
+-
+ from helper_sql import sqlQuery
+-
 -try:
 -    from PyQt4 import QtGui
 -    haveQt = True
 -except ImportError:
 -    haveQt = False
 -
--def search_translate (context, text):
+-
+-def search_translate(context, text):
+-    """Translation wrapper"""
 -    if haveQt:
 -        return QtGui.QApplication.translate(context, text)
--    else:
--        return text.lower()
--
--def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
+-    return text.lower()
++from tr import _translate
+ 
+ 
+-def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
+-    """Perform a search in mailbox tables"""
+-    # pylint: disable=too-many-arguments, too-many-branches
 +def search_sql(
 +        xAddress="toaddress", account=None, folder="inbox", where=None,
 +        what=None, unreadOnly=False):
@@ -7482,12 +7500,13 @@ index d6704731..7de9f1e5 100644
              where = "message"
          else:
              where = "toaddress || fromaddress || subject || message"
-@@ -68,18 +58,30 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
-         sqlStatementBase += " ORDER BY lastactiontime"
+@@ -73,20 +59,29 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
      return sqlQuery(sqlStatementBase, sqlArguments)
  
--def check_match(toAddress, fromAddress, subject, message, where = None, what = None):
-+
+ 
+-def check_match(toAddress, fromAddress, subject, message, where=None, what=None):
+-    """Check if a single message matches a filter (used when new messages are added to messagelists)"""
+-    # pylint: disable=too-many-arguments
 +def check_match(
 +        toAddress, fromAddress, subject, message, where=None, what=None):
      if what is not None and what != "":

@@ -1,0 +1,8 @@
+# User to run MiNode as
+# minode_user=blockchain
+
+# Where to store MiNode data
+# minode_datadir=
+
+# Connections limit
+# minode_max_connections=16

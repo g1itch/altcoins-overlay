@@ -8,7 +8,7 @@ MY_PN=eMarkd
 inherit versionator altcoin
 
 HOMEPAGE="http://deutsche-emark.de/"
-COMMIT="597f477c9be5fcb08121a0bdf2fb3ad419a02d19"
+COMMIT="6c9d85b9b1430022d9a4b3561e993b5ba4c76b56"
 SRC_URI="https://github.com/${COIN_NAME}project/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"

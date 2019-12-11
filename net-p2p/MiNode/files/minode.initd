@@ -6,9 +6,10 @@
 minode_user=${minode_user:-blockchain}
 minode_datadir=${minode_datadir:-/var/lib/${SVCNAME}}
 minode_max_connections=${minode_max_connections:-16}
+minode_opts=${minode_opts:-}
 
 command="/usr/bin/minode"
-command_args="--data-dir ${minode_datadir} --connection-limit ${minode_max_connections}"
+command_args="--data-dir ${minode_datadir} --connection-limit ${minode_max_connections} ${minode_opts}"
 pidfile=${minode_datadir}/${SVCNAME}.pid
 start_stop_daemon_args="-mb -N ${NICELEVEL:-20} -u ${minode_user}"
 

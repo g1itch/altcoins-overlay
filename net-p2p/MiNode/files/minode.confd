@@ -6,3 +6,6 @@
 
 # Connections limit
 # minode_max_connections=16
+
+# Any other options
+# minode_opts=

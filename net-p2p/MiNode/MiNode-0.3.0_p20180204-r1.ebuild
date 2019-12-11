@@ -38,6 +38,6 @@ src_install () {
 	dodoc README.md
 
 	local DN=${PN,,}
-	newconfd "${FILESDIR}"/${DN}.confd  ${DN}
+	newconfd "${FILESDIR}"/${DN}.confd ${DN}
 	newinitd "${FILESDIR}"/${DN}.initd ${DN}
 }

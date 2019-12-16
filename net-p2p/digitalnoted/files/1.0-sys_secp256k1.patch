@@ -1,0 +1,26 @@
+--- src/makefile.unix~	2019-12-16 10:38:05.255175217 +0200
++++ src/makefile.unix	2019-12-16 11:58:03.496067255 +0200
+@@ -6,6 +6,7 @@
+ USE_WALLET:=1
+ USE_IPV6:=1
+ USE_SYSTEM_LEVELDB:=0
++USE_SYSTEM_SECP256K1:=1
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -184,11 +185,15 @@
+ 
+ all: DigitalNoted
+ 
++ifeq (${USE_SYSTEM_SECP256K1}, 0)
+ # build secp256k1
+ DEFS += $(addprefix -I,$(CURDIR)/secp256k1/include)
+ secp256k1/src/libsecp256k1_la-secp256k1.o:
+ 	@echo "Building Secp256k1 ..."; cd secp256k1; chmod 755 *; ./autogen.sh; ./configure --enable-module-recovery; make; cd ..;
+ DigitalNoted: secp256k1/src/libsecp256k1_la-secp256k1.o
++else
++LIBS += -lsecp256k1
++endif
+ 
+ OBJS += obj/txdb-leveldb.o
+ ifeq (${USE_SYSTEM_LEVELDB}, 0)

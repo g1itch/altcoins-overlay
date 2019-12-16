@@ -16,7 +16,10 @@ KEYWORDS="~x86 ~amd64"
 IUSE="examples ipv6 upnp +wallet"
 
 DEPEND+="virtual/awk"
-RDEPEND+="virtual/bitcoin-leveldb"
+RDEPEND+="
+	virtual/bitcoin-leveldb
+	dev-libs/libsecp256k1
+"
 
 S="${WORKDIR}"/${MY_PN:0:-1}-2-${COMMIT}
 

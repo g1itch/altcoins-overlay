@@ -1,0 +1,11 @@
+-- configure.ac~       2019-12-31 00:21:26.000000000 +0200
++++ configure.ac        2019-12-31 00:23:42.395456072 +0200
+@@ -1423,7 +1423,7 @@
+ 
+ AX_SUBDIRS_CONFIGURE([src/secp256k1], [[--disable-shared], [--with-pic], [--with-bignum=no], [--enable-module-recovery], [--enable-experimental], [--enable-module-ecdh]])
+ 
+-ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery --disable-jni --disable-system-torrc --disable-systemd --disable-lzma --disable-zstd --disable-asciidoc"
++ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery --disable-jni --disable-system-torrc --disable-systemd --disable-lzma --disable-zstd --disable-libscrypt --disable-asciidoc"
+ AC_CONFIG_SUBDIRS([src/secp256k1])
+ AC_CONFIG_SUBDIRS([src/tor])
+ 

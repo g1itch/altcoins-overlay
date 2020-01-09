@@ -1,16 +1,3 @@
-diff --git a/setup.py b/setup.py
-index 3e585b6b..58a80dfc 100644
---- a/setup.py
-+++ b/setup.py
-@@ -54,7 +54,7 @@ if __name__ == "__main__":
-         libraries=['pthread', 'crypto'],
-     )
- 
--    installRequires = []
-+    installRequires = []  # QtPy
-     packages = [
-         'pybitmessage',
-         'pybitmessage.bitmessageqt',
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
 index 440d36b2..f12faf2b 100644
 --- a/src/bitmessageqt/__init__.py
@@ -4828,7 +4815,7 @@ index 80993fac..0eb347a3 100644
   </customwidgets>
   <resources>
 diff --git a/src/bitmessageqt/dialogs.py b/src/bitmessageqt/dialogs.py
-index b4bcd2fd..4774ea8e 100644
+index c667edb1..21122499 100644
 --- a/src/bitmessageqt/dialogs.py
 +++ b/src/bitmessageqt/dialogs.py
 @@ -3,7 +3,7 @@ src/bitmessageqt/dialogs.py
@@ -6134,10 +6121,10 @@ index edacd4bb..3890219c 100644
          tmp = SafeHTMLParser.replace_pre(data)
          tmp = self.uriregex1.sub(r'<a href="\1">\1</a>', tmp)
 diff --git a/src/bitmessageqt/settings.py b/src/bitmessageqt/settings.py
-index 982328cc..bc5a8e61 100644
+index 011d38ed..4f0efc29 100644
 --- a/src/bitmessageqt/settings.py
 +++ b/src/bitmessageqt/settings.py
-@@ -1,7 +1,7 @@
+@@ -2,7 +2,7 @@ import ConfigParser
  import os
  import sys
  
@@ -6146,8 +6133,8 @@ index 982328cc..bc5a8e61 100644
  
  import debug
  import defaults
-@@ -20,7 +20,7 @@ from network.asyncore_pollchoose import set_rates
- from tr import _translate
+@@ -35,7 +35,7 @@ def getSOCKSProxyType(config):
+     return result
  
  
 -class SettingsDialog(QtGui.QDialog):
@@ -6155,7 +6142,7 @@ index 982328cc..bc5a8e61 100644
      """The "Settings" dialog"""
      def __init__(self, parent=None, firstrun=False):
          super(SettingsDialog, self).__init__(parent)
-@@ -42,7 +42,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -67,7 +67,7 @@ class SettingsDialog(QtGui.QDialog):
              self.tabWidgetSettings.setCurrentIndex(
                  self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
              )
@@ -6164,7 +6151,7 @@ index 982328cc..bc5a8e61 100644
  
      def adjust_from_config(self, config):
          """Adjust all widgets state according to config settings"""
-@@ -351,7 +351,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -376,7 +376,7 @@ class SettingsDialog(QtGui.QDialog):
              self.config.set('bitmessagesettings', 'maxuploadrate', str(
                  int(float(self.lineEditMaxUploadRate.text()))))
          except ValueError:
@@ -6173,7 +6160,7 @@ index 982328cc..bc5a8e61 100644
                  self, _translate("MainWindow", "Number needed"),
                  _translate(
                      "MainWindow",
-@@ -474,7 +474,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -499,7 +499,7 @@ class SettingsDialog(QtGui.QDialog):
              if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
                  # If the time period is less than 5 hours, we give
                  # zero values to all fields. No message will be sent again.
@@ -6299,10 +6286,10 @@ index 65a5acfb..477b0d68 100644
      deleteAfter = 60
  
 diff --git a/src/bitmessageqt/support.py b/src/bitmessageqt/support.py
-index 2a1ddb18..56c4d479 100644
+index d6d4543d..312710d2 100644
 --- a/src/bitmessageqt/support.py
 +++ b/src/bitmessageqt/support.py
-@@ -1,30 +1,30 @@
+@@ -1,31 +1,31 @@
  import ctypes
 -from PyQt4 import QtCore, QtGui
  import ssl
@@ -6322,6 +6309,7 @@ index 2a1ddb18..56c4d479 100644
  import paths
  import proofofwork
 -from pyelliptic.openssl import OpenSSL
+-from settings import getSOCKSProxyType
  import queues
 -import network.stats
  import state
@@ -6331,6 +6319,7 @@ index 2a1ddb18..56c4d479 100644
 +from l10n import getTranslationLanguage
 +from openclpow import openclEnabled
 +from pyelliptic.openssl import OpenSSL
++from settings import getSOCKSProxyType
 +from tr import _translate
  from version import softwareVersion
  
@@ -6344,7 +6333,7 @@ index 2a1ddb18..56c4d479 100644
  SUPPORT_SUBJECT = 'Support request'
  SUPPORT_MESSAGE = '''You can use this message to send a report to one of the PyBitmessage core developers regarding PyBitmessage or the mailchuck.com email service. If you are using PyBitmessage involuntarily, for example because your computer was infected with ransomware, this is not an appropriate venue for resolving such issues.
  
-@@ -43,6 +43,7 @@ Operating system: {}
+@@ -44,6 +44,7 @@ Operating system: {}
  Architecture: {}bit
  Python Version: {}
  OpenSSL Version: {}
@@ -6352,7 +6341,7 @@ index 2a1ddb18..56c4d479 100644
  Frozen: {}
  Portable mode: {}
  C PoW: {}
-@@ -53,37 +54,56 @@ UPnP: {}
+@@ -54,37 +55,56 @@ UPnP: {}
  Connected hosts: {}
  '''
  
@@ -6417,7 +6406,7 @@ index 2a1ddb18..56c4d479 100644
          return
      myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
      myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
-@@ -93,26 +113,25 @@ def createSupportMessage(myapp):
+@@ -94,26 +114,25 @@ def createSupportMessage(myapp):
      if commit:
          version += " GIT " + commit
  
@@ -6806,29 +6795,30 @@ index 9e19cf50..ba383b97 100644
                          listOfNewAddressesToSendOutThroughTheAPI)
                  elif command == 'getDeterministicAddress':
 diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
-index 2c741661..fe28813c 100644
+index 1a2f7751..fe28813c 100644
 --- a/src/class_objectProcessor.py
 +++ b/src/class_objectProcessor.py
-@@ -148,12 +148,11 @@ class objectProcessor(threading.Thread):
+@@ -148,14 +148,11 @@ class objectProcessor(threading.Thread):
                  ' WHERE ackdata=?',
                  'ackreceived', int(time.time()), data[readPosition:])
              queues.UISignalQueue.put((
 -                'updateSentItemStatusByAckdata',
--                (data[readPosition:],
--                 tr._translate(
--                     "MainWindow",
--                     "Acknowledgement of the message received %1"
--                 ).arg(l10n.formatTimestamp()))
+-                (
+-                    data[readPosition:],
+-                    tr._translate(
 +                'updateSentItemStatusByAckdata', (
 +                    data[readPosition:], tr._translate(
-+                        "MainWindow",
+                         "MainWindow",
+-                        "Acknowledgement of the message received %1"
+-                    ).arg(l10n.formatTimestamp())
+-                )
 +                        "Acknowledgement of the message received {0}"
 +                    ).format(l10n.formatTimestamp()))
              ))
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index a275b79d..a7b232d8 100644
+index d035c092..183a2906 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -1,7 +1,7 @@
@@ -7706,10 +7696,10 @@ index c9238f63..93eadf11 100644
          try:
              s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 diff --git a/src/plugins/menu_qrcode.py b/src/plugins/menu_qrcode.py
-index 2e65bd88..304567fd 100644
+index 63644db6..1fbccbe4 100644
 --- a/src/plugins/menu_qrcode.py
 +++ b/src/plugins/menu_qrcode.py
-@@ -9,7 +9,7 @@ A menu plugin showing QR-Code for bitmessage address in modal dialog.
+@@ -6,7 +6,7 @@ A menu plugin showing QR-Code for bitmessage address in modal dialog.
  import urllib
  
  import qrcode
@@ -7718,7 +7708,7 @@ index 2e65bd88..304567fd 100644
  
  from pybitmessage.tr import _translate
  
-@@ -41,23 +41,23 @@ class Image(qrcode.image.base.BaseImage):           # pylint: disable=abstract-m
+@@ -39,23 +39,23 @@ class Image(qrcode.image.base.BaseImage):  # pylint: disable=abstract-method
              QtCore.Qt.black)
  
  
@@ -7748,7 +7738,7 @@ index 2e65bd88..304567fd 100644
          layout.addWidget(self.image)
          layout.addWidget(self.label)
          layout.addWidget(buttonBox)
-@@ -74,7 +74,7 @@ class QRCodeDialog(QtGui.QDialog):
+@@ -72,7 +72,7 @@ class QRCodeDialog(QtGui.QDialog):
          self.label.setText(text)
          self.label.setToolTip(text)
          self.label.setFixedWidth(pixmap.width())
@@ -7758,17 +7748,17 @@ index 2e65bd88..304567fd 100644
  
  def connect_plugin(form):
 diff --git a/src/plugins/plugin.py b/src/plugins/plugin.py
-index e671a73f..3a966f75 100644
+index 629de0a6..9f3b76c0 100644
 --- a/src/plugins/plugin.py
 +++ b/src/plugins/plugin.py
-@@ -23,6 +23,7 @@ def get_plugins(group, point='', name=None, fallback=None):
+@@ -32,6 +32,7 @@ def get_plugins(group, point='', name=None, fallback=None):
              except (AttributeError,
                      ImportError,
                      ValueError,
 +                    RuntimeError,  # PyQt for example
                      pkg_resources.DistributionNotFound,
                      pkg_resources.UnknownExtra):
-                 continue
+                 logger.debug(
 diff --git a/src/qidenticon.py b/src/qidenticon.py
 index deafc570..b61f55ff 100644
 --- a/src/qidenticon.py

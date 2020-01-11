@@ -1,0 +1,83 @@
+diff --git a/src/checkpoints.cpp b/src/checkpoints.cpp
+index 6814fc5..231d4e9 100644
+--- a/src/checkpoints.cpp
++++ b/src/checkpoints.cpp
+@@ -7,6 +7,7 @@
+ #include <boost/foreach.hpp>
+ 
+ #include "checkpoints.h"
++#include "txdb-leveldb.h"
+ 
+ #include "txdb.h"
+ #include "main.h"
+diff --git a/src/makefile.unix b/src/makefile.unix
+index 9208afc..bea4e80 100644
+--- a/src/makefile.unix
++++ b/src/makefile.unix
+@@ -5,7 +5,7 @@
+ 
+ USE_UPNP:=0
+ USE_IPV6:=1
+-BOOST_LIB_SUFFIX:=-mt
++USE_SYSTEM_LEVELDB:=0
+ 
+ LINK:=$(CXX)
+ ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
+@@ -33,8 +33,7 @@ LIBS += \
+    -l boost_thread$(BOOST_LIB_SUFFIX) \
+    -l db_cxx$(BDB_LIB_SUFFIX) \
+    -l ssl \
+-   -l crypto \
+-   -l rt
++   -l crypto
+ 
+ ifndef USE_UPNP
+ 	override USE_UPNP = -
+@@ -142,27 +141,22 @@ OBJS= \
+     obj/scrypt-arm.o \
+     obj/scrypt-x86.o \
+     obj/scrypt-x86_64.o \
+-    obj/smessage.o \
+-    obj/zerocoin/Accumulator.o \
+-    obj/zerocoin/AccumulatorProofOfKnowledge.o \
+-    obj/zerocoin/Coin.o \
+-    obj/zerocoin/CoinSpend.o \
+-    obj/zerocoin/Commitment.o \
+-    obj/zerocoin/ParamGeneration.o \
+-    obj/zerocoin/Params.o \
+-    obj/zerocoin/SerialNumberSignatureOfKnowledge.o \
+-    obj/zerocoin/SpendMetaData.o \
+-    obj/zerocoin/ZeroTest.o
++    obj/smessage.o
+ 
+ all: fluttercoind
+ 
++OBJS += obj/txdb-leveldb.o
++
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
+ LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+-OBJS += obj/txdb-leveldb.o
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
+ obj/txdb-leveldb.o: leveldb/libleveldb.a
++else
++LIBS += -lleveldb -lmemenv
++endif
+ 
+ # auto-generated dependencies:
+ -include obj/*.P
+diff --git a/src/txdb-leveldb.cpp b/src/txdb-leveldb.cpp
+index 214a5a6..ce97c3d 100644
+--- a/src/txdb-leveldb.cpp
++++ b/src/txdb-leveldb.cpp
+@@ -12,7 +12,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "kernel.h"
+ #include "checkpoints.h"

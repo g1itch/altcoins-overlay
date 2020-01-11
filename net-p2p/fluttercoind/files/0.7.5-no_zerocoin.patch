@@ -1,0 +1,91 @@
+diff --git a/src/init.cpp b/src/init.cpp
+index a03dc5d..14939f8 100644
+--- a/src/init.cpp
++++ b/src/init.cpp
+@@ -14,7 +14,6 @@
+ #include "ui_interface.h"
+ #include "checkpoints.h"
+ #include "smessage.h"
+-#include "zerocoin/ZeroTest.h"
+ #include <boost/filesystem.hpp>
+ #include <boost/filesystem/fstream.hpp>
+ #include <boost/filesystem/convenience.hpp>
+@@ -817,17 +816,6 @@ if (firstRunCheck() == 0)
+         return false;
+     }
+ 
+-    // ********************************************************* Testing Zerocoin
+-
+-
+-    if (GetBoolArg("-zerotest", false))
+-    {
+-        printf("\n=== ZeroCoin tests start ===\n");
+-        Test_RunAllTests();
+-        printf("=== ZeroCoin tests end ===\n\n");
+-    }
+-
+-    // ********************************************************* Step 8: load wallet
+ 
+     uiInterface.InitMessage(_("Loading wallet..."));
+     printf("Loading wallet...\n");
+diff --git a/src/main.cpp b/src/main.cpp
+index 88998da..5fecb55 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -14,7 +14,6 @@
+ #include "ui_interface.h"
+ #include "kernel.h"
+ #include "smessage.h"
+-#include "zerocoin/Zerocoin.h"
+ #include <boost/algorithm/string/replace.hpp>
+ #include <boost/filesystem.hpp>
+ #include <boost/filesystem/fstream.hpp>
+@@ -37,7 +36,6 @@ unsigned int nTransactionsUpdated = 0;
+ 
+ map<uint256, CBlockIndex*> mapBlockIndex;
+ set<pair<COutPoint, unsigned int> > setStakeSeen;
+-libzerocoin::Params* ZCParams;
+ 
+ CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // "standard" scrypt target limit for proof of work, results with 0,000244140625 proof-of-work difficulty
+ CBigNum bnProofOfStakeLimit(~uint256(0) >> 27);
+@@ -3174,9 +3172,6 @@ bool LoadBlockIndex(bool fAllowNew)
+         bnTrustedModulus.SetHex("9ff28c9cb5039df509a37260e10ae66ef880a538824de54e78051eed6a95ceb0509dd160eb77ec47279453c3b2e58f1ac25a607277d403e05a8ae5e8e4c8365fa3eec911f9a1e0a4ad58bc4c5a3531c5632e13a94526851c618f59715842c56b31af96b973a7c0bae154cddd8f67985783f299616d588f7fe1942d3f2a766711b8690cc3a225d52d93130594e130a17e51602eda21a03dc955075b6fa20f3d4e25a91d32b0aef75d8ca05802fa159f94b9b0f2e385744bc6105b744727ea063b59e8cf838fcf5dcd31d399919db49cd1c73ea9bff02be4e92c3766b65219ae79ee2bb61441d4362c8251d2f2d97314c7e56a40e21b13fa5016e16482065bd797960a04069b97b23bcbe699e78e87fec1d8ea1f035e0ac643bb5a873ed0a2282ccfa31b5fd464264a793025e8357841596e4d995d95092980b73616345d37acb9284344cf862dc5c5729f32abc46e96603e1d3ff5263fc7d02b2eb62d35dc4b3b958d5b3e4bbd3884a5a112903552354a400db24fc60e2a4fb35eb151f8b57cd8dde7b68c1bfe2755f05c4af071c1f15d58b59d56761a72b03277e03d75156733b19bcdf2b62cd58e56e7f774c22856f8ece7c6e49445e481f29b265390e785e7857046d45a671b9a435642cfa445c47d8e8e2212fe3073bd86577e0083be490db1cf4a14095dc958eab7b4ca3c45c900bb68c9928d41859a70ad602fcc7c4309");
+     }
+ 
+-    // Set up the Zerocoin Params object
+-    ZCParams = new libzerocoin::Params(bnTrustedModulus);
+-
+     //
+     // Load block index
+     //
+diff --git a/src/main.h b/src/main.h
+index 7d4b608..40e2e74 100644
+--- a/src/main.h
++++ b/src/main.h
+@@ -11,7 +11,6 @@
+ #include "net.h"
+ #include "script.h"
+ #include "scrypt.h"
+-#include "zerocoin/Zerocoin.h"
+ #include "base58.h"
+ 
+ #include <list>
+@@ -44,8 +43,8 @@ static const unsigned int FORK_FINAL = 1397936903;
+ static const unsigned int FORK_ADJUST_SOFT = 1517428800; // Jan 31 2018, 20:00:00 UTC --ofeefee
+ static const unsigned int FORK_ADJUST_HARD = 1518033600; // Feb 7 2018, 20:00:00 UTC --ofeefee
+ 
+-string SearchTerm(const char *chAddress);
+-string SearchTermV2(const char *chAddress);
++std::string SearchTerm(const char *chAddress);
++std::string SearchTermV2(const char *chAddress);
+ bool fAddrMiner (const char *chHash, const char *chTerm);
+ 
+ inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+@@ -65,7 +64,6 @@ static const uint256 hashBadBlock15553("0x000000000141634a8cd6b9ab39c21447a41eea
+ inline int64 PastDrift(int64 nTime)   { return nTime - 2 * 60 * 60; } // up to 2 hours from the past
+ inline int64 FutureDrift(int64 nTime) { return nTime + 2 * 60 * 60; } // up to 2 hours from the future
+ 
+-extern libzerocoin::Params* ZCParams;
+ extern CScript COINBASE_FLAGS;
+ extern CCriticalSection cs_main;
+ extern std::map<uint256, CBlockIndex*> mapBlockIndex;

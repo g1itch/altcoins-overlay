@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Gentoo Authors
+# Copyright 2017-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -15,14 +15,18 @@ KEYWORDS="~x86 ~amd64"
 IUSE="examples ipv6 upnp +wallet"
 
 DEPEND+="virtual/awk"
-RDEPEND+="virtual/bitcoin-leveldb"
+RDEPEND+="
+	virtual/bitcoin-leveldb
+	dev-libs/libsecp256k1
+"
 
 S="${WORKDIR}"/${MY_PN:0:-1}-2-${PV}
 
 src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
-	epatch "${FILESDIR}"/${PVM}-miniupnpc-1.9.patch
+	epatch "${FILESDIR}"/${PVM}-sys_secp256k1.patch
+	epatch "${FILESDIR}"/${PVM}-miniupnpc-2.1.patch
 	altcoin_src_prepare
 }
 

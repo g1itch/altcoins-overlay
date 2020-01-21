@@ -764,7 +764,7 @@ index 4714d493..a5f83da6 100644
  #include <openssl/ecdsa.h>
  #include <openssl/rand.h>
 diff --git a/src/smessage.cpp b/src/smessage.cpp
-index 0fd02a9a..2a925538 100644
+index 0fd02a9a..852755b5 100644
 --- a/src/smessage.cpp
 +++ b/src/smessage.cpp
 @@ -114,15 +114,27 @@ bool SecMsgCrypter::Encrypt(uint8_t* chPlaintext, uint32_t nPlain, std::vector<u
@@ -854,10 +854,11 @@ index 0fd02a9a..2a925538 100644
              rv = 3; // checksum mismatch
          }
      }
+-    HMAC_CTX_cleanup(&ctx);
 +#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 +    HMAC_CTX_free(ctx);
 +#else
-     HMAC_CTX_cleanup(&ctx);
++    HMAC_CTX_cleanup(ctx);
 +    delete ctx;
 +#endif
  

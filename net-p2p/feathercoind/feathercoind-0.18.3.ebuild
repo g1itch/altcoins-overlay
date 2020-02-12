@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Gentoo Authors
+# Copyright 2016-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -23,8 +23,10 @@ S="${WORKDIR}"/${COIN_NAME^}-${PV}
 
 
 src_prepare() {
+	local PVM=$(get_version_component_range 1-2)
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/0.13-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf
 }
 

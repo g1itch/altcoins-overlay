@@ -7,9 +7,8 @@ MY_PV=${PV}-core.bliss
 
 inherit versionator altcoin
 
-COMMIT="9b218e36a061c1ed6ab089c8d8fe8cfc08edced3"
 HOMEPAGE="http://okcash.co"
-SRC_URI="https://github.com/okcashpro/${COIN_NAME}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/okcashpro/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
@@ -17,8 +16,6 @@ IUSE="examples ipv6 upnp"
 
 DEPEND+="virtual/awk"
 RDEPEND+="virtual/bitcoin-leveldb"
-
-S="${WORKDIR}"/${COIN_NAME}-${COMMIT}
 
 src_prepare() {
 	local PVM=4.0

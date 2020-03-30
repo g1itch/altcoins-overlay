@@ -28,9 +28,8 @@ S="${WORKDIR}"/${MyPN}-${PV}
 
 
 src_prepare() {
-	local PVM=$(get_version_component_range 1-2)
 	rm -r src/leveldb
-	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/2.1-sys_leveldb.patch
 	eautoreconf
 }
 

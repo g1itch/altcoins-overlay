@@ -10,10 +10,9 @@ HOMEPAGE="http://bitcore.cc/"
 SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 
 S="${WORKDIR}"/BitCore-${PV}
-
 
 src_configure() {
 	append-ldflags -Wl,-z,noexecstack

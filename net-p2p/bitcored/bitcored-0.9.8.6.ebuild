@@ -10,8 +10,8 @@ HOMEPAGE="http://bitcore.cc/"
 SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS=""
-IUSE="examples upnp +wallet zeromq cpu_flags_x86_sse2"
+KEYWORDS="~x86 ~amd64"
+IUSE="examples upnp +wallet zeromq"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
@@ -24,7 +24,9 @@ S="${WORKDIR}"/BitCore-${PV}
 
 src_prepare() {
 	rm -r src/leveldb
-	epatch "${FILESDIR}"/0.14-sys_leveldb.patch
+	local PVM=$(get_version_component_range 1-2)
+	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf
 }
 
@@ -37,7 +39,6 @@ src_configure() {
 		$(use_enable upnp upnp-default) \
 		$(use_enable wallet) \
 		$(use_enable zeromq zmq) \
-		$(use_enable cpu_flags_x86_sse2 sse2) \
 		--disable-ccache \
 		--disable-static \
 		--with-system-leveldb \

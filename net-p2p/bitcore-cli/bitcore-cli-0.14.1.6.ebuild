@@ -1,6 +1,5 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 
 EAPI=5
 COIN_SYMBOL="BTX"
@@ -11,7 +10,7 @@ HOMEPAGE="http://bitcore.cc/"
 SRC_URI="https://github.com/LIMXTEC/${COIN_NAME}/archive/${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 
 S="${WORKDIR}"/BitCore-${PV}
 

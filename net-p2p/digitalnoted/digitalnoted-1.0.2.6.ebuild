@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Gentoo Authors
+# Copyright 2017-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -7,8 +7,7 @@ MY_PN=DigitalNoted
 inherit altcoin versionator
 
 HOMEPAGE="http://digitalnote.biz/"
-COMMIT="97d670c2b1f7695bb8ffc2c43cbd1c58949b7aff"
-SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${MY_PN:0:-1}-2/archive/${COMMIT}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}${COIN_SYMBOL}/${MY_PN:0:-1}-2/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
@@ -21,10 +20,9 @@ RDEPEND+="
 	dev-libs/libsecp256k1
 "
 
-S="${WORKDIR}"/${MY_PN:0:-1}-2-${COMMIT}
+S="${WORKDIR}"/${MY_PN:0:-1}-2-${PV}
 
 src_prepare() {
-	rm -rf src/leveldb src/secp256k1
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	epatch "${FILESDIR}"/${PVM}-sys_secp256k1.patch

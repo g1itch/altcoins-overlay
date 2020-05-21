@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Gentoo Foundation
+# Copyright 2015-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -6,7 +6,7 @@ EAPI=5
 inherit altcoin
 
 DESCRIPTION="Command-line JSON-RPC client for Digibyte crypto-currency"
-HOMEPAGE="http://digibyte.co/"
+HOMEPAGE="https://digibyte.io/"
 SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"

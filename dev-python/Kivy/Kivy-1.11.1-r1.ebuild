@@ -25,7 +25,7 @@ RDEPEND="
 	cairo? ( dev-python/pycairo[${PYTHON_USEDEP}] )
 	garden? ( dev-python/kivy-garden[${PYTHON_USEDEP}] )
 	gstreamer? ( dev-python/gst-python:1.0[${PYTHON_USEDEP}] )
-	sdl? ( media-libs/libsdl2
+	sdl? ( media-libs/libsdl2[gles2]
 		media-libs/sdl2-ttf
 		media-libs/sdl2-image
 		media-libs/sdl2-mixer )

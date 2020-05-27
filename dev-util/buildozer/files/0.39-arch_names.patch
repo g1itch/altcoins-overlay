@@ -1,0 +1,149 @@
+--- a/buildozer/targets/android.py	2019-02-04 01:51:13.000000000 +0200
++++ b/buildozer/targets/android.py	2020-05-27 17:45:33.553387942 +0300
+@@ -47,6 +47,9 @@
+ # does.
+ DEFAULT_SDK_TAG = '4333796'
+ 
++DEFAULT_ARCH = 'armeabi-v7a'
++
++
+ class TargetAndroid(Target):
+     targetname = 'android'
+     p4a_directory = "python-for-android"
+@@ -56,6 +59,8 @@
+ 
+     def __init__(self, *args, **kwargs):
+         super(TargetAndroid, self).__init__(*args, **kwargs)
++        self._arch = self.buildozer.config.getdefault(
++            'app', 'android.arch', DEFAULT_ARCH)
+         self._build_dir = join(self.buildozer.platform_dir, 'build')
+         executable = sys.executable or 'python'
+         self._p4a_cmd = '{} -m pythonforandroid.toolchain '.format(executable)
+@@ -99,18 +104,7 @@
+         """Call the sdkmanager in our Android SDK with the given arguments."""
+         # Use the android-sdk dir as cwd by default
+         kwargs['cwd'] = kwargs.get('cwd', self.android_sdk_dir)
+-
+-        sdkmanager_path = os.path.join(self.android_sdk_dir,
+-                                       'tools',
+-                                       'bin',
+-                                       'sdkmanager')
+-        if not os.path.isfile(sdkmanager_path):
+-            raise BuildozerException(
+-                ('sdkmanager path "{}" does not exist, sdkmanager is not'
+-                 'installed'.format(sdkmanager_path)))
+-
+-        command = sdkmanager_path + ' ' + ' '.join(args)
+-
++        command = self.sdkmanager_path + ' ' + ' '.join(args)
+         return_child = kwargs.pop('return_child', False)
+         if return_child:
+             return self.buildozer.cmd_expect(command, **kwargs)
+@@ -713,8 +707,26 @@
+     def get_available_packages(self):
+         return True
+ 
+-    def get_dist_dir(self, dist_name):
+-        return join(self._build_dir, 'dists', dist_name)
++    def get_dist_dir(self, dist_name, arch):
++        """Find the dist dir with the given name and target arch, if one
++        already exists, otherwise return a new dist_dir name.
++        """
++        expected_dist_name = generate_dist_folder_name(dist_name, arch_names=[arch])
++
++        # If the expected dist name does exist, simply use that
++        expected_dist_dir = join(self._build_dir, 'dists', expected_dist_name)
++        if exists(expected_dist_dir):
++            return expected_dist_dir
++
++        # For backwards compatibility, check if a directory without
++        # the arch exists. If so, this is probably the target dist.
++        old_dist_dir = join(self._build_dir, 'dists', dist_name)
++        if exists(old_dist_dir):
++            return old_dist_dir
++
++        # If no directory has been found yet, our dist probably
++        # doesn't exist yet, so use the expected name
++        return expected_dist_dir
+ 
+     def get_local_recipes_dir(self):
+         local_recipes = self.buildozer.config.getdefault('app', 'p4a.local_recipes')
+@@ -876,7 +888,8 @@
+ 
+     def build_package(self):
+         dist_name = self.buildozer.config.get('app', 'package.name')
+-        dist_dir = self.get_dist_dir(dist_name)
++        arch = self.buildozer.config.getdefault('app', 'android.arch', DEFAULT_ARCH)
++        dist_dir = self.get_dist_dir(dist_name, arch)
+         config = self.buildozer.config
+         package = self._get_package()
+         version = self.buildozer.get_version()
+@@ -1019,8 +1032,10 @@
+         if self.build_mode == 'debug':
+             build_cmd += [("debug", )]
+             mode = 'debug'
++            mode_sign = mode
+         else:
+             build_cmd += [("release", )]
++            mode_sign = "release"
+             mode = self.get_release_mode()
+ 
+         self.execute_build_package(build_cmd)
+@@ -1039,16 +1054,14 @@
+         gradle_files = ["build.gradle", "gradle", "gradlew"]
+         is_gradle_build = build_tools_version >= "25.0" and any(
+             (exists(join(dist_dir, x)) for x in gradle_files))
++        packagename = config.get('app', 'package.name')
+ 
+         if is_gradle_build:
+             # on gradle build, the apk use the package name, and have no version
+-            packagename = config.get('app', 'package.name')
++            packagename_src = basename(dist_dir)  # gradle specifically uses the folder name
+             apk = u'{packagename}-{mode}.apk'.format(
+-                packagename=packagename, mode=mode)
+-            apk_dir = join(dist_dir, "build", "outputs", "apk", mode)
+-            apk_dest = u'{packagename}-{version}-{mode}.apk'.format(
+-                packagename=packagename, mode=mode, version=version)
+-
++                packagename=packagename_src, mode=mode)
++            apk_dir = join(dist_dir, "build", "outputs", "apk", mode_sign)
+         else:
+             # on ant, the apk use the title, and have version
+             bl = u'\'" ,'
+@@ -1063,6 +1076,10 @@
+             apk_dir = join(dist_dir, "bin")
+             apk_dest = apk
+ 
++        apk_dest = u'{packagename}-{version}-{arch}-{mode}.apk'.format(
++            packagename=packagename, mode=mode, version=version,
++            arch=self._arch)
++
+         # copy to our place
+         copyfile(join(apk_dir, apk), join(self.buildozer.bin_dir, apk_dest))
+ 
+@@ -1226,3 +1243,25 @@
+ 
+ def get_target(buildozer):
+     return TargetAndroid(buildozer)
++
++
++def generate_dist_folder_name(base_dist_name, arch_names=None):
++    """Generate the distribution folder name to use, based on a
++    combination of the input arguments.
++    WARNING: This function is copied from python-for-android. It would
++    be preferable to have a proper interface, either importing the p4a
++    code or having a p4a dist dir query option.
++    Parameters
++    ----------
++    base_dist_name : str
++        The core distribution identifier string
++    arch_names : list of str
++        The architecture compile targets
++    """
++    if arch_names is None:
++        arch_names = ["no_arch_specified"]
++
++    return '{}__{}'.format(
++        base_dist_name,
++        '_'.join(arch_names)
++    )

@@ -4,14 +4,14 @@
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite,ssl,ipv6"
+PYTHON_REQ_USE="sqlite,ssl"
 
 inherit distutils-r1 gnome2-utils versionator systemd
 
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="e37d52d9502553318bf96a4b341f273df5ca550b"
+COMMIT="3f773c78f70c5a517d26c8fa4d9858c1d4fd3bb6"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -26,9 +26,10 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
 
+# desktop? ( dev-python/pyxdg[${PYTHON_USEDEP}] )
 RDEPEND="${DEPEND}
 	debug? ( dev-python/python-prctl[${PYTHON_USEDEP}] )
-	desktop? ( dev-python/pyxdg[${PYTHON_USEDEP}] )
+
 	!libressl? ( dev-libs/openssl:0[-bindist] )
 	libressl? ( dev-libs/libressl )
 	msgpack? ( || ( dev-python/msgpack[${PYTHON_USEDEP}]
@@ -60,7 +61,7 @@ PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/${PVM}-api.patch
 	"${FILESDIR}"/${PVM}-qt5.patch
-	"${FILESDIR}"/${PVM}-desktop.patch
+	# "${FILESDIR}"/${PVM}-desktop.patch
 )
 
 src_prepare() {

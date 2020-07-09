@@ -17,3 +17,5 @@ SLOT="0"
 DEPEND="dev-python/setuptools"
 RDEPEND="dev-python/PyQt5[${PYTHON_USEDEP}]
 	dev-qt/qtchooser"
+
+PATCHES=( "${FILESDIR}"/2.3-pyexpat-python2.patch )

@@ -1,0 +1,27 @@
+--- a/pyqtdeploy/metadata/python_metadata.py	2018-12-02 13:55:39.000000000 +0200
++++ b/pyqtdeploy/metadata/python_metadata.py	2020-07-09 14:39:34.462965606 +0300
+@@ -4857,14 +4857,21 @@
+                 deps=('collections', 'contextvars', 'itertools', 'locale',
+                         'math', 'numbers', 're'))),
+ 
+-    'pyexpat':
+-        ExtensionModule(internal=True,
+-                source=('expat/loadlibrary.c', 'expat/xmlparse.c',
++    'pyexpat': (
++        ExtensionModule(version=2, internal=True,
++                source=('win#expat/loadlibrary.c', 'expat/xmlparse.c',
+                         'expat/xmlrole.c', 'expat/xmltok.c', 'pyexpat.c'),
+                 defines=('XML_STATIC', 'win#COMPILED_FROM_DSP',
+                         '!win#HAVE_EXPAT_CONFIG_H', '!win#XML_DEV_URANDOM'),
+                 includepath='expat',
+                 pyd='pyexpat.pyd'),
++        ExtensionModule(version=3, internal=True,
++                source=('expat/loadlibrary.c', 'expat/xmlparse.c',
++                        'expat/xmlrole.c', 'expat/xmltok.c', 'pyexpat.c'),
++                defines=('XML_STATIC', 'win#COMPILED_FROM_DSP',
++                        '!win#HAVE_EXPAT_CONFIG_H', '!win#XML_DEV_URANDOM'),
++                includepath='expat',
++                pyd='pyexpat.pyd')),
+ 
+     '_queue':
+         ExtensionModule(min_version=(3, 7), internal=True,

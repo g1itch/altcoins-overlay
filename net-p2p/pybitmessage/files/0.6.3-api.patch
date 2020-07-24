@@ -2232,7 +2232,7 @@ index 446c6ae4..ce71c858 100644
 +    def _methodHelp(self, method):
 +        return self._handlers[method].__doc__
 diff --git a/src/bitmessagemain.py b/src/bitmessagemain.py
-index 2a279aca..fb4699e3 100755
+index 0d766568..a0a6a025 100755
 --- a/src/bitmessagemain.py
 +++ b/src/bitmessagemain.py
 @@ -188,6 +188,8 @@ class Main(object):

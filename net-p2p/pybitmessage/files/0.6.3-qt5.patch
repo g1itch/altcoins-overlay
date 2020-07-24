@@ -1,3 +1,16 @@
+diff --git a/.travis.yml b/.travis.yml
+index 274d14c1..a699443f 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -6,7 +6,7 @@ addons:
+     packages:
+       - build-essential
+       - libcap-dev
+-      - python-qt4
++      - python-pyqt5
+       - tor
+       - xvfb
+ install:
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
 index 2f1a6e7f..f01ec4f8 100644
 --- a/src/bitmessageqt/__init__.py
@@ -2513,14 +2526,14 @@ index 50ea3548..31780e20 100644
              self.feedback = self.REGISTRATION_DENIED
          return self.feedback
 diff --git a/src/bitmessageqt/address_dialogs.py b/src/bitmessageqt/address_dialogs.py
-index 7b73152d..39f8a6dc 100644
+index 56cf7cc5..ac78d5ea 100644
 --- a/src/bitmessageqt/address_dialogs.py
 +++ b/src/bitmessageqt/address_dialogs.py
 @@ -1,39 +1,39 @@
  """
  Dialogs that work with BM address.
  """
--# pylint: disable=attribute-defined-outside-init,too-few-public-methods
+-# pylint: disable=attribute-defined-outside-init,too-few-public-methods,relative-import
 +# pylint: disable=too-few-public-methods
 +# https://github.com/PyCQA/pylint/issues/471
  
@@ -2669,17 +2682,6 @@ index 7b73152d..39f8a6dc 100644
  
      def _onSuccess(self, addressVersion, streamNumber, ripe):
          if addressVersion <= 3:
-@@ -191,8 +200,8 @@ class NewSubscriptionDialog(AddressDataDialog):
-         else:
-             Inventory().flush()
-             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
--                encodeVarint(addressVersion) +
--                encodeVarint(streamNumber) + ripe
-+                encodeVarint(addressVersion)
-+                + encodeVarint(streamNumber) + ripe
-             ).digest()).digest()
-             tag = doubleHashOfAddressData[32:]
-             self.recent = Inventory().by_type_and_tag(3, tag)
 @@ -210,22 +219,21 @@ class NewSubscriptionDialog(AddressDataDialog):
                      _translate(
                          "MainWindow",
@@ -2708,16 +2710,24 @@ index 7b73152d..39f8a6dc 100644
      """
      QDialog for special address behaviour (e.g. mailing list functionality)
      """
-@@ -265,7 +273,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
-                     unicode(mailingListName, 'utf-8')
-                 )
+@@ -256,12 +264,12 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
+                     self.radioButtonBehaviorMailingList.click()
+                 else:
+                     self.radioButtonBehaveNormalAddress.click()
+-                mailingListName = config.safeGet(self.address, 'mailinglistname', '')
++                mailingListName = config.safeGet(
++                    self.address, 'mailinglistname', '')
+                 self.lineEditMailingListName.setText(
+-                    unicode(mailingListName, 'utf-8')
+-                )
++                    mailingListName.decode('utf-8'))
  
 -        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 +        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
          self.show()
  
      def accept(self):
-@@ -278,14 +286,15 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
+@@ -274,14 +282,15 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
              # Set the color to either black or grey
              if self.config.getboolean(self.address, 'enabled'):
                  self.parent.setCurrentItemColor(
@@ -2736,7 +2746,7 @@ index 7b73152d..39f8a6dc 100644
              self.parent.setCurrentItemColor(
                  QtGui.QColor(137, 4, 177))  # magenta
          self.parent.rerenderComboBoxSendFrom()
-@@ -294,13 +303,15 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
+@@ -290,13 +299,15 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
          self.parent.rerenderMessagelistToLabels()
  
  
@@ -2753,7 +2763,7 @@ index 7b73152d..39f8a6dc 100644
          if account:
              self.acct = account
              self.setWindowTitle(_translate(
-@@ -333,7 +344,7 @@ class EmailGatewayDialog(QtGui.QDialog):
+@@ -329,7 +340,7 @@ class EmailGatewayDialog(QtGui.QDialog):
              else:
                  self.acct = MailchuckAccount(address)
          self.lineEditEmail.setFocus()
@@ -2762,7 +2772,7 @@ index 7b73152d..39f8a6dc 100644
  
      def accept(self):
          """Accept callback"""
-@@ -347,7 +358,7 @@ class EmailGatewayDialog(QtGui.QDialog):
+@@ -343,7 +354,7 @@ class EmailGatewayDialog(QtGui.QDialog):
  
          if self.radioButtonRegister.isChecked() \
                  or self.radioButtonRegister.isHidden():
@@ -2772,32 +2782,44 @@ index 7b73152d..39f8a6dc 100644
              self.config.set(self.acct.fromAddress, 'label', email)
              self.config.set(self.acct.fromAddress, 'gateway', 'mailchuck')
 diff --git a/src/bitmessageqt/addressvalidator.py b/src/bitmessageqt/addressvalidator.py
-index f9de70a2..fefe045e 100644
+index 89c17891..de2cd5b3 100644
 --- a/src/bitmessageqt/addressvalidator.py
 +++ b/src/bitmessageqt/addressvalidator.py
-@@ -1,4 +1,9 @@
--from PyQt4 import QtGui
-+"""
+@@ -1,14 +1,15 @@
+ """
+-Address validator module.
 +The validator for address and passphrase QLineEdits
 +used in `.dialogs.NewChanDialog`.
-+"""
-+
-+from qtpy import QtGui
+ """
+-# pylint: disable=too-many-branches,too-many-arguments
+ 
+-from PyQt4 import QtGui
  from Queue import Empty
  
++from qtpy import QtGui
++
+ from account import getSortedAccounts
  from addresses import decodeAddress, addBMIfNotPresent
-@@ -7,16 +12,20 @@ from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
+-from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
++from queues import addressGeneratorQueue, apiAddressGeneratorReturnQueue
  from tr import _translate
  from utils import str_chan
  
--class AddressPassPhraseValidatorMixin():
--    def setParams(self, passPhraseObject=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
-+
-+class AddressPassPhraseValidatorMixin(object):
-+    def setParams(
+@@ -16,22 +17,18 @@ from utils import str_chan
+ class AddressPassPhraseValidatorMixin(object):
+     """Bitmessage address or passphrase validator class for Qt UI"""
+     def setParams(
+-            self,
+-            passPhraseObject=None,
+-            addressObject=None,
+-            feedBackObject=None,
+-            buttonBox=None,
+-            addressMandatory=True,
 +        self, passPhraseObject=None, addressObject=None,
 +        feedBackObject=None, button=None, addressMandatory=True
-+    ):
+     ):
+-        """Initialisation"""
++        """Initialization"""
          self.addressObject = addressObject
          self.passPhraseObject = passPhraseObject
          self.feedBackObject = feedBackObject
@@ -2810,8 +2832,8 @@ index f9de70a2..fefe045e 100644
 +        self.okButtonLabel = button.text()
  
      def setError(self, string):
-         if string is not None and self.feedBackObject is not None:
-@@ -26,12 +35,14 @@ class AddressPassPhraseValidatorMixin():
+         """Indicate that the validation is pending or failed"""
+@@ -42,13 +39,13 @@ class AddressPassPhraseValidatorMixin(object):
              self.feedBackObject.setStyleSheet("QLabel { color : red; }")
              self.feedBackObject.setText(string)
          self.isValid = False
@@ -2820,17 +2842,16 @@ index f9de70a2..fefe045e 100644
 +        if self.okButton:
 +            self.okButton.setEnabled(False)
              if string is not None and self.feedBackObject is not None:
--                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Invalid"))
+-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
 +                self.okButton.setText(
-+                    _translate("AddressValidator", "Invalid"))
+                     _translate("AddressValidator", "Invalid"))
              else:
--                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Validating..."))
+-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
 +                self.okButton.setText(
-+                    _translate("AddressValidator", "Validating..."))
+                     _translate("AddressValidator", "Validating..."))
  
      def setOK(self, string):
-         if string is not None and self.feedBackObject is not None:
-@@ -41,9 +52,9 @@ class AddressPassPhraseValidatorMixin():
+@@ -60,9 +57,9 @@ class AddressPassPhraseValidatorMixin(object):
              self.feedBackObject.setStyleSheet("QLabel { }")
              self.feedBackObject.setText(string)
          self.isValid = True
@@ -2842,8 +2863,8 @@ index f9de70a2..fefe045e 100644
 +            self.okButton.setText(self.okButtonLabel)
  
      def checkQueue(self):
-         gotOne = False
-@@ -55,7 +66,8 @@ class AddressPassPhraseValidatorMixin():
+         """Validator queue loop"""
+@@ -75,7 +72,8 @@ class AddressPassPhraseValidatorMixin(object):
  
          while True:
              try:
@@ -2853,14 +2874,18 @@ index f9de70a2..fefe045e 100644
              except Empty:
                  if gotOne:
                      break
-@@ -65,80 +77,115 @@ class AddressPassPhraseValidatorMixin():
+@@ -85,96 +83,120 @@ class AddressPassPhraseValidatorMixin(object):
                  gotOne = True
  
-         if len(addressGeneratorReturnValue) == 0:
+         if not addressGeneratorReturnValue:
 -            self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
 -            return (QtGui.QValidator.Intermediate, 0)
 -        if addressGeneratorReturnValue[0] == 'chan name does not match address':
--            self.setError(_translate("AddressValidator", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
+-            self.setError(
+-                _translate(
+-                    "AddressValidator",
+-                    "Although the Bitmessage address you "
+-                    "entered was valid, it doesn't match the chan name."))
 -            return (QtGui.QValidator.Intermediate, 0)
 -        self.setOK(_translate("MainWindow", "Passphrase and address appear to be valid."))
 +            self.setError(_translate(
@@ -2880,14 +2905,15 @@ index f9de70a2..fefe045e 100644
 +            "MainWindow", "Passphrase and address appear to be valid."))
  
      def returnValid(self):
+         """Return the value of whether the validation was successful"""
 -        if self.isValid:
 -            return QtGui.QValidator.Acceptable
--        else:
--            return QtGui.QValidator.Intermediate
+-        return QtGui.QValidator.Intermediate
 +        return QtGui.QValidator.Acceptable if self.isValid \
 +            else QtGui.QValidator.Intermediate
  
      def validate(self, s, pos):
+         """Top level validator method"""
 -        if self.addressObject is None:
 +        try:
 +            address = self.addressObject.text().encode('utf-8')
@@ -2934,9 +2960,15 @@ index f9de70a2..fefe045e 100644
 +            status = decodeAddress(address)[0]
              # version too high
 -            if decodeAddress(address)[0] == 'versiontoohigh':
--                self.setError(_translate("AddressValidator", "Address too new. Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage."))
+-                self.setError(
+-                    _translate(
+-                        "AddressValidator",
+-                        "Address too new. Although that Bitmessage"
+-                        " address might be valid, its version number"
+-                        " is too new for us to handle. Perhaps you need"
+-                        " to upgrade Bitmessage."))
 -                return (QtGui.QValidator.Intermediate, pos)
--    
+-
 +            if status == 'versiontoohigh':
 +                self.setError(_translate(
 +                    "AddressValidator",
@@ -2972,26 +3004,30 @@ index f9de70a2..fefe045e 100644
 +                str_chan + ' ' + passPhrase, passPhrase, False
 +            ))
          else:
--            addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(address), str_chan + ' ' + str(passPhrase), passPhrase, False))
+-            addressGeneratorQueue.put(
+-                ('joinChan', addBMIfNotPresent(address),
+-                 "{} {}".format(str_chan, passPhrase), passPhrase, False))
 +            addressGeneratorQueue.put((
 +                'joinChan', addBMIfNotPresent(address),
-+                str_chan + ' ' + passPhrase, passPhrase, False
++                "{} {}".format(str_chan, passPhrase), passPhrase, False
 +            ))
  
 -        if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
 -            return (self.returnValid(), pos)
+-        return (QtGui.QValidator.Intermediate, pos)
 +        if self.okButton.hasFocus():
 +            return (self.returnValid(), s, pos)
-         else:
--            return (QtGui.QValidator.Intermediate, pos)
++        else:
 +            return (QtGui.QValidator.Intermediate, s, pos)
  
      def checkData(self):
+         """Validator Qt signal interface"""
 -        return self.validate("", 0)
 +        return self.validate(u"", 0)
-+
+ 
  
  class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
+     """AddressValidator class for Qt UI"""
 -    def __init__(self, parent=None, passPhraseObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
 +    def __init__(
 +        self, parent=None, passPhraseObject=None, feedBackObject=None,
@@ -3005,6 +3041,7 @@ index f9de70a2..fefe045e 100644
  
  
  class PassPhraseValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
+     """PassPhraseValidator class for Qt UI"""
 -    def __init__(self, parent=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=False):
 +    def __init__(
 +        self, parent=None, addressObject=None, feedBackObject=None,
@@ -4106,22 +4143,22 @@ index 80993fac..0eb347a3 100644
   </customwidgets>
   <resources>
 diff --git a/src/bitmessageqt/dialogs.py b/src/bitmessageqt/dialogs.py
-index 10701500..b1c9cafb 100644
+index e76dd84e..b1c9cafb 100644
 --- a/src/bitmessageqt/dialogs.py
 +++ b/src/bitmessageqt/dialogs.py
-@@ -1,9 +1,8 @@
+@@ -1,8 +1,8 @@
  """
--src/bitmessageqt/dialogs.py
--===========================
+-Custom dialog classes
 +All dialogs are available in this module.
  """
- 
+-# pylint: disable=too-few-public-methods
 -from PyQt4 import QtGui
++
 +from qtpy import QtWidgets
  
  import paths
  import widgets
-@@ -17,7 +16,6 @@ from settings import SettingsDialog
+@@ -16,7 +16,6 @@ from settings import SettingsDialog
  from tr import _translate
  from version import softwareVersion
  
@@ -4129,7 +4166,7 @@ index 10701500..b1c9cafb 100644
  __all__ = [
      "NewChanDialog", "AddAddressDialog", "NewAddressDialog",
      "NewSubscriptionDialog", "RegenerateAddressesDialog",
-@@ -26,8 +24,8 @@ __all__ = [
+@@ -25,8 +24,8 @@ __all__ = [
  ]
  
  
@@ -4140,7 +4177,7 @@ index 10701500..b1c9cafb 100644
      def __init__(self, parent=None):
          super(AboutDialog, self).__init__(parent)
          widgets.load('about.ui', self)
-@@ -51,11 +49,11 @@ class AboutDialog(QtGui.QDialog):
+@@ -50,11 +49,11 @@ class AboutDialog(QtGui.QDialog):
          except AttributeError:
              pass
  
@@ -4155,7 +4192,7 @@ index 10701500..b1c9cafb 100644
      def __init__(self, parent=None, config=None):
          super(IconGlossaryDialog, self).__init__(parent)
          widgets.load('iconglossary.ui', self)
-@@ -65,22 +63,23 @@ class IconGlossaryDialog(QtGui.QDialog):
+@@ -64,22 +63,23 @@ class IconGlossaryDialog(QtGui.QDialog):
  
          self.labelPortNumber.setText(_translate(
              "iconGlossaryDialog",
@@ -4572,11 +4609,13 @@ index e6d64427..419ffc29 100644
          part2 = text[nextDelimiterIndex:]
  
 diff --git a/src/bitmessageqt/languagebox.py b/src/bitmessageqt/languagebox.py
-index b97e61d3..fc96257a 100644
+index 9ff78990..5fa88167 100644
 --- a/src/bitmessageqt/languagebox.py
 +++ b/src/bitmessageqt/languagebox.py
-@@ -1,44 +1,53 @@
-+"""LanguageBox widgets is for selecting UI language"""
+@@ -1,48 +1,55 @@
+-"""Language Box Module for Locale Settings"""
+-# pylint: disable=too-few-public-methods,bad-continuation
++"""LanguageBox widget is for selecting UI language"""
 +
  import glob
  import os
@@ -4590,7 +4629,9 @@ index b97e61d3..fc96257a 100644
  
  
 -class LanguageBox(QtGui.QComboBox):
+-    """LanguageBox class for Qt UI"""
 +class LanguageBox(QtWidgets.QComboBox):
++    """A subclass of `QtWidgets.QComboBox` for selecting language"""
      languageName = {
 -        "system": "System Settings", "eo": "Esperanto",
 +        "system": "System Settings",
@@ -4604,6 +4645,7 @@ index b97e61d3..fc96257a 100644
          self.populate()
  
      def populate(self):
+         """Populates drop down list with all available languages."""
          self.clear()
          localesPath = os.path.join(paths.codePath(), 'translations')
 -        self.addItem(QtGui.QApplication.translate(
@@ -4638,31 +4680,35 @@ index b97e61d3..fc96257a 100644
              if self.itemData(i) == configuredLocale:
                  self.setCurrentIndex(i)
 diff --git a/src/bitmessageqt/messagecompose.py b/src/bitmessageqt/messagecompose.py
-index f7d5dac3..a4bfccda 100644
+index c51282f8..a4bfccda 100644
 --- a/src/bitmessageqt/messagecompose.py
 +++ b/src/bitmessageqt/messagecompose.py
-@@ -1,20 +1,28 @@
--from PyQt4 import QtCore, QtGui
+@@ -1,37 +1,31 @@
+-"""
+-Message editor with a wheel zoom functionality
+-"""
+-# pylint: disable=bad-continuation
 +from qtpy import QtCore, QtWidgets
 +from tr import _translate
  
--class MessageCompose(QtGui.QTextEdit):
--    
--    def __init__(self, parent = 0):
-+
+-from PyQt4 import QtCore, QtGui
+ 
 +class MessageCompose(QtWidgets.QTextEdit):
-+
+ 
+-class MessageCompose(QtGui.QTextEdit):
+-    """Editor class with wheel zoom functionality"""
+-    def __init__(self, parent=0):
 +    def __init__(self, parent=None):
          super(MessageCompose, self).__init__(parent)
--        self.setAcceptRichText(False) # we'll deal with this later when we have a new message format
 +        # we'll deal with this later when we have a new message format
-+        self.setAcceptRichText(False)
+         self.setAcceptRichText(False)
          self.defaultFontPointSize = self.currentFont().pointSize()
--    
-+
+ 
      def wheelEvent(self, event):
--        if (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
-+        if (
+-        """Mouse wheel scroll event handler"""
+         if (
+-            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
+-        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
 +            (QtWidgets.QApplication.queryKeyboardModifiers()
 +             & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
 +            and event.angleDelta().y() != 0
@@ -4672,29 +4718,38 @@ index f7d5dac3..a4bfccda 100644
              else:
                  self.zoomOut(1)
              zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
--            QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
+-            QtGui.QApplication.activeWindow().statusBar().showMessage(
+-                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(
+-                    str(zoom)
+-                )
+-            )
 +            QtWidgets.QApplication.activeWindow().statusbar.showMessage(
 +                _translate("MainWindow", "Zoom level {0}%").format(zoom))
          else:
              # in QTextEdit, super does not zoom, only scroll
              super(MessageCompose, self).wheelEvent(event)
+ 
+     def reset(self):
+-        """Clear the edit content"""
+         self.setText('')
 diff --git a/src/bitmessageqt/messageview.py b/src/bitmessageqt/messageview.py
-index 45f3a79a..05488667 100644
+index 13ea16f9..ebf23c87 100644
 --- a/src/bitmessageqt/messageview.py
 +++ b/src/bitmessageqt/messageview.py
-@@ -1,20 +1,19 @@
+@@ -1,22 +1,21 @@
  """
--src/bitmessageqt/messageview.py
--===============================
+ Custom message viewer with support for switching between HTML and plain
+ text rendering, HTML sanitization, lazy rendering (as you scroll down),
+-zoom and URL click warning popup
 -
-+MessageView widget definition
++zoom and URL click warning popup.
  """
  
 -from PyQt4 import QtCore, QtGui
 +from qtpy import QtCore, QtGui, QtWidgets
  
  from safehtmlparser import SafeHTMLParser
-+from tr import _translate
+ from tr import _translate
  
  
 -class MessageView(QtGui.QTextBrowser):
@@ -4708,7 +4763,7 @@ index 45f3a79a..05488667 100644
          super(MessageView, self).__init__(parent)
          self.mode = MessageView.MODE_PLAIN
          self.html = None
-@@ -36,8 +35,11 @@ class MessageView(QtGui.QTextBrowser):
+@@ -38,8 +37,11 @@ class MessageView(QtGui.QTextBrowser):
  
      def mousePressEvent(self, event):
          """Mouse press button event handler"""
@@ -4722,20 +4777,19 @@ index 45f3a79a..05488667 100644
              if self.mode == MessageView.MODE_PLAIN:
                  self.showHTML()
              else:
-@@ -49,23 +51,24 @@ class MessageView(QtGui.QTextBrowser):
-         """Mouse wheel scroll event handler"""
+@@ -52,23 +54,23 @@ class MessageView(QtGui.QTextBrowser):
          # super will actually automatically take care of zooming
          super(MessageView, self).wheelEvent(event)
--        if (QtGui.QApplication.queryKeyboardModifiers() &
--                QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
-+        if (
+         if (
+-            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
+-        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
 +            (QtWidgets.QApplication.queryKeyboardModifiers()
 +             & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
 +            and event.angleDelta().y() != 0
 +        ):
              zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
--            QtGui.QApplication.activeWindow().statusBar().showMessage(
--                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
+-            QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
+-                "MainWindow", "Zoom level %1%").arg(str(zoom)))
 +            QtWidgets.QApplication.activeWindow().statusbar.showMessage(
 +                _translate("MainWindow", "Zoom level {0}%").format(zoom))
  
@@ -4756,20 +4810,20 @@ index 45f3a79a..05488667 100644
              window.ui.lineEditTo.setText(link.path())
              if link.hasQueryItem("subject"):
                  window.ui.lineEditSubject.setText(
-@@ -80,39 +83,40 @@ class MessageView(QtGui.QTextBrowser):
+@@ -83,39 +85,40 @@ class MessageView(QtGui.QTextBrowser):
              )
              window.ui.textEditMessage.setFocus()
              return
 -        reply = QtGui.QMessageBox.warning(
 -            self,
 -            QtGui.QApplication.translate(
--                "MessageView",
--                "Follow external link"),
--            QtGui.QApplication.translate(
 +        reply = QtWidgets.QMessageBox.warning(
 +            self, _translate("MessageView", "Follow external link"),
 +            _translate(
                  "MessageView",
+-                "Follow external link"),
+-            QtGui.QApplication.translate(
+-                "MessageView",
 -                "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
 -                " or download malicious data. Are you sure?").arg(unicode(link.toString())),
 -            QtGui.QMessageBox.Yes,
@@ -4814,7 +4868,7 @@ index 45f3a79a..05488667 100644
              startpos = self.outpos
              self.outpos += 10240
              # find next end of tag
-@@ -120,8 +124,9 @@ class MessageView(QtGui.QTextBrowser):
+@@ -123,8 +126,9 @@ class MessageView(QtGui.QTextBrowser):
                  pos = self.out.find(">", self.outpos)
                  if pos > self.outpos:
                      self.outpos = pos + 1
@@ -4826,7 +4880,7 @@ index 45f3a79a..05488667 100644
          self.verticalScrollBar().setValue(position)
          self.rendering = False
  
-@@ -130,9 +135,11 @@ class MessageView(QtGui.QTextBrowser):
+@@ -133,9 +137,11 @@ class MessageView(QtGui.QTextBrowser):
          self.mode = MessageView.MODE_PLAIN
          out = self.html.raw
          if self.html.has_html:
@@ -4841,7 +4895,7 @@ index 45f3a79a..05488667 100644
          self.out = out
          self.outpos = 0
          self.setHtml("")
-@@ -141,10 +148,10 @@ class MessageView(QtGui.QTextBrowser):
+@@ -144,10 +150,10 @@ class MessageView(QtGui.QTextBrowser):
      def showHTML(self):
          """Render message as HTML"""
          self.mode = MessageView.MODE_HTML
@@ -4856,7 +4910,7 @@ index 45f3a79a..05488667 100644
          self.outpos = 0
          self.setHtml("")
          self.lazyRender()
-@@ -152,8 +159,6 @@ class MessageView(QtGui.QTextBrowser):
+@@ -155,8 +161,6 @@ class MessageView(QtGui.QTextBrowser):
      def setContent(self, data):
          """Set message content from argument"""
          self.html = SafeHTMLParser()
@@ -4866,7 +4920,7 @@ index 45f3a79a..05488667 100644
          self.html.feed(data)
          self.html.close()
 diff --git a/src/bitmessageqt/networkstatus.py b/src/bitmessageqt/networkstatus.py
-index e8340298..d2df7fa2 100644
+index e7fd9e94..c2a379da 100644
 --- a/src/bitmessageqt/networkstatus.py
 +++ b/src/bitmessageqt/networkstatus.py
 @@ -4,7 +4,7 @@ Network status tab widget definition.
@@ -4876,9 +4930,9 @@ index e8340298..d2df7fa2 100644
 -from PyQt4 import QtCore, QtGui
 +from qtpy import QtCore, QtGui, QtWidgets
  
- import knownnodes
  import l10n
-@@ -18,14 +18,15 @@ from tr import _translate
+ import network.stats
+@@ -17,14 +17,16 @@ from tr import _translate
  from uisignaler import UISignaler
  
  
@@ -4893,10 +4947,11 @@ index e8340298..d2df7fa2 100644
 -        header.setResizeMode(QtGui.QHeaderView.ResizeToContents)
 +        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 +        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
++        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
  
          # Somehow this value was 5 when I tested
          if header.sortIndicatorSection() > 4:
-@@ -34,20 +35,17 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+@@ -33,20 +35,17 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
          self.startup = time.localtime()
  
          self.UISignalThread = UISignaler.get()
@@ -4926,7 +4981,7 @@ index e8340298..d2df7fa2 100644
  
      def startUpdate(self):
          """Start a timer to update counters every 2 seconds"""
-@@ -59,91 +57,66 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+@@ -58,91 +57,66 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
          """Stop counter update timer"""
          self.timer.stop()
  
@@ -4972,8 +5027,8 @@ index e8340298..d2df7fa2 100644
 -                "Object(s) to be synced: %n",
 -                None,
 -                QtCore.QCoreApplication.CodecForTr,
--                network.stats.pendingDownload() +
--                network.stats.pendingUpload()))
+-                network.stats.pendingDownload()
+-                + network.stats.pendingUpload()))
 +        self.labelSyncStatus.setText(_translate(
 +            "networkstatus", "Object(s) to be synced: %n", None,
 +            network.stats.pendingDownload() + network.stats.pendingUpload()))
@@ -5051,7 +5106,7 @@ index e8340298..d2df7fa2 100644
  
      def updateNetworkStatusTab(self, outbound, add, destination):
          """Add or remove an entry to the list of connected peers"""
-@@ -170,67 +143,67 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+@@ -169,67 +143,67 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
          if add:
              self.tableWidgetConnectionCount.insertRow(0)
              self.tableWidgetConnectionCount.setItem(
@@ -5104,7 +5159,7 @@ index e8340298..d2df7fa2 100644
 +            self.tableWidgetConnectionCount.item(0, 1).setData(
 +                QtCore.Qt.UserRole, outbound)
          else:
-             if len(BMConnectionPool().inboundConnections) == 0:
+             if not BMConnectionPool().inboundConnections:
                  self.window().setStatusIcon('yellow')
              for i in range(self.tableWidgetConnectionCount.rowCount()):
 -                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
@@ -5153,7 +5208,7 @@ index e8340298..d2df7fa2 100644
          Inventory().numberOfInventoryLookupsPerformed = 0
          self.updateNumberOfBytes()
          self.updateNumberOfObjectsToBeSynced()
-@@ -238,13 +211,12 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+@@ -237,13 +211,12 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
      def retranslateUi(self):
          """Conventional Qt Designer method for dynamic l10n"""
          super(NetworkStatus, self).retranslateUi()
@@ -5400,19 +5455,26 @@ index edacd4bb..3890219c 100644
          tmp = SafeHTMLParser.replace_pre(data)
          tmp = self.uriregex1.sub(r'<a href="\1">\1</a>', tmp)
 diff --git a/src/bitmessageqt/settings.py b/src/bitmessageqt/settings.py
-index 8e4bf198..e4f5670b 100644
+index 32681b57..6cac16a8 100644
 --- a/src/bitmessageqt/settings.py
 +++ b/src/bitmessageqt/settings.py
-@@ -5,7 +5,7 @@ import ConfigParser
+@@ -1,12 +1,13 @@
+ """
+-This module setting file is for settings
++SettingsDialog class definition
+ """
++
+ import ConfigParser
  import os
  import sys
+ import tempfile
  
 -from PyQt4 import QtCore, QtGui
 +from qtpy import QtCore, QtGui, QtWidgets
  
  import debug
  import defaults
-@@ -37,7 +37,7 @@ def getSOCKSProxyType(config):
+@@ -37,7 +38,7 @@ def getSOCKSProxyType(config):
      return result
  
  
@@ -5421,7 +5483,7 @@ index 8e4bf198..e4f5670b 100644
      """The "Settings" dialog"""
      def __init__(self, parent=None, firstrun=False):
          super(SettingsDialog, self).__init__(parent)
-@@ -69,7 +69,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -69,7 +70,7 @@ class SettingsDialog(QtGui.QDialog):
              self.tabWidgetSettings.setCurrentIndex(
                  self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
              )
@@ -5430,7 +5492,7 @@ index 8e4bf198..e4f5670b 100644
  
      def adjust_from_config(self, config):
          """Adjust all widgets state according to config settings"""
-@@ -280,10 +280,10 @@ class SettingsDialog(QtGui.QDialog):
+@@ -280,10 +281,10 @@ class SettingsDialog(QtGui.QDialog):
              _translate("MainWindow", "Testing..."))
          nc = namecoin.namecoinConnection({
              'type': self.getNamecoinType(),
@@ -5445,7 +5507,7 @@ index 8e4bf198..e4f5670b 100644
          })
          status, text = nc.test()
          self.labelNamecoinTestResult.setText(text)
-@@ -316,8 +316,8 @@ class SettingsDialog(QtGui.QDialog):
+@@ -316,8 +317,8 @@ class SettingsDialog(QtGui.QDialog):
          self.config.set('bitmessagesettings', 'replybelow', str(
              self.checkBoxReplyBelow.isChecked()))
  
@@ -5456,7 +5518,7 @@ index 8e4bf198..e4f5670b 100644
          self.config.set('bitmessagesettings', 'userlocale', lang)
          self.parent.change_translation()
  
-@@ -378,7 +378,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -378,7 +379,7 @@ class SettingsDialog(QtGui.QDialog):
              self.config.set('bitmessagesettings', 'maxuploadrate', str(
                  int(float(self.lineEditMaxUploadRate.text()))))
          except ValueError:
@@ -5465,7 +5527,7 @@ index 8e4bf198..e4f5670b 100644
                  self, _translate("MainWindow", "Number needed"),
                  _translate(
                      "MainWindow",
-@@ -419,7 +419,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -419,7 +420,7 @@ class SettingsDialog(QtGui.QDialog):
                      float(self.lineEditSmallMessageDifficulty.text())
                      * defaults.networkDefaultPayloadLengthExtraBytes)))
  
@@ -5474,7 +5536,37 @@ index 8e4bf198..e4f5670b 100644
                  'bitmessagesettings', 'opencl'):
              self.config.set(
                  'bitmessagesettings', 'opencl',
-@@ -504,7 +504,7 @@ class SettingsDialog(QtGui.QDialog):
+@@ -429,11 +430,11 @@ class SettingsDialog(QtGui.QDialog):
+         acceptableDifficultyChanged = False
+ 
+         if (
+-                float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
+-                or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
++            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
++            or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
+         ):
+             if self.config.get(
+-                    'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
++                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
+             ) != str(int(
+                 float(self.lineEditMaxAcceptableTotalDifficulty.text())
+                     * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)):
+@@ -446,11 +447,11 @@ class SettingsDialog(QtGui.QDialog):
+                         * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+                 )
+         if (
+-                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
+-                or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
++            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
++            or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
+         ):
+             if self.config.get(
+-                    'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
++                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
+             ) != str(int(
+                 float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+                     * defaults.networkDefaultPayloadLengthExtraBytes)):
+@@ -502,7 +503,7 @@ class SettingsDialog(QtGui.QDialog):
              if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                  # If the time period is less than 5 hours, we give
                  # zero values to all fields. No message will be sent again.
@@ -5483,6 +5575,28 @@ index 8e4bf198..e4f5670b 100644
                      self,
                      _translate("MainWindow", "Will not resend ever"),
                      _translate(
+@@ -538,8 +539,8 @@ class SettingsDialog(QtGui.QDialog):
+         self.parent.updateStartOnLogon()
+ 
+         if (
+-                state.appdata != paths.lookupExeFolder()
+-                and self.checkBoxPortableMode.isChecked()
++            state.appdata != paths.lookupExeFolder()
++            and self.checkBoxPortableMode.isChecked()
+         ):
+             # If we are NOT using portable mode now but the user selected
+             # that we should...
+@@ -561,8 +562,8 @@ class SettingsDialog(QtGui.QDialog):
+                 pass
+ 
+         if (
+-                state.appdata == paths.lookupExeFolder()
+-                and not self.checkBoxPortableMode.isChecked()
++            state.appdata == paths.lookupExeFolder()
++            and not self.checkBoxPortableMode.isChecked()
+         ):
+             # If we ARE using portable mode now but the user selected
+             # that we shouldn't...
 diff --git a/src/bitmessageqt/settingsmixin.py b/src/bitmessageqt/settingsmixin.py
 index 3d5999e2..9e53c6fb 100644
 --- a/src/bitmessageqt/settingsmixin.py
@@ -5600,11 +5714,12 @@ index 65a5acfb..477b0d68 100644
      deleteAfter = 60
  
 diff --git a/src/bitmessageqt/support.py b/src/bitmessageqt/support.py
-index 345ea647..4b4de0a3 100644
+index ac02e2ca..081b86f7 100644
 --- a/src/bitmessageqt/support.py
 +++ b/src/bitmessageqt/support.py
-@@ -1,12 +1,11 @@
+@@ -1,13 +1,11 @@
  """Composing support request message functions."""
+-# pylint: disable=no-member
  
  import ctypes
 +import os
@@ -5617,7 +5732,7 @@ index 345ea647..4b4de0a3 100644
  import account
  import defaults
  import network.stats
-@@ -21,8 +20,8 @@ from l10n import getTranslationLanguage
+@@ -22,8 +20,8 @@ from l10n import getTranslationLanguage
  from openclpow import openclEnabled
  from pyelliptic.openssl import OpenSSL
  from settings import getSOCKSProxyType
@@ -5627,16 +5742,16 @@ index 345ea647..4b4de0a3 100644
  
  
  # this is BM support address going to Peter Surda
-@@ -30,7 +29,7 @@ OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
+@@ -31,7 +29,7 @@ OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
  SUPPORT_ADDRESS = 'BM-2cUdgkDDAahwPAU6oD2A7DnjqZz3hgY832'
  SUPPORT_LABEL = _translate("Support", "PyBitmessage support")
  SUPPORT_MY_LABEL = _translate("Support", "My new address")
 -SUPPORT_SUBJECT = 'Support request'
-+SUPPORT_SUBJECT = _translate("Support", 'Support request')
++SUPPORT_SUBJECT = _translate("Support", "Support request")
  SUPPORT_MESSAGE = _translate("Support", '''
  You can use this message to send a report to one of the PyBitmessage core \
  developers regarding PyBitmessage or the mailchuck.com email service. \
-@@ -54,6 +53,7 @@ Operating system: {}
+@@ -55,6 +53,7 @@ Operating system: {}
  Architecture: {}bit
  Python Version: {}
  OpenSSL Version: {}
@@ -5644,7 +5759,7 @@ index 345ea647..4b4de0a3 100644
  Frozen: {}
  Portable mode: {}
  C PoW: {}
-@@ -66,23 +66,31 @@ Connected hosts: {}
+@@ -67,28 +66,35 @@ Connected hosts: {}
  
  
  def checkAddressBook(myapp):
@@ -5657,9 +5772,9 @@ index 345ea647..4b4de0a3 100644
 +        'SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
      if queryreturn == []:
          sqlExecute(
--            'INSERT INTO addressbook VALUES (?,?)', SUPPORT_LABEL, SUPPORT_ADDRESS)
-+            'INSERT INTO addressbook VALUES (?,?)',
-+            SUPPORT_LABEL, SUPPORT_ADDRESS)
+             'INSERT INTO addressbook VALUES (?,?)',
+-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
++            SUPPORT_LABEL.encode('utf-8'), SUPPORT_ADDRESS)
          myapp.rerenderAddressBook()
  
  
@@ -5678,8 +5793,13 @@ index 345ea647..4b4de0a3 100644
 +    """Checks if user has any anabled normal address, creates new one if no."""
      if not checkHasNormalAddress():
          queues.addressGeneratorQueue.put((
-             'createRandomAddress', 4, 1, SUPPORT_MY_LABEL, 1, "", False,
-@@ -96,15 +104,20 @@ def createAddressIfNeeded(myapp):
+             'createRandomAddress', 4, 1,
+-            str(SUPPORT_MY_LABEL.toUtf8()),
++            SUPPORT_MY_LABEL.encode('utf-8'),
+             1, "", False,
+             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+             defaults.networkDefaultPayloadLengthExtraBytes
+@@ -100,15 +106,20 @@ def createAddressIfNeeded(myapp):
  
  
  def createSupportMessage(myapp):
@@ -5703,7 +5823,7 @@ index 345ea647..4b4de0a3 100644
      if addrIndex == -1:  # something is very wrong
          return
      myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
-@@ -115,15 +128,12 @@ def createSupportMessage(myapp):
+@@ -119,15 +130,12 @@ def createSupportMessage(myapp):
      if commit:
          version += " GIT " + commit
  
@@ -5723,7 +5843,7 @@ index 345ea647..4b4de0a3 100644
          except:
              pass
      architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
-@@ -132,22 +142,26 @@ def createSupportMessage(myapp):
+@@ -136,22 +144,26 @@ def createSupportMessage(myapp):
      opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (
          ssl.OPENSSL_VERSION, OpenSSL._version)
  
@@ -5756,8 +5876,37 @@ index 345ea647..4b4de0a3 100644
  
      # single msg tab
      myapp.ui.tabWidgetSend.setCurrentIndex(
+diff --git a/src/bitmessageqt/tests/main.py b/src/bitmessageqt/tests/main.py
+index d2a64f83..b30b1546 100644
+--- a/src/bitmessageqt/tests/main.py
++++ b/src/bitmessageqt/tests/main.py
+@@ -2,7 +2,7 @@
+ 
+ import unittest
+ 
+-from PyQt4 import QtCore, QtGui
++from qtpy import QtWidgets
+ 
+ import bitmessageqt
+ from tr import _translate
+@@ -12,7 +12,7 @@ class TestBase(unittest.TestCase):
+     """Base class for bitmessageqt test case"""
+ 
+     def setUp(self):
+-        self.app = QtGui.QApplication([])
++        self.app = QtWidgets.QApplication([])
+         self.window = bitmessageqt.MyForm()
+ 
+     def tearDown(self):
+@@ -26,5 +26,5 @@ class TestMain(unittest.TestCase):
+         """Check the results of _translate() with various args"""
+         self.assertIsInstance(
+             _translate("MainWindow", "Test"),
+-            QtCore.QString
++            unicode
+         )
 diff --git a/src/bitmessageqt/uisignaler.py b/src/bitmessageqt/uisignaler.py
-index 055f9097..f4c7bee5 100644
+index 055f9097..f5e14fbf 100644
 --- a/src/bitmessageqt/uisignaler.py
 +++ b/src/bitmessageqt/uisignaler.py
 @@ -1,15 +1,34 @@
@@ -5777,7 +5926,7 @@ index 055f9097..f4c7bee5 100644
 -    def __init__(self, parent=None):
 -        QThread.__init__(self, parent)
 +    writeNewAddressToTable = QtCore.Signal(str, str, str)
-+    updateStatusBar = QtCore.Signal(str)
++    updateStatusBar = QtCore.Signal(object)
 +    updateSentItemStatusByToAddress = QtCore.Signal(object, str)
 +    updateSentItemStatusByAckdata = QtCore.Signal(object, str)
 +    displayNewInboxMessage = QtCore.Signal(object, str, object, object, str)
@@ -6044,10 +6193,10 @@ index 3df6501f..bcde983e 100644
                          listOfNewAddressesToSendOutThroughTheAPI)
                  elif command == 'getDeterministicAddress':
 diff --git a/src/class_objectProcessor.py b/src/class_objectProcessor.py
-index f435d8d4..881ad6c2 100644
+index add86a75..b68a01a1 100644
 --- a/src/class_objectProcessor.py
 +++ b/src/class_objectProcessor.py
-@@ -148,14 +148,11 @@ class objectProcessor(threading.Thread):
+@@ -147,14 +147,11 @@ class objectProcessor(threading.Thread):
                  ' WHERE ackdata=?',
                  'ackreceived', int(time.time()), data[readPosition:])
              queues.UISignalQueue.put((
@@ -6067,7 +6216,7 @@ index f435d8d4..881ad6c2 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 6e2522d8..53bf5470 100644
+index 699506de..db304db1 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -23,14 +23,13 @@ import protocol
@@ -6082,12 +6231,12 @@ index 6e2522d8..53bf5470 100644
  from bmconfigparser import BMConfigParser
  from helper_sql import sqlExecute, sqlQuery
  from inventory import Inventory
- from network import StoppableThread
+ from network import knownnodes, StoppableThread
 +from tr import _translate
  
  
  def sizeof_fmt(num, suffix='h/s'):
-@@ -205,9 +204,8 @@ class singleWorker(StoppableThread):
+@@ -214,9 +213,8 @@ class singleWorker(StoppableThread):
          return privSigningKeyHex, privEncryptionKeyHex, \
              pubSigningKey, pubEncryptionKey
  
@@ -6099,7 +6248,7 @@ index 6e2522d8..53bf5470 100644
          target = 2 ** 64 / (
              defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
                  len(payload) + 8 +
-@@ -233,14 +231,16 @@ class singleWorker(StoppableThread):
+@@ -242,14 +240,16 @@ class singleWorker(StoppableThread):
                  'PoW took %.1f seconds, speed %s.',
                  delta, sizeof_fmt(nonce / delta)
              )
@@ -6119,7 +6268,7 @@ index 6e2522d8..53bf5470 100644
          # Look up my stream number based on my address hash
          myAddress = shared.myAddressesByHash[adressHash]
          # status
-@@ -296,13 +296,14 @@ class singleWorker(StoppableThread):
+@@ -305,13 +305,14 @@ class singleWorker(StoppableThread):
  
      def sendOutOrStoreMyV3Pubkey(self, adressHash):
          """
@@ -6138,7 +6287,7 @@ index 6e2522d8..53bf5470 100644
              # The address has been deleted.
              return
          if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
-@@ -379,9 +380,10 @@ class singleWorker(StoppableThread):
+@@ -388,9 +389,10 @@ class singleWorker(StoppableThread):
  
      def sendOutOrStoreMyV4Pubkey(self, myAddress):
          """
@@ -6152,7 +6301,7 @@ index 6e2522d8..53bf5470 100644
          """
          if not BMConfigParser().has_section(myAddress):
              # The address has been deleted.
-@@ -508,7 +510,10 @@ class singleWorker(StoppableThread):
+@@ -517,7 +519,10 @@ class singleWorker(StoppableThread):
          queues.invQueue.put((streamNumber, inventoryHash))
  
      def sendBroadcast(self):
@@ -6164,7 +6313,7 @@ index 6e2522d8..53bf5470 100644
          # Reset just in case
          sqlExecute(
              '''UPDATE sent SET status='broadcastqueued' '''
-@@ -539,8 +544,7 @@ class singleWorker(StoppableThread):
+@@ -548,8 +553,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6174,7 +6323,7 @@ index 6e2522d8..53bf5470 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -628,8 +632,7 @@ class singleWorker(StoppableThread):
+@@ -637,8 +641,7 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6184,7 +6333,7 @@ index 6e2522d8..53bf5470 100644
                          "MainWindow",
                          "Doing work necessary to send broadcast..."))
              ))
-@@ -661,11 +664,9 @@ class singleWorker(StoppableThread):
+@@ -670,11 +673,9 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6199,7 +6348,7 @@ index 6e2522d8..53bf5470 100644
              ))
  
              # Update the status of the message in the 'sent' table to have
-@@ -677,7 +678,10 @@ class singleWorker(StoppableThread):
+@@ -686,7 +687,10 @@ class singleWorker(StoppableThread):
              )
  
      def sendMsg(self):
@@ -6211,7 +6360,7 @@ index 6e2522d8..53bf5470 100644
          # pylint: disable=too-many-nested-blocks
          # Reset just in case
          sqlExecute(
-@@ -770,8 +774,7 @@ class singleWorker(StoppableThread):
+@@ -779,8 +783,7 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByToAddress', (
@@ -6221,7 +6370,7 @@ index 6e2522d8..53bf5470 100644
                                      "MainWindow",
                                      "Encryption key was requested earlier."))
                          ))
-@@ -842,8 +845,7 @@ class singleWorker(StoppableThread):
+@@ -851,8 +854,7 @@ class singleWorker(StoppableThread):
                              )
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByToAddress', (
@@ -6231,7 +6380,7 @@ index 6e2522d8..53bf5470 100644
                                          "MainWindow",
                                          "Sending a request for the"
                                          " recipient\'s encryption key."))
-@@ -867,8 +869,7 @@ class singleWorker(StoppableThread):
+@@ -876,8 +878,7 @@ class singleWorker(StoppableThread):
                  state.ackdataForWhichImWatching[ackdata] = 0
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6241,7 +6390,7 @@ index 6e2522d8..53bf5470 100644
                              "MainWindow",
                              "Looking up the receiver\'s public key"))
                  ))
-@@ -925,15 +926,14 @@ class singleWorker(StoppableThread):
+@@ -934,15 +935,14 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByAckdata', (
@@ -6260,7 +6409,7 @@ index 6e2522d8..53bf5470 100644
                          ))
                          # if the human changes their setting and then
                          # sends another message or restarts their client,
-@@ -956,8 +956,7 @@ class singleWorker(StoppableThread):
+@@ -965,8 +965,7 @@ class singleWorker(StoppableThread):
                          defaults.networkDefaultPayloadLengthExtraBytes
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -6270,7 +6419,7 @@ index 6e2522d8..53bf5470 100644
                                  "MainWindow",
                                  "Doing work necessary to send message.\n"
                                  "There is no required difficulty for"
-@@ -989,32 +988,18 @@ class singleWorker(StoppableThread):
+@@ -998,32 +997,18 @@ class singleWorker(StoppableThread):
                          requiredAverageProofOfWorkNonceTrialsPerByte,
                          requiredPayloadLengthExtraBytes
                      )
@@ -6315,7 +6464,7 @@ index 6e2522d8..53bf5470 100644
                      if status != 'forcepow':
                          maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
                              'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-@@ -1034,18 +1019,19 @@ class singleWorker(StoppableThread):
+@@ -1043,18 +1028,19 @@ class singleWorker(StoppableThread):
                                  ackdata)
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByAckdata', (
@@ -6346,7 +6495,7 @@ index 6e2522d8..53bf5470 100644
                              continue
              else:  # if we are sending a message to ourselves or a chan..
                  self.logger.info('Sending a message.')
-@@ -1059,15 +1045,14 @@ class singleWorker(StoppableThread):
+@@ -1068,15 +1054,14 @@ class singleWorker(StoppableThread):
                  except Exception as err:
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -6365,7 +6514,7 @@ index 6e2522d8..53bf5470 100644
                      ))
                      self.logger.error(
                          'Error within sendMsg. Could not read the keys'
-@@ -1084,8 +1069,7 @@ class singleWorker(StoppableThread):
+@@ -1093,8 +1078,7 @@ class singleWorker(StoppableThread):
                      defaults.networkDefaultPayloadLengthExtraBytes
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6375,7 +6524,7 @@ index 6e2522d8..53bf5470 100644
                              "MainWindow",
                              "Doing work necessary to send message."))
                  ))
-@@ -1107,8 +1091,7 @@ class singleWorker(StoppableThread):
+@@ -1116,8 +1100,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6385,7 +6534,7 @@ index 6e2522d8..53bf5470 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -1161,8 +1144,7 @@ class singleWorker(StoppableThread):
+@@ -1170,8 +1153,7 @@ class singleWorker(StoppableThread):
                  # The fullAckPayload is a normal msg protocol message
                  # with the proof of work already completed that the
                  # receiver of this message can easily send out.
@@ -6395,7 +6544,7 @@ index 6e2522d8..53bf5470 100644
              payload += encodeVarint(len(fullAckPayload))
              payload += fullAckPayload
              dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
-@@ -1174,8 +1156,7 @@ class singleWorker(StoppableThread):
+@@ -1183,8 +1165,7 @@ class singleWorker(StoppableThread):
              # We have assembled the data that will be encrypted.
              try:
                  encrypted = highlevelcrypto.encrypt(
@@ -6405,7 +6554,7 @@ index 6e2522d8..53bf5470 100644
              except:
                  sqlExecute(
                      '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
-@@ -1183,12 +1164,11 @@ class singleWorker(StoppableThread):
+@@ -1192,12 +1173,11 @@ class singleWorker(StoppableThread):
                  )
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6421,7 +6570,7 @@ index 6e2522d8..53bf5470 100644
                  ))
                  continue
  
-@@ -1252,21 +1232,19 @@ class singleWorker(StoppableThread):
+@@ -1261,21 +1241,19 @@ class singleWorker(StoppableThread):
                 not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6450,7 +6599,7 @@ index 6e2522d8..53bf5470 100644
                  ))
              self.logger.info(
                  'Broadcasting inv for my msg(within sendmsg function): %s',
-@@ -1396,8 +1374,7 @@ class singleWorker(StoppableThread):
+@@ -1405,8 +1383,7 @@ class singleWorker(StoppableThread):
          queues.UISignalQueue.put(('updateStatusBar', statusbar))
          queues.UISignalQueue.put((
              'updateSentItemStatusByToAddress', (
@@ -6460,7 +6609,7 @@ index 6e2522d8..53bf5470 100644
                      "MainWindow",
                      "Doing work necessary to request encryption key."))
          ))
-@@ -1421,30 +1398,31 @@ class singleWorker(StoppableThread):
+@@ -1430,30 +1407,31 @@ class singleWorker(StoppableThread):
              int(time.time()), retryNumber + 1, sleeptill, toAddress)
  
          queues.UISignalQueue.put((
@@ -7146,10 +7295,10 @@ index ac76ef4b..19ca4ff8 100644
 +else:
 +    _translate = _tr_dummy
 diff --git a/src/upnp.py b/src/upnp.py
-index 99000413..fc09a647 100644
+index 34111afd..1891ef42 100644
 --- a/src/upnp.py
 +++ b/src/upnp.py
-@@ -270,9 +270,12 @@ class uPnPThread(StoppableThread):
+@@ -269,9 +269,12 @@ class uPnPThread(StoppableThread):
                              with knownnodes.knownNodesLock:
                                  knownnodes.addKnownNode(
                                      1, self_peer, is_self=True)

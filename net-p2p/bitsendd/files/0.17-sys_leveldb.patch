@@ -1,8 +1,8 @@
---- configure.ac~	2014-10-08 11:21:17.000000000 +0300
-+++ configure.ac	2015-11-02 17:03:52.304185594 +0200
-@@ -378,10 +378,22 @@
-  [ AC_MSG_RESULT(no)]
- )
+--- configure.ac~	2020-08-14 15:45:09.000000000 +0300
++++ configure.ac	2020-09-15 17:13:36.521599494 +0300
+@@ -848,10 +848,22 @@
+   [AC_MSG_ERROR([Cannot set default symbol visibility. Use --disable-reduce-exports.])])
+ fi
  
 +dnl Check for leveldb, only if explicitly requested
  LEVELDB_CPPFLAGS=
@@ -24,14 +24,14 @@
  AC_SUBST(LEVELDB_CPPFLAGS)
  AC_SUBST(LIBLEVELDB)
  AC_SUBST(LIBMEMENV)
---- src/leveldbwrapper.cpp~	2014-10-08 11:21:17.000000000 +0300
-+++ src/leveldbwrapper.cpp	2015-11-02 17:05:18.666556817 +0200
+--- src/dbwrapper.cpp~	2020-08-14 15:45:09.000000000 +0300
++++ src/dbwrapper.cpp	2020-09-15 17:15:24.742608823 +0300
 @@ -10,7 +10,7 @@
  #include <leveldb/cache.h>
  #include <leveldb/env.h>
  #include <leveldb/filter_policy.h>
 -#include <memenv.h>
 +#include <leveldb/helpers/memenv.h>
+ #include <stdint.h>
+ #include <algorithm>
  
- void HandleError(const leveldb::Status &status) throw(leveldb_error) {
-     if (status.ok())

@@ -1,0 +1,28 @@
+diff --git a/src/httpserver.cpp b/src/httpserver.cpp
+index 647d4d830..cd72b07a9 100644
+--- a/src/httpserver.cpp
++++ b/src/httpserver.cpp
+@@ -1,6 +1,7 @@
+ // Copyright (c) 2015-2018 The Bitcoin Core developers
+ // Distributed under the MIT software license, see the accompanying
+ // file COPYING or http://www.opensource.org/licenses/mit-license.php.
++#include <deque>
+ 
+ #include <httpserver.h>
+ 
+diff --git a/src/xbridge/xbridgeapp.cpp b/src/xbridge/xbridgeapp.cpp
+index bb1f14442..f28402e48 100644
+--- a/src/xbridge/xbridgeapp.cpp
++++ b/src/xbridge/xbridgeapp.cpp
+@@ -84,10 +84,7 @@ class App::Impl
+ {
+     friend class App;
+ 
+-    enum
+-    {
+-        TIMER_INTERVAL = 15
+-    };
++    long TIMER_INTERVAL = 15;
+ 
+ protected:
+     /**

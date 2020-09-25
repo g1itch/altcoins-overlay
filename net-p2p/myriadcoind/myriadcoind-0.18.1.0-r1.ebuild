@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Gentoo Authors
+# Copyright 2018-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -15,7 +15,6 @@ IUSE="examples upnp +wallet zeromq"
 
 RDEPEND+="
 	>=dev-libs/leveldb-1.18-r1
-	dev-libs/univalue
 	zeromq? ( net-libs/zeromq )
 "
 
@@ -25,6 +24,7 @@ S="${WORKDIR}"/${COIN_NAME}-${PV}
 src_prepare() {
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/0.14-sys_leveldb.patch
+	epatch "${FILESDIR}"/0.18-missing-include.patch
 	eautoreconf
 }
 

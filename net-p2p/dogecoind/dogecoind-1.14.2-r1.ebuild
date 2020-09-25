@@ -1,15 +1,14 @@
-# Copyright 2017-2019 Gentoo Authors
+# Copyright 2017-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="DOGE"
-MY_PV=${PV/_rc1/-rc-1}
 DB_VER=5.1
 
 inherit versionator altcoin
 
 HOMEPAGE="http://dogecoin.com/"
-SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
@@ -21,12 +20,13 @@ RDEPEND+="
 	zeromq? ( net-libs/zeromq )
 "
 
-S="${WORKDIR}"/${COIN_NAME}-${MY_PV}
+S="${WORKDIR}"/${COIN_NAME}-${PV}
 
 src_prepare() {
 	rm -r src/leveldb
 	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf
 }
 

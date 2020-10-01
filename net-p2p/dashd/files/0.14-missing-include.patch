@@ -1,0 +1,12 @@
+diff --git a/src/httpserver.cpp b/src/httpserver.cpp
+index 647d4d830..cd72b07a9 100644
+--- a/src/httpserver.cpp
++++ b/src/httpserver.cpp
+@@ -1,6 +1,7 @@
+ // Copyright (c) 2015-2018 The Bitcoin Core developers
+ // Distributed under the MIT software license, see the accompanying
+ // file COPYING or http://www.opensource.org/licenses/mit-license.php.
++#include <deque>
+ 
+ #include <httpserver.h>
+ 

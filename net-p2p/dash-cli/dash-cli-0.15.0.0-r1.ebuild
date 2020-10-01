@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Gentoo Authors
+# Copyright 2015-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -12,7 +12,10 @@ SRC_URI="https://github.com/dashpay/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
-RDEPEND+="=dev-libs/chiabls-20181101"
+RDEPEND+="
+	=dev-libs/chiabls-20181101
+	=dev-libs/libbacktrace-20180522
+"
 
 src_configure() {
 	# To avoid executable GNU stack.

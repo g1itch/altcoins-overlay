@@ -21,8 +21,9 @@ RDEPEND+="
 
 src_prepare() {
 	rm -r src/leveldb
-	# local PVM=$(get_version_component_range 1-2)
+	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/6.14-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf
 }
 

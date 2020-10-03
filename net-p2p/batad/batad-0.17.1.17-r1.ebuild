@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Gentoo Authors
+# Copyright 2017-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -27,6 +27,7 @@ src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	altcoin_src_prepare
 }
 

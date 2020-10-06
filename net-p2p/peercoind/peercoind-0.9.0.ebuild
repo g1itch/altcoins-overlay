@@ -17,7 +17,7 @@ IUSE="examples upnp +wallet zeromq"
 
 src_prepare() {
 	rm -r src/leveldb
-	local PVM=$(get_version_component_range 1-2)
+	local PVM=0.8
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf

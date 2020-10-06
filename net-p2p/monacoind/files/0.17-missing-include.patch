@@ -1,0 +1,10 @@
+--- src/httpserver.cpp~	2020-10-06 16:19:39.673855193 +0300
++++ src/httpserver.cpp	2020-10-06 16:20:03.187625725 +0300
+@@ -13,6 +13,7 @@
+ #include <sync.h>
+ #include <ui_interface.h>
+ 
++#include <deque>
+ #include <memory>
+ #include <stdio.h>
+ #include <stdlib.h>

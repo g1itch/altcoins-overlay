@@ -11,8 +11,231 @@ index 274d14c1..a699443f 100644
        - tor
        - xvfb
  install:
+diff --git a/buildscripts/winbuild.sh b/buildscripts/winbuild.sh
+index 43d8cf34..bb3decf0 100755
+--- a/buildscripts/winbuild.sh
++++ b/buildscripts/winbuild.sh
+@@ -72,6 +72,8 @@ function install_python(){
+         wine python -m pip install pytools==2020.2
+ 	echo "Upgrading pip"
+ 	wine python -m pip install --upgrade pip
++	# install pypiwin32 for win32com
++	wine python -m pip install pypiwin32
+ }
+ 
+ function install_pyqt(){
+@@ -82,6 +84,8 @@ function install_pyqt(){
+ 		echo "Installing PyQt-${PYQT_VERSION} 32b"
+ 		wine PyQt${PYQT_VERSION}-x32.exe /S /WX
+ 	fi
++	# and qtpy
++	wine python -m pip install qtpy
+ }
+ 
+ function install_openssl(){
+diff --git a/packages/pyinstaller/bitmessagemain.spec b/packages/pyinstaller/bitmessagemain.spec
+index 92e52f6a..0fd1c95a 100644
+--- a/packages/pyinstaller/bitmessagemain.spec
++++ b/packages/pyinstaller/bitmessagemain.spec
+@@ -1,13 +1,15 @@
++# -*- mode: python -*-
+ import ctypes
+ import os
+-import time
+ import sys
++import time
++
+ 
+ if ctypes.sizeof(ctypes.c_voidp) == 4:
+-  arch=32
++  arch = 32
+ else:
+-  arch=64
+-  
++  arch = 64
++
+ sslName = 'OpenSSL-Win%s' % ("32" if arch == 32 else "64")
+ site_root = os.path.abspath(HOMEPATH)
+ spec_root = os.path.abspath(SPECPATH)
+@@ -20,33 +22,44 @@ pythonDllPath = os.path.join(cdrivePath, "Python27")
+ outPath = os.path.join(spec_root, "bitmessagemain")
+ 
+ importPath = srcPath 
+-sys.path.insert(0,importPath)
+-os.chdir(sys.path[0])
+-from version import softwareVersion
++sys.path.insert(0, importPath)
++os.chdir(importPath)
+ 
+-today = time.strftime("%Y%m%d")
+ snapshot = False
+ 
+-os.rename(os.path.join(srcPath, '__init__.py'), os.path.join(srcPath, '__init__.py.backup'))
++os.rename(
++    os.path.join(srcPath, '__init__.py'),
++    os.path.join(srcPath, '__init__.py.backup'))
+ 
+-# -*- mode: python -*-
+ a = Analysis(
+-             [os.path.join(srcPath, 'bitmessagemain.py')],
+-             pathex=[outPath],
+-             hiddenimports=['bitmessageqt.languagebox', 'pyopencl','numpy', 'win32com' , 'setuptools.msvc' ,'_cffi_backend'],
+-             hookspath=None,
+-             runtime_hooks=None
+-             )
++    [os.path.join(srcPath, 'bitmessagemain.py')],
++    pathex=[outPath],
++    hiddenimports=[
++        'bitmessageqt.languagebox', 'pyopencl', 'numpy', 'win32com',
++        'setuptools.msvc', '_cffi_backend'
++    ],
++    hookspath=None,  # this feature has undocumented syntax
++    # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-PyQt4-API-Version
++    runtime_hooks=['pyinstaller_rthook_pyqt4.py'],
++    excludes=[
++        'bsddb', 'bz2',
++        'PyQt4.QtOpenGL', 'PyQt4.QtOpenGL', 'PyQt4.QtSql',
++        'PyQt4.QtSvg', 'PyQt4.QtTest', 'PyQt4.QtWebKit', 'PyQt4.QtXml',
++        'tcl', 'tk', 'Tkinter', 'win32ui']
++)
++
++os.rename(
++    os.path.join(srcPath, '__init__.py.backup'),
++    os.path.join(srcPath, '__init__.py'))
+ 
+-os.rename(os.path.join(srcPath, '__init__.py.backup'), os.path.join(srcPath, '__init__.py'))
+ 
+ def addTranslations():
+-    import os
+     extraDatas = []
+     for file_ in os.listdir(os.path.join(srcPath, 'translations')):
+         if file_[-3:] != ".qm":
+             continue
+-        extraDatas.append((os.path.join('translations', file_),
++        extraDatas.append((
++            os.path.join('translations', file_),
+             os.path.join(srcPath, 'translations', file_), 'DATA'))
+     for libdir in sys.path:
+         qtdir = os.path.join(libdir, qtBase, 'translations')
+@@ -57,57 +70,74 @@ def addTranslations():
+     for file_ in os.listdir(qtdir):
+         if file_[0:3] != "qt_" or file_[5:8] != ".qm":
+             continue
+-        extraDatas.append((os.path.join('translations', file_),
++        extraDatas.append((
++            os.path.join('translations', file_),
+             os.path.join(qtdir, file_), 'DATA'))
+     return extraDatas
+ 
+-def addUIs():
+-    import os
+-    extraDatas = []
+-    for file_ in os.listdir(os.path.join(srcPath, 'bitmessageqt')):
+-        if file_[-3:] != ".ui":
+-            continue
+-        extraDatas.append((os.path.join('ui', file_), os.path.join(srcPath,
+-            'bitmessageqt', file_), 'DATA'))
+-    return extraDatas
++
++dir_append = os.path.join(srcPath, 'bitmessageqt')
++
++a.datas += [
++    (os.path.join('ui', file_), os.path.join(dir_append, file_), 'DATA')
++    for file_ in os.listdir(dir_append) if file_.endswith('.ui')
++]
+ 
+ # append the translations directory
+ a.datas += addTranslations()
+-a.datas += addUIs()
+ 
+ 
+-a.binaries += [('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
+-         ('python27.dll', os.path.join(pythonDllPath, 'python27.dll'), 'BINARY'),
+-         (os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
+-         (os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
+-         (os.path.join('sslkeys', 'cert.pem'), os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
+-         (os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
+-         ]
++excluded_binaries = [
++    'QtOpenGL4.dll', 'QtSql4.dll', 'QtSvg4.dll', 'QtTest4.dll',
++    'QtWebKit4.dll', 'QtXml4.dll'
++]
++a.binaries = TOC([x for x in a.binaries if x[0] not in excluded_binaries])
++
++a.binaries += [
++    # No effect: libeay32.dll will be taken from PyQt if installed
++    ('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
++    (os.path.join('bitmsghash', 'bitmsghash%i.dll' % arch),
++        os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % arch),
++    'BINARY'),
++    (os.path.join('bitmsghash', 'bitmsghash.cl'),
++         os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
++    (os.path.join('sslkeys', 'cert.pem'),
++         os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
++    (os.path.join('sslkeys', 'key.pem'),
++         os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
++]
++
+ 
+-    
+-fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareVersion)
++from version import softwareVersion
++
++today = time.strftime("%Y%m%d")
++
++fname = 'Bitmessage_%s_%s.exe' % (
++    "x86" if arch == 32 else "x64", softwareVersion)
+ if snapshot:
+-    fname = 'Bitmessagedev_%s_%s.exe' % ("x86" if arch == 32 else "x64", today)
+-    
++    fname = 'Bitmessagedev_%s_%s.exe' % (
++        "x86" if arch == 32 else "x64", today)
++
+ pyz = PYZ(a.pure)
+-exe = EXE(pyz,
+-          a.scripts,
+-          a.binaries,
+-          a.zipfiles,
+-          a.datas,
+-          a.binaries,
+-          [],
+-          name=fname,
+-          debug=False,
+-          strip=None,
+-          upx=False,
+-          console=False, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
+-
+-coll = COLLECT(exe,
+-               a.binaries,
+-               a.zipfiles,
+-               a.datas,
+-               strip=False,
+-               upx=False,
+-               name='main')
++exe = EXE(
++    pyz,
++    a.scripts,
++    a.binaries,
++    a.zipfiles,
++    a.datas,
++    name=fname,
++    debug=False,
++    strip=None,
++    upx=False,
++    console=False, icon=os.path.join(srcPath, 'images', 'can-icon.ico')
++)
+ 
++coll = COLLECT(
++    exe,
++    a.binaries,
++    a.zipfiles,
++    a.datas,
++    strip=False,
++    upx=False,
++    name='main'
++)
 diff --git a/src/bitmessageqt/__init__.py b/src/bitmessageqt/__init__.py
-index 2f1a6e7f..f01ec4f8 100644
+index 8a3b2510..05e0c865 100644
 --- a/src/bitmessageqt/__init__.py
 +++ b/src/bitmessageqt/__init__.py
 @@ -15,8 +15,7 @@ import time
@@ -1839,9 +2062,9 @@ index 2f1a6e7f..f01ec4f8 100644
          idCount = len(inventoryHashesToTrash)
          sqlExecuteChunked(
              ("DELETE FROM inbox" if folder == "trash" or shifted else
--             "UPDATE inbox SET folder='trash'") +
+-             "UPDATE inbox SET folder='trash', read=1") +
 -            " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
-+             "UPDATE inbox SET folder='trash'")
++             "UPDATE inbox SET folder='trash', read=1")
 +            + " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
          tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
          tableWidget.setUpdatesEnabled(True)
@@ -2289,7 +2512,7 @@ index 2f1a6e7f..f01ec4f8 100644
  
          socket.abort()
  
-@@ -4187,7 +4266,7 @@ class BitmessageQtApplication(QtGui.QApplication):
+@@ -4187,16 +4266,12 @@ class BitmessageQtApplication(QtGui.QApplication):
          else:
              # Nope, create a local server with this id and assign on_new_connection
              # for whenever a second instance tries to run focus the application.
@@ -2298,7 +2521,16 @@ index 2f1a6e7f..f01ec4f8 100644
              self.server.listen(id)
              self.server.newConnection.connect(self.on_new_connection)
  
-@@ -4219,12 +4298,6 @@ def run():
+         self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
+ 
+-    def __del__(self):
+-        if self.server:
+-            self.server.close()
+-
+     def on_new_connection(self):
+         if myapp:
+             myapp.appIndicatorShow()
+@@ -4219,12 +4294,6 @@ def run():
      if myapp._firstrun:
          myapp.showConnectDialog()  # ask the user if we may connect
  
@@ -2782,16 +3014,17 @@ index 56cf7cc5..ac78d5ea 100644
              self.config.set(self.acct.fromAddress, 'label', email)
              self.config.set(self.acct.fromAddress, 'gateway', 'mailchuck')
 diff --git a/src/bitmessageqt/addressvalidator.py b/src/bitmessageqt/addressvalidator.py
-index 89c17891..de2cd5b3 100644
+index 89c17891..6a13dba6 100644
 --- a/src/bitmessageqt/addressvalidator.py
 +++ b/src/bitmessageqt/addressvalidator.py
-@@ -1,14 +1,15 @@
+@@ -1,14 +1,16 @@
  """
 -Address validator module.
 +The validator for address and passphrase QLineEdits
 +used in `.dialogs.NewChanDialog`.
  """
 -# pylint: disable=too-many-branches,too-many-arguments
++# pylint: disable=too-many-arguments
  
 -from PyQt4 import QtGui
  from Queue import Empty
@@ -2805,7 +3038,7 @@ index 89c17891..de2cd5b3 100644
  from tr import _translate
  from utils import str_chan
  
-@@ -16,22 +17,18 @@ from utils import str_chan
+@@ -16,22 +18,18 @@ from utils import str_chan
  class AddressPassPhraseValidatorMixin(object):
      """Bitmessage address or passphrase validator class for Qt UI"""
      def setParams(
@@ -2833,7 +3066,7 @@ index 89c17891..de2cd5b3 100644
  
      def setError(self, string):
          """Indicate that the validation is pending or failed"""
-@@ -42,13 +39,13 @@ class AddressPassPhraseValidatorMixin(object):
+@@ -42,13 +40,13 @@ class AddressPassPhraseValidatorMixin(object):
              self.feedBackObject.setStyleSheet("QLabel { color : red; }")
              self.feedBackObject.setText(string)
          self.isValid = False
@@ -2851,7 +3084,7 @@ index 89c17891..de2cd5b3 100644
                      _translate("AddressValidator", "Validating..."))
  
      def setOK(self, string):
-@@ -60,9 +57,9 @@ class AddressPassPhraseValidatorMixin(object):
+@@ -60,9 +58,9 @@ class AddressPassPhraseValidatorMixin(object):
              self.feedBackObject.setStyleSheet("QLabel { }")
              self.feedBackObject.setText(string)
          self.isValid = True
@@ -2864,7 +3097,7 @@ index 89c17891..de2cd5b3 100644
  
      def checkQueue(self):
          """Validator queue loop"""
-@@ -75,7 +72,8 @@ class AddressPassPhraseValidatorMixin(object):
+@@ -75,7 +73,8 @@ class AddressPassPhraseValidatorMixin(object):
  
          while True:
              try:
@@ -2874,7 +3107,7 @@ index 89c17891..de2cd5b3 100644
              except Empty:
                  if gotOne:
                      break
-@@ -85,96 +83,120 @@ class AddressPassPhraseValidatorMixin(object):
+@@ -85,96 +84,120 @@ class AddressPassPhraseValidatorMixin(object):
                  gotOne = True
  
          if not addressGeneratorReturnValue:
@@ -4120,7 +4353,7 @@ index 3897bddc..6db303db 100644
                  '''UPDATE blacklist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
          else:
 diff --git a/src/bitmessageqt/blacklist.ui b/src/bitmessageqt/blacklist.ui
-index 80993fac..0eb347a3 100644
+index 80993fac..c3b9b5a3 100644
 --- a/src/bitmessageqt/blacklist.ui
 +++ b/src/bitmessageqt/blacklist.ui
 @@ -62,6 +62,9 @@
@@ -4133,7 +4366,7 @@ index 80993fac..0eb347a3 100644
       <attribute name="horizontalHeaderCascadingSectionResizes">
        <bool>true</bool>
       </attribute>
-@@ -98,7 +101,7 @@
+@@ -98,11 +101,8 @@
    <customwidget>
     <class>STableWidget</class>
     <extends>QTableWidget</extends>
@@ -4141,24 +4374,28 @@ index 80993fac..0eb347a3 100644
 +   <header>bitmessageqt.settingsmixin</header>
    </customwidget>
   </customwidgets>
-  <resources>
+- <resources>
+-  <include location="bitmessage_icons.qrc"/>
+- </resources>
+  <connections/>
+ </ui>
 diff --git a/src/bitmessageqt/dialogs.py b/src/bitmessageqt/dialogs.py
-index e76dd84e..b1c9cafb 100644
+index e76dd84e..6ab97719 100644
 --- a/src/bitmessageqt/dialogs.py
 +++ b/src/bitmessageqt/dialogs.py
-@@ -1,8 +1,8 @@
+@@ -1,8 +1,9 @@
  """
 -Custom dialog classes
 +All dialogs are available in this module.
  """
--# pylint: disable=too-few-public-methods
+ # pylint: disable=too-few-public-methods
 -from PyQt4 import QtGui
 +
 +from qtpy import QtWidgets
  
  import paths
  import widgets
-@@ -16,7 +16,6 @@ from settings import SettingsDialog
+@@ -16,7 +17,6 @@ from settings import SettingsDialog
  from tr import _translate
  from version import softwareVersion
  
@@ -4166,7 +4403,7 @@ index e76dd84e..b1c9cafb 100644
  __all__ = [
      "NewChanDialog", "AddAddressDialog", "NewAddressDialog",
      "NewSubscriptionDialog", "RegenerateAddressesDialog",
-@@ -25,8 +24,8 @@ __all__ = [
+@@ -25,8 +25,8 @@ __all__ = [
  ]
  
  
@@ -4177,7 +4414,7 @@ index e76dd84e..b1c9cafb 100644
      def __init__(self, parent=None):
          super(AboutDialog, self).__init__(parent)
          widgets.load('about.ui', self)
-@@ -50,11 +49,11 @@ class AboutDialog(QtGui.QDialog):
+@@ -50,11 +50,11 @@ class AboutDialog(QtGui.QDialog):
          except AttributeError:
              pass
  
@@ -4192,7 +4429,7 @@ index e76dd84e..b1c9cafb 100644
      def __init__(self, parent=None, config=None):
          super(IconGlossaryDialog, self).__init__(parent)
          widgets.load('iconglossary.ui', self)
-@@ -64,22 +63,23 @@ class IconGlossaryDialog(QtGui.QDialog):
+@@ -64,22 +64,23 @@ class IconGlossaryDialog(QtGui.QDialog):
  
          self.labelPortNumber.setText(_translate(
              "iconGlossaryDialog",
@@ -4609,10 +4846,10 @@ index e6d64427..419ffc29 100644
          part2 = text[nextDelimiterIndex:]
  
 diff --git a/src/bitmessageqt/languagebox.py b/src/bitmessageqt/languagebox.py
-index 9ff78990..5fa88167 100644
+index 9ff78990..273012cc 100644
 --- a/src/bitmessageqt/languagebox.py
 +++ b/src/bitmessageqt/languagebox.py
-@@ -1,48 +1,55 @@
+@@ -1,48 +1,56 @@
 -"""Language Box Module for Locale Settings"""
 -# pylint: disable=too-few-public-methods,bad-continuation
 +"""LanguageBox widget is for selecting UI language"""
@@ -4630,6 +4867,7 @@ index 9ff78990..5fa88167 100644
  
 -class LanguageBox(QtGui.QComboBox):
 -    """LanguageBox class for Qt UI"""
++# pylint: disable=too-few-public-methods
 +class LanguageBox(QtWidgets.QComboBox):
 +    """A subclass of `QtWidgets.QComboBox` for selecting language"""
      languageName = {
@@ -4680,23 +4918,24 @@ index 9ff78990..5fa88167 100644
              if self.itemData(i) == configuredLocale:
                  self.setCurrentIndex(i)
 diff --git a/src/bitmessageqt/messagecompose.py b/src/bitmessageqt/messagecompose.py
-index c51282f8..a4bfccda 100644
+index c51282f8..68de5ce0 100644
 --- a/src/bitmessageqt/messagecompose.py
 +++ b/src/bitmessageqt/messagecompose.py
-@@ -1,37 +1,31 @@
+@@ -1,33 +1,34 @@
 -"""
 -Message editor with a wheel zoom functionality
 -"""
 -# pylint: disable=bad-continuation
++"""The MessageCompose class definition"""
+ 
+-from PyQt4 import QtCore, QtGui
 +from qtpy import QtCore, QtWidgets
 +from tr import _translate
  
--from PyQt4 import QtCore, QtGui
- 
-+class MessageCompose(QtWidgets.QTextEdit):
  
 -class MessageCompose(QtGui.QTextEdit):
--    """Editor class with wheel zoom functionality"""
++class MessageCompose(QtWidgets.QTextEdit):
+     """Editor class with wheel zoom functionality"""
 -    def __init__(self, parent=0):
 +    def __init__(self, parent=None):
          super(MessageCompose, self).__init__(parent)
@@ -4705,7 +4944,7 @@ index c51282f8..a4bfccda 100644
          self.defaultFontPointSize = self.currentFont().pointSize()
  
      def wheelEvent(self, event):
--        """Mouse wheel scroll event handler"""
+         """Mouse wheel scroll event handler"""
          if (
 -            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
 -        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
@@ -4717,21 +4956,21 @@ index c51282f8..a4bfccda 100644
                  self.zoomIn(1)
              else:
                  self.zoomOut(1)
-             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
+-            zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
 -            QtGui.QApplication.activeWindow().statusBar().showMessage(
 -                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(
 -                    str(zoom)
 -                )
 -            )
 +            QtWidgets.QApplication.activeWindow().statusbar.showMessage(
-+                _translate("MainWindow", "Zoom level {0}%").format(zoom))
++                _translate("MainWindow", "Zoom level {0}%").format(
++                    # zoom percentage
++                    self.currentFont().pointSize() * 100
++                    / self.defaultFontPointSize
++                ))
          else:
              # in QTextEdit, super does not zoom, only scroll
              super(MessageCompose, self).wheelEvent(event)
- 
-     def reset(self):
--        """Clear the edit content"""
-         self.setText('')
 diff --git a/src/bitmessageqt/messageview.py b/src/bitmessageqt/messageview.py
 index 13ea16f9..ebf23c87 100644
 --- a/src/bitmessageqt/messageview.py
@@ -5228,7 +5467,7 @@ index e7fd9e94..c2a379da 100644
          self.updateNumberOfBroadcastsProcessed()
          self.updateNumberOfPubkeysProcessed()
 diff --git a/src/bitmessageqt/networkstatus.ui b/src/bitmessageqt/networkstatus.ui
-index e0c01b57..64a3d48d 100644
+index e0c01b57..7830714a 100644
 --- a/src/bitmessageqt/networkstatus.ui
 +++ b/src/bitmessageqt/networkstatus.ui
 @@ -100,6 +100,9 @@
@@ -5251,7 +5490,7 @@ index e0c01b57..64a3d48d 100644
           <attribute name="verticalHeaderVisible">
            <bool>false</bool>
           </attribute>
-@@ -296,7 +296,7 @@
+@@ -296,11 +296,8 @@
    <customwidget>
     <class>STableWidget</class>
     <extends>QTableWidget</extends>
@@ -5259,7 +5498,11 @@ index e0c01b57..64a3d48d 100644
 +   <header>bitmessageqt.settingsmixin</header>
    </customwidget>
   </customwidgets>
-  <resources>
+- <resources>
+-  <include location="bitmessage_icons.qrc"/>
+- </resources>
+  <connections/>
+ </ui>
 diff --git a/src/bitmessageqt/newaddressdialog.ui b/src/bitmessageqt/newaddressdialog.ui
 index a9eda5c3..0f8c33d7 100644
 --- a/src/bitmessageqt/newaddressdialog.ui
@@ -5440,10 +5683,10 @@ index e9d5bb3a..706c3e81 100644
 +                    getattr(self, attr).verticalHeaderItem(i).setText(
 +                        getattr(defaults, attr).verticalHeaderItem(i).text())
 diff --git a/src/bitmessageqt/safehtmlparser.py b/src/bitmessageqt/safehtmlparser.py
-index edacd4bb..3890219c 100644
+index d408d2c7..a7161ae0 100644
 --- a/src/bitmessageqt/safehtmlparser.py
 +++ b/src/bitmessageqt/safehtmlparser.py
-@@ -121,10 +121,6 @@ class SafeHTMLParser(HTMLParser):
+@@ -123,10 +123,6 @@ class SafeHTMLParser(HTMLParser):
          self.sanitised += "&" + name + ";"
  
      def feed(self, data):
@@ -5597,6 +5840,20 @@ index 32681b57..6cac16a8 100644
          ):
              # If we ARE using portable mode now but the user selected
              # that we shouldn't...
+diff --git a/src/bitmessageqt/settings.ui b/src/bitmessageqt/settings.ui
+index 0ffbf442..65d91d8f 100644
+--- a/src/bitmessageqt/settings.ui
++++ b/src/bitmessageqt/settings.ui
+@@ -1079,9 +1079,6 @@
+   <tabstop>checkBoxSocksListen</tabstop>
+   <tabstop>buttonBox</tabstop>
+  </tabstops>
+- <resources>
+-  <include location="bitmessage_icons.qrc"/>
+- </resources>
+  <connections>
+   <connection>
+    <sender>buttonBox</sender>
 diff --git a/src/bitmessageqt/settingsmixin.py b/src/bitmessageqt/settingsmixin.py
 index 3d5999e2..9e53c6fb 100644
 --- a/src/bitmessageqt/settingsmixin.py
@@ -5698,23 +5955,55 @@ index 3d5999e2..9e53c6fb 100644
          # self.writeState(self)
          pass
 diff --git a/src/bitmessageqt/statusbar.py b/src/bitmessageqt/statusbar.py
-index 65a5acfb..477b0d68 100644
+index 2add604d..478d570c 100644
 --- a/src/bitmessageqt/statusbar.py
 +++ b/src/bitmessageqt/statusbar.py
-@@ -1,8 +1,8 @@
--from PyQt4 import QtCore, QtGui
--from Queue import Queue
-+from qtpy import QtWidgets
+@@ -1,11 +1,11 @@
+-# pylint: disable=unused-argument
+-"""Status bar Module"""
++"""BMStatusBar class definition"""
+ 
  from time import time
+-from PyQt4 import QtGui
+ 
++from qtpy import QtWidgets
  
 -class BMStatusBar(QtGui.QStatusBar):
 +
 +class BMStatusBar(QtWidgets.QStatusBar):
+     """Status bar with queue and priorities"""
      duration = 10000
      deleteAfter = 60
+@@ -16,21 +16,24 @@ class BMStatusBar(QtGui.QStatusBar):
+         self.timer = self.startTimer(BMStatusBar.duration)
+         self.iterator = 0
  
+-    def timerEvent(self, event):
++    def timerEvent(self, event):  # pylint: disable=unused-argument
+         """an event handler which allows to queue and prioritise messages to
+         show in the status bar, for example if many messages come very quickly
+         after one another, it adds delays and so on"""
+         while len(self.important) > 0:
+             self.iterator += 1
+             try:
+-                if time() > self.important[self.iterator][1] + BMStatusBar.deleteAfter:
++                if (
++                    self.important[self.iterator][1]
++                    + BMStatusBar.deleteAfter < time()
++                ):
+                     del self.important[self.iterator]
+                     self.iterator -= 1
+                     continue
+             except IndexError:
+                 self.iterator = -1
+                 continue
+-            super(BMStatusBar, self).showMessage(self.important[self.iterator][0], 0)
++            self.showMessage(self.important[self.iterator][0], 0)
+             break
+ 
+     def addImportant(self, message):
 diff --git a/src/bitmessageqt/support.py b/src/bitmessageqt/support.py
-index ac02e2ca..081b86f7 100644
+index ac02e2ca..08125446 100644
 --- a/src/bitmessageqt/support.py
 +++ b/src/bitmessageqt/support.py
 @@ -1,13 +1,11 @@
@@ -5823,7 +6112,7 @@ index ac02e2ca..081b86f7 100644
      if addrIndex == -1:  # something is very wrong
          return
      myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
-@@ -119,15 +130,12 @@ def createSupportMessage(myapp):
+@@ -119,15 +130,13 @@ def createSupportMessage(myapp):
      if commit:
          version += " GIT " + commit
  
@@ -5832,7 +6121,8 @@ index ac02e2ca..081b86f7 100644
 -        windowsversion = sys.getwindowsversion()
 -        os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
 +    if sys.platform.startswith("win"):
-+        osname = "Windows %s.%s" % sys.getwindowsversion()
++        # pylint: disable=no-member
++        osname = "Windows %s.%s" % sys.getwindowsversion()[:2]
      else:
          try:
 -            from os import uname
@@ -5843,7 +6133,7 @@ index ac02e2ca..081b86f7 100644
          except:
              pass
      architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
-@@ -136,22 +144,26 @@ def createSupportMessage(myapp):
+@@ -136,22 +145,26 @@ def createSupportMessage(myapp):
      opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (
          ssl.OPENSSL_VERSION, OpenSSL._version)
  
@@ -6216,7 +6506,7 @@ index add86a75..b68a01a1 100644
          else:
              logger.debug('This object is not an acknowledgement bound for me.')
 diff --git a/src/class_singleWorker.py b/src/class_singleWorker.py
-index 699506de..db304db1 100644
+index 499cb82f..c07dc1c5 100644
 --- a/src/class_singleWorker.py
 +++ b/src/class_singleWorker.py
 @@ -23,14 +23,13 @@ import protocol
@@ -6323,7 +6613,7 @@ index 699506de..db304db1 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -637,8 +641,7 @@ class singleWorker(StoppableThread):
+@@ -639,8 +643,7 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6333,7 +6623,7 @@ index 699506de..db304db1 100644
                          "MainWindow",
                          "Doing work necessary to send broadcast..."))
              ))
-@@ -670,11 +673,9 @@ class singleWorker(StoppableThread):
+@@ -672,11 +675,9 @@ class singleWorker(StoppableThread):
  
              queues.UISignalQueue.put((
                  'updateSentItemStatusByAckdata', (
@@ -6348,7 +6638,7 @@ index 699506de..db304db1 100644
              ))
  
              # Update the status of the message in the 'sent' table to have
-@@ -686,7 +687,10 @@ class singleWorker(StoppableThread):
+@@ -688,7 +689,10 @@ class singleWorker(StoppableThread):
              )
  
      def sendMsg(self):
@@ -6360,7 +6650,7 @@ index 699506de..db304db1 100644
          # pylint: disable=too-many-nested-blocks
          # Reset just in case
          sqlExecute(
-@@ -779,8 +783,7 @@ class singleWorker(StoppableThread):
+@@ -784,8 +788,7 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByToAddress', (
@@ -6370,7 +6660,7 @@ index 699506de..db304db1 100644
                                      "MainWindow",
                                      "Encryption key was requested earlier."))
                          ))
-@@ -851,8 +854,7 @@ class singleWorker(StoppableThread):
+@@ -857,8 +860,7 @@ class singleWorker(StoppableThread):
                              )
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByToAddress', (
@@ -6380,7 +6670,7 @@ index 699506de..db304db1 100644
                                          "MainWindow",
                                          "Sending a request for the"
                                          " recipient\'s encryption key."))
-@@ -876,8 +878,7 @@ class singleWorker(StoppableThread):
+@@ -882,8 +884,7 @@ class singleWorker(StoppableThread):
                  state.ackdataForWhichImWatching[ackdata] = 0
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6390,7 +6680,7 @@ index 699506de..db304db1 100644
                              "MainWindow",
                              "Looking up the receiver\'s public key"))
                  ))
-@@ -934,15 +935,14 @@ class singleWorker(StoppableThread):
+@@ -940,15 +941,14 @@ class singleWorker(StoppableThread):
                          )
                          queues.UISignalQueue.put((
                              'updateSentItemStatusByAckdata', (
@@ -6409,7 +6699,7 @@ index 699506de..db304db1 100644
                          ))
                          # if the human changes their setting and then
                          # sends another message or restarts their client,
-@@ -965,8 +965,7 @@ class singleWorker(StoppableThread):
+@@ -971,8 +971,7 @@ class singleWorker(StoppableThread):
                          defaults.networkDefaultPayloadLengthExtraBytes
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -6419,7 +6709,7 @@ index 699506de..db304db1 100644
                                  "MainWindow",
                                  "Doing work necessary to send message.\n"
                                  "There is no required difficulty for"
-@@ -998,32 +997,18 @@ class singleWorker(StoppableThread):
+@@ -1004,32 +1003,18 @@ class singleWorker(StoppableThread):
                          requiredAverageProofOfWorkNonceTrialsPerByte,
                          requiredPayloadLengthExtraBytes
                      )
@@ -6464,7 +6754,7 @@ index 699506de..db304db1 100644
                      if status != 'forcepow':
                          maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
                              'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-@@ -1043,18 +1028,19 @@ class singleWorker(StoppableThread):
+@@ -1049,18 +1034,19 @@ class singleWorker(StoppableThread):
                                  ackdata)
                              queues.UISignalQueue.put((
                                  'updateSentItemStatusByAckdata', (
@@ -6495,7 +6785,7 @@ index 699506de..db304db1 100644
                              continue
              else:  # if we are sending a message to ourselves or a chan..
                  self.logger.info('Sending a message.')
-@@ -1068,15 +1054,14 @@ class singleWorker(StoppableThread):
+@@ -1074,15 +1060,14 @@ class singleWorker(StoppableThread):
                  except Exception as err:
                      queues.UISignalQueue.put((
                          'updateSentItemStatusByAckdata', (
@@ -6514,7 +6804,7 @@ index 699506de..db304db1 100644
                      ))
                      self.logger.error(
                          'Error within sendMsg. Could not read the keys'
-@@ -1093,8 +1078,7 @@ class singleWorker(StoppableThread):
+@@ -1099,8 +1084,7 @@ class singleWorker(StoppableThread):
                      defaults.networkDefaultPayloadLengthExtraBytes
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6524,7 +6814,7 @@ index 699506de..db304db1 100644
                              "MainWindow",
                              "Doing work necessary to send message."))
                  ))
-@@ -1116,8 +1100,7 @@ class singleWorker(StoppableThread):
+@@ -1122,8 +1106,7 @@ class singleWorker(StoppableThread):
              except:
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6534,7 +6824,7 @@ index 699506de..db304db1 100644
                              "MainWindow",
                              "Error! Could not find sender address"
                              " (your address) in the keys.dat file."))
-@@ -1170,8 +1153,7 @@ class singleWorker(StoppableThread):
+@@ -1176,8 +1159,7 @@ class singleWorker(StoppableThread):
                  # The fullAckPayload is a normal msg protocol message
                  # with the proof of work already completed that the
                  # receiver of this message can easily send out.
@@ -6544,7 +6834,7 @@ index 699506de..db304db1 100644
              payload += encodeVarint(len(fullAckPayload))
              payload += fullAckPayload
              dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
-@@ -1183,8 +1165,7 @@ class singleWorker(StoppableThread):
+@@ -1189,8 +1171,7 @@ class singleWorker(StoppableThread):
              # We have assembled the data that will be encrypted.
              try:
                  encrypted = highlevelcrypto.encrypt(
@@ -6553,8 +6843,8 @@ index 699506de..db304db1 100644
 +                    payload, "04" + hexlify(pubEncryptionKeyBase256))
              except:
                  sqlExecute(
-                     '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
-@@ -1192,12 +1173,11 @@ class singleWorker(StoppableThread):
+                     '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
+@@ -1198,12 +1179,11 @@ class singleWorker(StoppableThread):
                  )
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6570,7 +6860,7 @@ index 699506de..db304db1 100644
                  ))
                  continue
  
-@@ -1261,21 +1241,19 @@ class singleWorker(StoppableThread):
+@@ -1267,21 +1247,19 @@ class singleWorker(StoppableThread):
                 not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                  queues.UISignalQueue.put((
                      'updateSentItemStatusByAckdata', (
@@ -6599,7 +6889,7 @@ index 699506de..db304db1 100644
                  ))
              self.logger.info(
                  'Broadcasting inv for my msg(within sendmsg function): %s',
-@@ -1405,8 +1383,7 @@ class singleWorker(StoppableThread):
+@@ -1411,8 +1389,7 @@ class singleWorker(StoppableThread):
          queues.UISignalQueue.put(('updateStatusBar', statusbar))
          queues.UISignalQueue.put((
              'updateSentItemStatusByToAddress', (
@@ -6609,7 +6899,7 @@ index 699506de..db304db1 100644
                      "MainWindow",
                      "Doing work necessary to request encryption key."))
          ))
-@@ -1430,30 +1407,31 @@ class singleWorker(StoppableThread):
+@@ -1436,30 +1413,31 @@ class singleWorker(StoppableThread):
              int(time.time()), retryNumber + 1, sleeptill, toAddress)
  
          queues.UISignalQueue.put((
@@ -6788,10 +7078,10 @@ index 03e297f1..384e566c 100755
      simply checking if msgpack package with all its dependency
      is available or not as recommended for messages coding.
 diff --git a/src/fallback/__init__.py b/src/fallback/__init__.py
-index 9a8d646f..8e48d76c 100644
+index 9a8d646f..bd1f51b9 100644
 --- a/src/fallback/__init__.py
 +++ b/src/fallback/__init__.py
-@@ -30,3 +30,30 @@ else:
+@@ -30,3 +30,36 @@ else:
          if data:
              hasher.update(data)
          return hasher
@@ -6818,6 +7108,12 @@ index 9a8d646f..8e48d76c 100644
 +            'QtNetwork': QtNetwork,
 +            'uic': uic
 +        }
++        try:
++            from PyQt5 import QtTest
++        except ImportError:
++            pass
++        else:
++            context['QtTest'] = QtTest
 +        qtpy = types.ModuleType(
 +            'qtpy', 'PyQt5 based dynamic fallback for qtpy')
 +        qtpy.__dict__.update(context)
@@ -7000,6 +7296,23 @@ index ae2bde79..33319bda 100644
  
          try:
              s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+diff --git a/src/network/tcp.py b/src/network/tcp.py
+index 64153d9d..7ecb91fd 100644
+--- a/src/network/tcp.py
++++ b/src/network/tcp.py
+@@ -139,9 +139,10 @@ class TCPConnection(BMProto, TLSDispatcher):
+                 'updateStatusBar',
+                 _translate(
+                     "MainWindow",
+-                    "The time on your computer, %1, may be wrong. "
++                    "The time on your computer, {0}, may be wrong. "
+                     "Please verify your settings."
+-                ).arg(l10n.formatTimestamp())))
++                ).format(l10n.formatTimestamp())
++            ))
+ 
+     def state_connection_fully_established(self):
+         """
 diff --git a/src/plugins/menu_qrcode.py b/src/plugins/menu_qrcode.py
 index ea322a49..1fbccbe4 100644
 --- a/src/plugins/menu_qrcode.py
@@ -7064,6 +7377,22 @@ index 629de0a6..9f3b76c0 100644
                      pkg_resources.DistributionNotFound,
                      pkg_resources.UnknownExtra):
                  logger.debug(
+diff --git a/src/pyinstaller_rthook_pyqt4.py b/src/pyinstaller_rthook_pyqt4.py
+new file mode 100644
+index 00000000..b30fb1cc
+--- /dev/null
++++ b/src/pyinstaller_rthook_pyqt4.py
+@@ -0,0 +1,10 @@
++# https://github.com/pyinstaller/pyinstaller/wiki/Recipe-PyQt4-API-Version
++import sip
++
++sip.setapi(u'QDate', 2)
++sip.setapi(u'QDateTime', 2)
++sip.setapi(u'QString', 2)
++sip.setapi(u'QTextStream', 2)
++sip.setapi(u'QTime', 2)
++sip.setapi(u'QUrl', 2)
++sip.setapi(u'QVariant', 2)
 diff --git a/src/qidenticon.py b/src/qidenticon.py
 index 6eab09cd..b61f55ff 100644
 --- a/src/qidenticon.py

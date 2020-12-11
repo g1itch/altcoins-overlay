@@ -1,26 +1,27 @@
-# Copyright 1999-2019 Gentoo Authors
+# Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 )
-PYTHON_REQ_USE="sqlite,ssl"
+PYTHON_REQ_USE="sqlite,ssl,ipv6"
 
-inherit distutils-r1 gnome2-utils systemd
+inherit distutils-r1 gnome2-utils versionator systemd
 
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
+COMMIT="ee7aa6c28de944fe6f5aff49c6b186449b75957a"
 HOMEPAGE="https://bitmessage.org"
-SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${PV}.tar.gz
+SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
 
 LINGUAS=( ar cs da de eo fr it ja nb nl no pl pt ru sk sv zh_cn )
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
-IUSE="daemon debug libressl +msgpack systemd libnotify libcanberra ncurses opencl qt4 qt5 sound ${LINGUAS[@]/#/l10n_}"
+KEYWORDS=""
+IUSE="daemon debug libressl +msgpack systemd gnome-keyring libnotify libcanberra ncurses opencl qrcode qt4 sound ${LINGUAS[@]/#/l10n_}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="${PYTHON_DEPS}"
@@ -36,29 +37,27 @@ RDEPEND="${DEPEND}
 		dev-python/numpy[${PYTHON_USEDEP}]
 		dev-python/pyopencl[${PYTHON_USEDEP}]
 	)
-	qt4? ( <=dev-python/QtPy-1.2.1[gui,${PYTHON_USEDEP}]
-		   || ( dev-python/PyQt4[${PYTHON_USEDEP}]
-				dev-python/pyside[${PYTHON_USEDEP}] ) )
-	qt5? ( dev-python/QtPy[gui,${PYTHON_USEDEP}]
-		   dev-python/PyQt5[${PYTHON_USEDEP}] )
+	qt4? ( dev-python/PyQt4[${PYTHON_USEDEP}] )
 	sound? ( || ( dev-python/gst-python:1.0[${PYTHON_USEDEP}]
 				  media-sound/gst123
 				  media-libs/gst-plugins-base:1.0
 				  media-sound/mpg123
 				  media-sound/alsa-utils ) )
+	qrcode? ( dev-python/qrcode[${PYTHON_USEDEP}] )
 	libnotify? ( dev-python/pygobject[${PYTHON_USEDEP}]
 				 dev-python/notify2[${PYTHON_USEDEP}]
 				 x11-themes/hicolor-icon-theme )
 	libcanberra? ( dev-python/pycanberra[${PYTHON_USEDEP}] )
+	gnome-keyring? ( dev-python/gnome-keyring-python[${PYTHON_USEDEP}] )
 "
 
-S="${WORKDIR}"/${MY_PN}-${PV}
+S="${WORKDIR}"/${MY_PN}-${COMMIT}
 
+PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/0.6-desktop-network.patch
-	"${FILESDIR}"/${PV}-ipv6.patch
-	"${FILESDIR}"/${PV}-qt5.patch
-	"${FILESDIR}"/${PV}-maxobjectcount.patch
+	"${FILESDIR}"/${PVM}-keystore.patch
+	"${FILESDIR}"/${PVM}-ui-changes.patch
 )
 
 src_prepare() {

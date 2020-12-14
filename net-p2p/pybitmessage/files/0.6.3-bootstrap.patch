@@ -1,0 +1,333 @@
+diff --git a/src/network/advanceddispatcher.py b/src/network/advanceddispatcher.py
+index 982be819..8df557ad 100644
+--- a/src/network/advanceddispatcher.py
++++ b/src/network/advanceddispatcher.py
+@@ -31,6 +31,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
+     def __init__(self, sock=None):
+         if not hasattr(self, '_map'):
+             asyncore.dispatcher.__init__(self, sock)
++        self.close_reason = None
+         self.read_buf = bytearray()
+         self.write_buf = bytearray()
+         self.state = "init"
+diff --git a/src/network/bmproto.py b/src/network/bmproto.py
+index ef64de94..20cbb8e6 100644
+--- a/src/network/bmproto.py
++++ b/src/network/bmproto.py
+@@ -437,9 +437,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
+         # pylint: disable=redefined-outer-name
+         addresses = self._decode_addr()
+         for seenTime, stream, _, ip, port in addresses:
+-            decodedIP = protocol.checkIPAddress(str(ip))
+-            if stream not in state.streamsInWhichIAmParticipating:
++            ip = str(ip)
++            if (
++                stream not in state.streamsInWhichIAmParticipating
++                # FIXME: should check against complete list
++                or ip.startswith('bootstrap')
++            ):
+                 continue
++            decodedIP = protocol.checkIPAddress(ip)
+             if (
+                 decodedIP
+                 and time.time() - seenTime > 0
+diff --git a/src/network/knownnodes.py b/src/network/knownnodes.py
+index 07871c7c..ebb89d7e 100644
+--- a/src/network/knownnodes.py
++++ b/src/network/knownnodes.py
+@@ -1,6 +1,8 @@
+ """
+ Manipulations with knownNodes dictionary.
+ """
++# TODO: knownnodes object maybe?
++# pylint: disable=global-statement
+ 
+ import json
+ import logging
+@@ -63,7 +65,7 @@ def json_deserialize_knownnodes(source):
+     """
+     Read JSON from source and make knownnodes dict
+     """
+-    global knownNodesActual  # pylint: disable=global-statement
++    global knownNodesActual
+     for node in json.load(source):
+         peer = node['peer']
+         info = node['info']
+@@ -80,7 +82,7 @@ def pickle_deserialize_old_knownnodes(source):
+     the old format was {Peer:lastseen, ...}
+     the new format is {Peer:{"lastseen":i, "rating":f}}
+     """
+-    global knownNodes  # pylint: disable=global-statement
++    global knownNodes
+     knownNodes = pickle.load(source)
+     for stream in knownNodes.keys():
+         for node, params in knownNodes[stream].iteritems():
+@@ -228,6 +230,7 @@ def cleanupKnownNodes():
+     """
+     Cleanup knownnodes: remove old nodes and nodes with low rating
+     """
++    global knownNodesActual
+     now = int(time.time())
+     needToWriteKnownNodesToDisk = False
+ 
+@@ -238,6 +241,8 @@ def cleanupKnownNodes():
+             keys = knownNodes[stream].keys()
+             for node in keys:
+                 if len(knownNodes[stream]) <= 1:  # leave at least one node
++                    if stream == 1:
++                        knownNodesActual = False
+                     break
+                 try:
+                     age = now - knownNodes[stream][node]["lastseen"]
+diff --git a/src/network/tcp.py b/src/network/tcp.py
+index 64153d9d..1b30a0a2 100644
+--- a/src/network/tcp.py
++++ b/src/network/tcp.py
+@@ -366,16 +366,21 @@ def bootstrap(connection_class):
+             """
+             BMProto.bm_command_addr(self)
+             self._succeed = True
+-            # pylint: disable=attribute-defined-outside-init
+             self.close_reason = "Thanks for bootstrapping!"
+             self.set_state("close")
+ 
++        def set_connection_fully_established(self):
++            """Only send addr here"""
++            # pylint: disable=attribute-defined-outside-init
++            self.fullyEstablished = True
++            self.sendAddr()
++
+         def handle_close(self):
+             """
+             After closing the connection switch knownnodes.knownNodesActual
+             back to False if the bootstrapper failed.
+             """
+-            self._connection_base.handle_close(self)
++            BMProto.handle_close(self)
+             if not self._succeed:
+                 knownnodes.knownNodesActual = False
+ 
+diff --git a/src/network/tls.py b/src/network/tls.py
+index 1b325696..faba6aaa 100644
+--- a/src/network/tls.py
++++ b/src/network/tls.py
+@@ -154,12 +154,13 @@ class TLSDispatcher(AdvancedDispatcher):
+         except AttributeError:
+             return AdvancedDispatcher.handle_read(self)
+         except ssl.SSLError as err:
++            self.close_reason = "SSL Error in handle_read"
+             if err.errno == ssl.SSL_ERROR_WANT_READ:
+                 return
+             elif err.errno in _DISCONNECTED_SSL:
+                 self.handle_close()
+                 return
+-            logger.info("SSL Error: %s", str(err))
++            logger.info("SSL Error: %s", err)
+             self.handle_close()
+             return
+ 
+@@ -184,12 +185,13 @@ class TLSDispatcher(AdvancedDispatcher):
+         except AttributeError:
+             return AdvancedDispatcher.handle_write(self)
+         except ssl.SSLError as err:
++            self.close_reason = "SSL Error in handle_write"
+             if err.errno == ssl.SSL_ERROR_WANT_WRITE:
+                 return 0
+             elif err.errno in _DISCONNECTED_SSL:
+                 self.handle_close()
+                 return 0
+-            logger.info("SSL Error: %s", str(err))
++            logger.info("SSL Error: %s", err)
+             self.handle_close()
+             return
+ 
+@@ -203,8 +205,8 @@ class TLSDispatcher(AdvancedDispatcher):
+             # print "handshaking (internal)"
+             self.sslSocket.do_handshake()
+         except ssl.SSLError as err:
+-            # print "%s:%i: handshake fail" % (
+-            #    self.destination.host, self.destination.port)
++            self.close_reason = "SSL Error in tls_handshake"
++            logger.info("%s:%i: handshake fail", *self.destination)
+             self.want_read = self.want_write = False
+             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
+                 # print "want read"
+@@ -217,6 +219,7 @@ class TLSDispatcher(AdvancedDispatcher):
+         except socket.error as err:
+             # pylint: disable=protected-access
+             if err.errno in asyncore._DISCONNECTED:
++                self.close_reason = "socket.error in tls_handshake"
+                 self.handle_close()
+             else:
+                 raise
+diff --git a/src/tests/core.py b/src/tests/core.py
+index 3d8ac983..95fe9952 100644
+--- a/src/tests/core.py
++++ b/src/tests/core.py
+@@ -7,6 +7,7 @@ import os
+ import pickle  # nosec
+ import Queue
+ import random  # nosec
++import socket
+ import string
+ import sys
+ import time
+@@ -18,7 +19,6 @@ import helper_sent
+ 
+ from bmconfigparser import BMConfigParser
+ from helper_msgcoding import MsgEncode, MsgDecode
+-from helper_startup import start_proxyconfig
+ from helper_sql import sqlQuery
+ from network import asyncore_pollchoose as asyncore, knownnodes
+ from network.bmproto import BMProto
+@@ -31,9 +31,10 @@ from version import softwareVersion
+ from common import cleanup
+ 
+ try:
+-    import stem.version as stem_version
+-except ImportError:
+-    stem_version = None
++    socket.socket().bind(('127.0.0.1', 9050))
++    tor_port_free = True
++except (OSError, socket.error):
++    tor_port_free = False
+ 
+ knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
+ 
+@@ -155,12 +156,17 @@ class TestCore(unittest.TestCase):
+ 
+     def _initiate_bootstrap(self):
+         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
+-        self._outdate_knownnodes()
++        self._wipe_knownnodes()
+         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
+         knownnodes.cleanupKnownNodes()
+-        time.sleep(2)
++        time.sleep(5)
+ 
+-    def _check_bootstrap(self):
++    def _check_connection(self, full=False):
++        """
++        Check if there is at least one outbound connection to remote host
++        with name not starting with "bootstrap" in 6 minutes at most,
++        fail otherwise.
++        """
+         _started = time.time()
+         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+         proxy_type = BMConfigParser().safeGet(
+@@ -171,51 +177,94 @@ class TestCore(unittest.TestCase):
+             connection_base = Socks4aBMConnection
+         else:
+             connection_base = TCPConnection
+-        for _ in range(180):
++        c = 360
++        while c > 0:
+             time.sleep(1)
++            c -= 2
+             for peer, con in BMConnectionPool().outboundConnections.iteritems():
+-                if not peer.host.startswith('bootstrap'):
++                if (
++                    peer.host.startswith('bootstrap')
++                    or peer.host == 'quzwelsuziwqgpt2.onion'
++                ):
++                    if c < 60:
++                        self.fail(
++                            'Still connected to bootstrap node %s after % seconds' %
++                            (peer, time.time() - _started))
++                    c += 1
++                    break
++                else:
+                     self.assertIsInstance(con, connection_base)
+                     self.assertNotEqual(peer.host, '127.0.0.1')
++                    if full and not con.fullyEstablished:
++                        continue
+                     return
+         self.fail(
+             'Failed to connect during %s sec' % (time.time() - _started))
+ 
++    def _check_knownnodes(self):
++        for stream in knownnodes.knownNodes.itervalues():
++            for peer in stream:
++                if peer.host.startswith('bootstrap'):
++                    self.fail(
++                        'Bootstrap server in knownnodes: %s' % peer.host)
++
++    def test_dontconnect(self):
++        """all connections are closed 5 seconds after setting dontconnect"""
++        self._initiate_bootstrap()
++        self.assertEqual(len(BMConnectionPool().connections()), 0)
++
++    def test_connection(self):
++        """test connection to bootstrap servers"""
++        self._initiate_bootstrap()
++        for port in [8080, 8444]:
++            for item in socket.getaddrinfo(
++                    'bootstrap%s.bitmessage.org' % port, 80):
++                try:
++                    addr = item[4][0]
++                    socket.inet_aton(item[4][0])
++                except (TypeError, socket.error):
++                    continue
++                else:
++                    knownnodes.addKnownNode(1, Peer(addr, port))
++        self._check_connection(True)
++
+     def test_bootstrap(self):
+         """test bootstrapping"""
++        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
+         self._initiate_bootstrap()
+-        self._check_bootstrap()
++        self._check_connection()
++        self._check_knownnodes()
+ 
+-    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
++    @unittest.skipIf(tor_port_free, 'no running tor detected')
+     def test_bootstrap_tor(self):
+         """test bootstrapping with tor"""
++        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+         self._initiate_bootstrap()
+-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
+-        start_proxyconfig()
+-        self._check_bootstrap()
++        self._check_connection()
++        self._check_knownnodes()
+ 
+-    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+-    def test_onionservicesonly(self):  # this should start after bootstrap
+-        """
+-        set onionservicesonly, wait for 3 connections and check them all
+-        are onions
++    @unittest.skipIf(tor_port_free, 'no running tor detected')
++    def test_onionservicesonly(self):
++        """ensure bitmessage doesn't try to connect to non-onion nodes
++        if onionservicesonly set, wait at least 3 onion nodes
+         """
+         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+         BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
+         self._initiate_bootstrap()
+         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
++        tried_hosts = set()
+         for _ in range(360):
+             time.sleep(1)
+-            for n, peer in enumerate(BMConnectionPool().outboundConnections):
+-                if n > 2:
++            for peer in BMConnectionPool().outboundConnections:
++                if peer.host.endswith('.onion'):
++                    tried_hosts.add(peer.host)
++                else:
++                    if not peer.host.startswith('bootstrap'):
++                        self.fail(
++                            'Found non onion hostname %s in outbound'
++                            'connections!' % peer.host)
++                if len(tried_hosts) > 2:
+                     return
+-                if (
+-                    not peer.host.endswith('.onion')
+-                    and not peer.host.startswith('bootstrap')
+-                ):
+-                    self.fail(
+-                        'Found non onion hostname %s in outbound connections!'
+-                        % peer.host)
+         self.fail('Failed to connect to at least 3 nodes within 360 sec')
+ 
+     @staticmethod

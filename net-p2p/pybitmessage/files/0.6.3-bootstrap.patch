@@ -32,7 +32,7 @@ index ef64de94..20cbb8e6 100644
                  decodedIP
                  and time.time() - seenTime > 0
 diff --git a/src/network/knownnodes.py b/src/network/knownnodes.py
-index 07871c7c..ebb89d7e 100644
+index c92f8e9a..4840aad9 100644
 --- a/src/network/knownnodes.py
 +++ b/src/network/knownnodes.py
 @@ -1,6 +1,8 @@
@@ -44,7 +44,7 @@ index 07871c7c..ebb89d7e 100644
  
  import json
  import logging
-@@ -63,7 +65,7 @@ def json_deserialize_knownnodes(source):
+@@ -65,7 +67,7 @@ def json_deserialize_knownnodes(source):
      """
      Read JSON from source and make knownnodes dict
      """
@@ -53,7 +53,7 @@ index 07871c7c..ebb89d7e 100644
      for node in json.load(source):
          peer = node['peer']
          info = node['info']
-@@ -80,7 +82,7 @@ def pickle_deserialize_old_knownnodes(source):
+@@ -82,7 +84,7 @@ def pickle_deserialize_old_knownnodes(source):
      the old format was {Peer:lastseen, ...}
      the new format is {Peer:{"lastseen":i, "rating":f}}
      """
@@ -62,7 +62,7 @@ index 07871c7c..ebb89d7e 100644
      knownNodes = pickle.load(source)
      for stream in knownNodes.keys():
          for node, params in knownNodes[stream].iteritems():
-@@ -228,6 +230,7 @@ def cleanupKnownNodes():
+@@ -230,6 +232,7 @@ def cleanupKnownNodes():
      """
      Cleanup knownnodes: remove old nodes and nodes with low rating
      """
@@ -70,7 +70,7 @@ index 07871c7c..ebb89d7e 100644
      now = int(time.time())
      needToWriteKnownNodesToDisk = False
  
-@@ -238,6 +241,8 @@ def cleanupKnownNodes():
+@@ -240,6 +243,8 @@ def cleanupKnownNodes():
              keys = knownNodes[stream].keys()
              for node in keys:
                  if len(knownNodes[stream]) <= 1:  # leave at least one node
@@ -108,7 +108,7 @@ index 64153d9d..1b30a0a2 100644
                  knownnodes.knownNodesActual = False
  
 diff --git a/src/network/tls.py b/src/network/tls.py
-index 1b325696..faba6aaa 100644
+index 7c16b9b5..e326fa32 100644
 --- a/src/network/tls.py
 +++ b/src/network/tls.py
 @@ -154,12 +154,13 @@ class TLSDispatcher(AdvancedDispatcher):
@@ -142,16 +142,16 @@ index 1b325696..faba6aaa 100644
              return
  
 @@ -203,8 +205,8 @@ class TLSDispatcher(AdvancedDispatcher):
-             # print "handshaking (internal)"
+             logger.debug("handshaking (internal)")
              self.sslSocket.do_handshake()
          except ssl.SSLError as err:
--            # print "%s:%i: handshake fail" % (
--            #    self.destination.host, self.destination.port)
+-            logger.debug(
+-                '%s:%i: handshake fail', self.destination.host, self.destination.port)
 +            self.close_reason = "SSL Error in tls_handshake"
 +            logger.info("%s:%i: handshake fail", *self.destination)
              self.want_read = self.want_write = False
              if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                 # print "want read"
+                 logger.debug("want read")
 @@ -217,6 +219,7 @@ class TLSDispatcher(AdvancedDispatcher):
          except socket.error as err:
              # pylint: disable=protected-access
@@ -161,18 +161,18 @@ index 1b325696..faba6aaa 100644
              else:
                  raise
 diff --git a/src/tests/core.py b/src/tests/core.py
-index 3d8ac983..95fe9952 100644
+index 0ff54f91..7fb6a9c0 100644
 --- a/src/tests/core.py
 +++ b/src/tests/core.py
-@@ -7,6 +7,7 @@ import os
- import pickle  # nosec
+@@ -8,6 +8,7 @@ import pickle  # nosec
  import Queue
  import random  # nosec
+ import shutil
 +import socket
  import string
  import sys
  import time
-@@ -18,7 +19,6 @@ import helper_sent
+@@ -20,7 +21,6 @@ import helper_addressbook
  
  from bmconfigparser import BMConfigParser
  from helper_msgcoding import MsgEncode, MsgDecode
@@ -180,7 +180,7 @@ index 3d8ac983..95fe9952 100644
  from helper_sql import sqlQuery
  from network import asyncore_pollchoose as asyncore, knownnodes
  from network.bmproto import BMProto
-@@ -31,9 +31,10 @@ from version import softwareVersion
+@@ -33,9 +33,10 @@ from version import softwareVersion
  from common import cleanup
  
  try:
@@ -194,7 +194,7 @@ index 3d8ac983..95fe9952 100644
  
  knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
  
-@@ -155,12 +156,17 @@ class TestCore(unittest.TestCase):
+@@ -158,12 +159,17 @@ class TestCore(unittest.TestCase):
  
      def _initiate_bootstrap(self):
          BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
@@ -215,7 +215,7 @@ index 3d8ac983..95fe9952 100644
          _started = time.time()
          BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
          proxy_type = BMConfigParser().safeGet(
-@@ -171,51 +177,94 @@ class TestCore(unittest.TestCase):
+@@ -174,51 +180,94 @@ class TestCore(unittest.TestCase):
              connection_base = Socks4aBMConnection
          else:
              connection_base = TCPConnection

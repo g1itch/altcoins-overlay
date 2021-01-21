@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -11,7 +11,7 @@ inherit distutils-r1 gnome2-utils versionator systemd
 MY_PN="PyBitmessage"
 
 DESCRIPTION="Reference client for Bitmessage: a P2P communications protocol"
-COMMIT="9265235053aad4261bf8c2da4809acc3d3fb69f1"
+COMMIT="9c5d329c90637fa5932265836ee90dbe2d8a0b4e"
 HOMEPAGE="https://bitmessage.org"
 SRC_URI="https://github.com/Bitmessage/${MY_PN}/archive/${COMMIT}.tar.gz
 	-> ${P}.tar.gz"
@@ -45,9 +45,8 @@ S="${WORKDIR}"/${MY_PN}-${COMMIT}
 PVM=$(get_version_component_range 1-3)
 PATCHES=(
 	"${FILESDIR}"/${PVM}-qt5.patch
-	"${FILESDIR}"/${PVM}-bootstrap.patch
 	"${FILESDIR}"/${PVM}-desktop.patch
-	"${FILESDIR}"/${PVM}-knownnodes.patch
+	"${FILESDIR}"/${PVM}-bootstrap.patch
 )
 
 src_prepare() {

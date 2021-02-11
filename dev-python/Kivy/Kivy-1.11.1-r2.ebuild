@@ -1,9 +1,9 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
 
-PYTHON_COMPAT=( python2_7 python3_{6,7,8} )
+PYTHON_COMPAT=( python3_{6..9} )
 
 inherit distutils-r1
 
@@ -25,19 +25,21 @@ RDEPEND="
 	cairo? ( dev-python/pycairo[${PYTHON_USEDEP}] )
 	garden? ( dev-python/kivy-garden[${PYTHON_USEDEP}] )
 	gstreamer? ( dev-python/gst-python:1.0[${PYTHON_USEDEP}] )
-	sdl? ( media-libs/libsdl2
+	sdl? ( media-libs/libsdl2[gles2]
 		media-libs/sdl2-ttf
 		media-libs/sdl2-image
 		media-libs/sdl2-mixer )
 	!sdl? ( dev-python/pygame[${PYTHON_USEDEP}] )
 	spell? ( dev-python/pyenchant[${PYTHON_USEDEP}] )"
 DEPEND="${RDEPEND}
-	dev-python/cython[${PYTHON_USEDEP}]
+	<=dev-python/cython-0.29.15[${PYTHON_USEDEP}]
 	dev-python/setuptools[${PYTHON_USEDEP}]
 	doc? ( dev-python/sphinx[${PYTHON_USEDEP}] )
 	test? ( dev-python/nose[${PYTHON_USEDEP}] )"
 
 S="${WORKDIR}/${P,,}"
+
+PATCHES=( "${FILESDIR}/1.11-setup.patch" )
 
 python_prepare_all() {
 # 	sed -e '/data_files=/d' -i "${S}/setup.py" || die

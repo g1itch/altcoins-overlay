@@ -1,0 +1,17 @@
+diff --git a/setup.py b/setup.py
+index e69de29..967eb8e 100644
+--- setup.py
++++ setup.py
+@@ -0,0 +1,12 @@
++#!/usr/bin/env python
++
++from distutils.core import setup
++
++setup(
++    name='pycanberra',
++    version='0.1',
++    description='A ctypes wrapper for the libcanberra api',
++    author='Dave Barry',
++    url='https://github.com/totdb/pycanberra',
++    py_modules=['pycanberra']
++)

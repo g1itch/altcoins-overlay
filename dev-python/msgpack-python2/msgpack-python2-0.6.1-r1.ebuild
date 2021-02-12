@@ -18,8 +18,8 @@ SLOT="0"
 KEYWORDS="amd64 x86"
 IUSE="+native-extensions"
 
+RDEPEND="!dev-python/msgpack[python_targets_python2_7]"
 DEPEND="
-	!dev-python/msgpack[python_targets_python2_7]
 	native-extensions? (
 		$(python_gen_cond_dep '>=dev-python/cython-python2-0.16' 'python*')
 	)

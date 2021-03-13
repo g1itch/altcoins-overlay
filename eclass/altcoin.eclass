@@ -1,6 +1,5 @@
-# Copyright 2015-2017 Gentoo Foundation
+# Copyright 2015-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 #
 # @ECLASS: altcoin.eclass
 # @MAINTAINER:
@@ -31,7 +30,6 @@ COIN_BOOST_MIN=${COIN_BOOST_MIN:-}
 
 
 RDEPEND="
-	dev-libs/boost[threads(+)]
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	net-misc/altcoin-daemon
 "

@@ -28,6 +28,14 @@ COIN_NEEDS_SSL=${COIN_NEEDS_SSL:-1}
 
 COIN_BOOST_MIN=${COIN_BOOST_MIN:-}
 
+# @ECLASS-VARIABLE: COIN_BOOST_MAX
+# @DESCRIPTION:
+# Set this variable before the inherit line
+# to figure out maximum supported boost ver
+# it's currently not possible to set both COIN_BOOST_MIN and COIN_BOOST_MAX
+
+COIN_BOOST_MIN=${COIN_BOOST_MAX:-}
+
 
 RDEPEND="
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
@@ -43,10 +51,12 @@ if [ "${COIN_NEEDS_SSL}" = "1" ]; then
 	fi
 fi
 
-if [ -z ${COIN_BOOST_MIN} ]; then
-	RDEPEND+="dev-libs/boost[threads(+)] "
-else
+if [[ -n ${COIN_BOOST_MAX} ]]; then
+	RDEPEND+="<=dev-libs/boost-${COIN_BOOST_MAX}[threads(+)] "
+elif [[ -n ${COIN_BOOST_MIN} ]]; then
 	RDEPEND+=">=dev-libs/boost-${COIN_BOOST_MIN}[threads(+)] "
+else
+	RDEPEND+="dev-libs/boost[threads(+)] "
 fi
 
 [[ $IUSE =~ upnp ]] && RDEPEND+="upnp? ( net-libs/miniupnpc ) "

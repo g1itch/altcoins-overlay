@@ -1,10 +1,10 @@
-# Copyright 2016-2020 Gentoo Authors
+# Copyright 2016-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="FLO"
+COIN_BOOST_MAX=1.72
 MY_PN=${COIN_SYMBOL,,}
-
 inherit versionator altcoin
 
 HOMEPAGE="http://florincoin.org/"

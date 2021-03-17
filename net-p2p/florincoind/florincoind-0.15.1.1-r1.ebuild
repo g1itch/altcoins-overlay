@@ -1,10 +1,9 @@
-# Copyright 2016-2018 Gentoo Foundation
+# Copyright 2016-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="FLO"
 MY_PN=${COIN_SYMBOL,,}
-
 inherit versionator altcoin
 
 HOMEPAGE="http://florincoin.org/"
@@ -27,6 +26,7 @@ src_prepare() {
 	local PVM=$(get_version_component_range 1-2)
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
+	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf
 }
 

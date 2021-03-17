@@ -1,10 +1,10 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="PPC"
+COIN_BOOST_MAX=1.72
 MY_PV="${PV}ppc"
-
 inherit versionator altcoin
 
 HOMEPAGE="http://peercoin.net/"
@@ -17,7 +17,7 @@ IUSE="examples upnp +wallet zeromq"
 
 src_prepare() {
 	rm -r src/leveldb
-	local PVM=0.8
+	local PVM=$(get_version_component_range 1-2)
 	epatch "${FILESDIR}"/${PVM}-sys_leveldb.patch
 	epatch "${FILESDIR}"/${PVM}-missing-include.patch
 	eautoreconf

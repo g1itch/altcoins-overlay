@@ -1,10 +1,10 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="PPC"
+COIN_BOOST_MAX=1.72
 MY_PV="${PV}ppc"
-
 inherit versionator altcoin
 
 HOMEPAGE="http://peercoin.net/"

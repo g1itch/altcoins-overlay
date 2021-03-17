@@ -1,11 +1,11 @@
-# Copyright 2015-2020 Gentoo Authors
+# Copyright 2015-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
 COIN_SYMBOL="BLK"
 COIN_NEEDS_SSL=0
+COIN_BOOST_MAX=1.72
 DB_VER=6.2
-
 inherit altcoin versionator
 
 MyPN=${COIN_NAME}-more

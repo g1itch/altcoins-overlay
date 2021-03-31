@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Gentoo Authors
+# Copyright 2018-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -15,7 +15,7 @@ SRC_URI="https://github.com/vergecurrency/${MyPN}/archive/v${MY_PV}.tar.gz -> ${
 https://www.torproject.org/dist/${TOR_PF}.tar.gz"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
+KEYWORDS=""
 IUSE="examples upnp +wallet zeromq"
 
 DEPEND+="dev-libs/univalue"

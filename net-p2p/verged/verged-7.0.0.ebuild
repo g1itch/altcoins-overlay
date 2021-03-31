@@ -3,7 +3,7 @@
 
 EAPI=5
 COIN_SYMBOL="XVG"
-
+COIN_BOOST_MAX=1.72
 inherit altcoin versionator
 
 TOR_PV=0.4.3.5
@@ -23,11 +23,10 @@ RDEPEND+=">=dev-libs/leveldb-1.18-r1"
 
 
 src_prepare() {
-	local PVM=$(get_major_version)
 	rm -rf src/tor; mv ../${TOR_PF} src/tor
 	epatch "${FILESDIR}"/5-sys_leveldb.patch
 	epatch "${FILESDIR}"/5-secp256k1.patch
-	epatch "${FILESDIR}"/${PVM}-tor_scrypt.patch
+	epatch "${FILESDIR}"/6-tor_scrypt.patch
 	eautoreconf
 }
 

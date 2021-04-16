@@ -5,9 +5,9 @@ EAPI=5
 
 inherit altcoin
 
-DESCRIPTION="Command-line JSON-RPC client for ${COIN_NAME^} crypto-currency"
+DESCRIPTION="Command-line JSON-RPC client for Verge crypto-currency"
 HOMEPAGE="http://vergecurrency.com/"
-SRC_URI="https://github.com/vergecurrency/${PN}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
+SRC_URI="https://github.com/vergecurrency/${COIN_NAME}/archive/v${PV}.tar.gz -> ${COIN_NAME}-${PV}.tar.gz"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"

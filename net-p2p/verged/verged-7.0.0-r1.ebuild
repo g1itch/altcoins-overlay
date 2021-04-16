@@ -3,7 +3,7 @@
 
 EAPI=5
 COIN_SYMBOL="XVG"
-COIN_BOOST_MAX=1.72
+COIN_BOOST_MAX=1.72.1
 inherit altcoin versionator
 
 TOR_PV=0.4.3.5

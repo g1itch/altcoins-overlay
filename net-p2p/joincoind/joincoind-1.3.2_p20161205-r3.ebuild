@@ -1,10 +1,10 @@
-# Copyright 2017 Gentoo Foundation
+# Copyright 2017-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 COIN_SYMBOL="J"
 
-inherit versionator autotools-utils altcoin
+inherit versionator altcoin
 
 HOMEPAGE="http://joincoinz.com/"
 COMMIT="cdd870f6c94a0e825b0070f868cb55e0af8cf4eb"

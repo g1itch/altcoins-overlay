@@ -3,8 +3,7 @@
 
 EAPI=5
 COIN_SYMBOL="PPC"
-MY_PV="${PV:0:-4}ppc.rc3"
-
+MY_PV="${PV}ppc"
 inherit versionator altcoin
 
 HOMEPAGE="http://peercoin.net/"
@@ -12,7 +11,7 @@ SRC_URI="https://github.com/${COIN_NAME}/${COIN_NAME}/archive/v${MY_PV}.tar.gz -
 
 LICENSE="MIT ISC GPL-2"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64 ~x86"
 IUSE="examples upnp +wallet zeromq"
 
 src_prepare() {

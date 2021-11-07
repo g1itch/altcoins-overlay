@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Gentoo Authors
+# Copyright 2015-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -26,4 +26,10 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PVM}-boost_1.70.patch
 	epatch "${FILESDIR}"/${PVM}-openssl_1.1.patch
 	altcoin_src_prepare
+}
+
+src_install() {
+	altcoin_src_install
+	ewarn 'Swap to Poligon is started!'
+	ewarn "Look at https://www.potcoin.com/2021/11/05/potcoin-is-migrating-to-polygon-swap-go-live-is-scheduled-for-november-1st-read-on-for-details/"
 }

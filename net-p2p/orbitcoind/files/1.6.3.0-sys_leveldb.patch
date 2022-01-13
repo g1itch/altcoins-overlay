@@ -1,0 +1,49 @@
+--- a/src/leveldb.cpp	2022-01-13 21:12:36.493808068 +0200
++++ b/src/leveldb.cpp	2022-01-13 21:12:51.106707816 +0200
+@@ -7,7 +7,7 @@
+ #include <leveldb/env.h>
+ #include <leveldb/cache.h>
+ #include <leveldb/filter_policy.h>
+-#include <memenv/memenv.h>
++#include <leveldb/helpers/memenv.h>
+ 
+ #include "leveldb.h"
+ #include "util.h"
+--- a/src/makefile.unix	2022-01-13 21:37:55.090389145 +0200
++++ b/src/makefile.unix	2022-01-13 21:39:49.552603834 +0200
+@@ -5,6 +5,7 @@
+ 
+ USE_UPNP:=0
+ USE_IPV6:=1
++USE_SYSTEM_LEVELDB:=0
+ 
+ CC = gcc
+ CXX = g++
+@@ -94,9 +95,6 @@
+  DEFS += -DUSE_IPV6=$(USE_IPV6)
+ endif
+ 
+-LIBS += $(CURDIR)/leveldb/libleveldb.a
+-LIBS += $(CURDIR)/leveldb/libmemenv.a
+-LIBS += $(CURDIR)/leveldb/libsnappy.a
+ INCS += $(addprefix -I,$(CURDIR)/leveldb/include)
+ INCS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+ 
+@@ -152,10 +150,17 @@
+ 
+ all: orbitcoind
+ 
++ifeq (${USE_SYSTEM_LEVELDB}, 0)
++LIBS += $(CURDIR)/leveldb/libleveldb.a
++LIBS += $(CURDIR)/leveldb/libmemenv.a
++LIBS += $(CURDIR)/leveldb/libsnappy.a
+ leveldb/libleveldb.a:
+ 	@echo "Building LevelDB ..."; cd leveldb; make -f Makefile.posix; cd ..;
+ 
+ obj/leveldb.o: leveldb/libleveldb.a leveldb/libmemenv.a leveldb/libsnappy.a
++else
++     LIBS += -lleveldb -lmemenv
++endif
+ 
+ # Auto-generated dependencies
+ -include obj/*.P

@@ -1,4 +1,4 @@
-# Copyright 2015-2021 Gentoo Authors
+# Copyright 2015-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 # @ECLASS: altcoin.eclass
@@ -44,10 +44,10 @@ RDEPEND="
 
 if [ "${COIN_NEEDS_SSL}" = "1" ]; then
 	if [[ $IUSE =~ libressl ]]; then
-		RDEPEND+="!libressl? ( dev-libs/openssl:0[-bindist] )
+		RDEPEND+="!libressl? ( dev-libs/openssl:0 )
 			libressl? ( dev-libs/libressl ) "
 	else
-		RDEPEND+=" dev-libs/openssl:0[-bindist] "
+		RDEPEND+=" dev-libs/openssl:0 "
 	fi
 fi
 

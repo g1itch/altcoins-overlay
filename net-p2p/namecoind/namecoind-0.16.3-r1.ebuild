@@ -1,7 +1,7 @@
-# Copyright 2017-2019 Gentoo Authors
+# Copyright 2017-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 COIN_SYMBOL="NMC"
 
 inherit versionator altcoin
@@ -28,7 +28,7 @@ S="${WORKDIR}"/${MY_PN}-${MY_PV}
 src_prepare() {
 	rm -r src/leveldb
 	epatch "${FILESDIR}"/0.13-sys_leveldb.patch
-	eautoreconf
+	altcoin_src_prepare
 }
 
 src_configure() {
@@ -43,6 +43,7 @@ src_configure() {
 		--disable-ccache \
 		--disable-static \
 		--with-system-leveldb \
+		--with-system-univalue \
 		--with-system-libsecp256k1 \
 		--without-utils \
 		--without-libs \

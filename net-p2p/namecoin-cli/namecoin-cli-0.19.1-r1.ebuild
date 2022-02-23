@@ -1,7 +1,7 @@
-# Copyright 2017-2018 Gentoo Foundation
+# Copyright 2017-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 
 inherit altcoin
 
@@ -30,6 +30,6 @@ src_configure() {
 src_install() {
 	dobin src/${PN}
 
-	newman doc/man/bitcoin-cli.1 ${PN}.1
-	newbashcomp contrib/bitcoind.bash-completion ${PN}
+	doman doc/man/${PN}.1
+	newbashcomp contrib/bitcoin-cli.bash-completion ${PN}
 }

@@ -105,6 +105,7 @@ altcoin_pkg_setup() {
 
 
 altcoin_src_prepare() {
+	default
 	[ -f configure.ac ] && eautoreconf && return 0
 	[ -f src/makefile.unix ] || return 0
 	if has_version '>=dev-libs/boost-1.52'; then

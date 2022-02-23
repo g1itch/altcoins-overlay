@@ -1,11 +1,11 @@
-# Copyright 2017-2020 Gentoo Authors
+# Copyright 2017-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 COIN_SYMBOL="OK"
-MY_PV=${PV}-core.aether
+MY_PV=${PV}-core.bliss
 
-inherit versionator altcoin
+inherit altcoin
 
 HOMEPAGE="http://okcash.co"
 SRC_URI="https://github.com/okcashpro/${COIN_NAME}/archive/v${MY_PV}.tar.gz -> ${P}.tar.gz"
